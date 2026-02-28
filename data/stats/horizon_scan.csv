@@ -1,0 +1,4 @@
+horizon_h,roc_auc,opt_threshold,sharpe_ratio,total_return,annualized_return,buy_hold_return,win_rate,n_trades,max_drawdown
+24,0.526,0.5,-5.3719,-0.1945,-0.584,-0.3687,0.3254,527,-0.1946
+12,0.5182,0.57,-7.9406,-0.0218,-0.0853,-0.3687,0.34,53,-0.028
+48,0.5134,0.5,-3.4646,-0.2609,-0.7066,-0.3687,0.3209,564,-0.2644

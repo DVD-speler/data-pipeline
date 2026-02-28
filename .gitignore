@@ -1,0 +1,23 @@
+# Data (groot, regenereerbaar)
+data/*.db
+data/*.parquet
+data/model.pkl
+
+# Wel bewaren: statistische output (klein, nuttig)
+!data/stats/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+.env
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
+Thumbs.db
