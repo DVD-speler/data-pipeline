@@ -73,6 +73,13 @@ def _add_ta_indicators(df: pd.DataFrame, suffix: str = "") -> pd.DataFrame:
         close=close, window=14
     ).rsi()
 
+    # Stochastic RSI (14 perioden, smooth 3/3) — sensitiever dan RSI
+    # %K: positie van RSI binnen zijn eigen 14-perioden band [0=oversold, 1=overbought]
+    stoch_rsi = ta_lib.momentum.StochRSIIndicator(
+        close=close, window=14, smooth1=3, smooth2=3
+    )
+    df[f"stoch_rsi{suffix}"] = stoch_rsi.stochrsi_k()
+
     # MACD (12, 26, 9)
     macd = ta_lib.trend.MACD(
         close=close, window_slow=26, window_fast=12, window_sign=9
@@ -80,9 +87,11 @@ def _add_ta_indicators(df: pd.DataFrame, suffix: str = "") -> pd.DataFrame:
     df[f"macd{suffix}"]        = macd.macd()
     df[f"macd_signal{suffix}"] = macd.macd_signal()
 
-    # Bollinger Bands (20 perioden, 2σ) — %B positie [0=onderband, 1=bovenband]
+    # Bollinger Bands (20 perioden, 2σ) — %B positie en bandbreedte
     bb = ta_lib.volatility.BollingerBands(close=close, window=20, window_dev=2)
-    df[f"bb_pct{suffix}"] = bb.bollinger_pband()
+    df[f"bb_pct{suffix}"]   = bb.bollinger_pband()
+    # BB breedte genormaliseerd door prijs: groeit bij volatiliteitsexpansie (breakout signaal)
+    df[f"bb_width{suffix}"] = (bb.bollinger_hband() - bb.bollinger_lband()) / (close + 1e-10)
 
     # EMA ratio's (close t.o.v. EMA — trendrichting en afstand)
     ema_20 = ta_lib.trend.EMAIndicator(close=close, window=20).ema_indicator()
@@ -101,6 +110,14 @@ def _add_ta_indicators(df: pd.DataFrame, suffix: str = "") -> pd.DataFrame:
             high=df["high"], low=df["low"], close=close, window=14
         ).average_true_range()
         df["atr_pct"] = atr / close
+
+        # ADX (14) — trendsterkte en directional movement (Fase 1: regime detectie)
+        adx_ind = ta_lib.trend.ADXIndicator(
+            high=df["high"], low=df["low"], close=close, window=14
+        )
+        df["adx"]     = adx_ind.adx()      # trendsterkte 0-100 (>20 = trending)
+        df["adx_pos"] = adx_ind.adx_pos()  # +DI: bull druk
+        df["adx_neg"] = adx_ind.adx_neg()  # -DI: bear druk
 
     return df
 
@@ -183,6 +200,14 @@ def build_features(
     df["return_6h"]  = df["close"].pct_change(6)
     df["return_12h"] = df["close"].pct_change(12)
 
+    # Volume momentum: 7-daags vs 30-daags volume ratio
+    # > 1 = groeiend volume t.o.v. baseline (institutionele activiteit / interesse)
+    # < 1 = verkleind volume (stille markten, gebrek aan overtuiging)
+    df["volume_momentum"] = (
+        df["volume"].rolling(7 * 24).mean()
+        / (df["volume"].rolling(30 * 24).mean() + 1e-10)
+    )
+
     # Volatiliteitsregime: verhouding recente 4h-vol t.o.v. 24h-vol
     # > 1 = vol expandeert (breakout/capitulatie), < 1 = vol comprimeert (squeeze)
     df["vol_4h"]     = df["returns"].rolling(4).std()
@@ -216,6 +241,55 @@ def build_features(
     # ── Technische indicatoren (1h) ───────────────────────────────────────────
     df = _add_ta_indicators(df, suffix="")
 
+    # ── Regime features (ADX-gebaseerd) ──────────────────────────────────────
+    # adx_trend: gecombineerde richting × sterkte, bereik [-1, +1]
+    #   positief = bull trend, negatief = bear trend, dichtbij 0 = ranging
+    if "adx_pos" in df.columns and "adx_neg" in df.columns:
+        df["adx_trend"] = (
+            (df["adx_pos"] - df["adx_neg"])
+            / (df["adx_pos"] + df["adx_neg"] + 1e-10)
+        )
+        # market_regime: bevestigd regime op basis van ADX drempel (>20 = trending)
+        # +1 = bevestigde bull (ADX>20, +DI > -DI)
+        #  0 = ranging (ADX≤20 of gemengde signalen)
+        # -1 = bevestigde bear (ADX>20, -DI > +DI)  ← short filter gebruikt dit
+        df["market_regime"] = np.where(
+            (df["adx"] > 20) & (df["adx_pos"] > df["adx_neg"]),   1,
+            np.where(
+            (df["adx"] > 20) & (df["adx_neg"] > df["adx_pos"]), -1,
+            0)
+        ).astype(float)
+
+    # EMA alignment score: hoeveel EMAs zijn in bull-volgorde gestapeld (0–3)
+    # Logica: ema_ratio = close/ema, dus kleinere ratio = EMA hoger dan bij grotere ratio
+    #   ema20 > ema50  ↔  ema_ratio_20 < ema_ratio_50
+    #   ema50 > ema200 ↔  ema_ratio_50 < price_vs_ema200
+    if all(c in df.columns for c in ["ema_ratio_20", "ema_ratio_50", "price_vs_ema200"]):
+        ema20_above_ema50  = (df["ema_ratio_20"]    < df["ema_ratio_50"]).astype(int)
+        ema50_above_ema200 = (df["ema_ratio_50"]    < df["price_vs_ema200"]).astype(int)
+        close_above_ema200 = (df["price_vs_ema200"] > 1.0).astype(int)
+        df["ema_alignment"] = ema20_above_ema50 + ema50_above_ema200 + close_above_ema200
+
+    # MACD histogram versnelling: richting van momentumverandering (reversal indicator)
+    # Positief = histogram groeit (stijgende momentum), negatief = histogram krimpt (afnemend momentum)
+    if "macd" in df.columns and "macd_signal" in df.columns:
+        macd_hist = df["macd"] - df["macd_signal"]
+        df["macd_hist_slope"] = macd_hist.diff(3)  # 3h verandering in MACD histogram
+
+    # VWAP-afstand: dagelijks hersteld om 00:00 UTC
+    # Positief = close boven daag-VWAP (intraday bullish), negatief = onder VWAP
+    df["_day"]     = df.index.normalize()
+    df["_typical"] = (df["high"] + df["low"] + df["close"]) / 3
+    df["_tpv"]     = df["_typical"] * df["volume"]
+    df["_cum_tpv"] = df.groupby("_day")["_tpv"].cumsum()
+    df["_cum_vol"] = df.groupby("_day")["volume"].cumsum()
+    df["vwap_distance"] = (
+        (df["close"] - df["_cum_tpv"] / (df["_cum_vol"] + 1e-10))
+        / (df["close"] + 1e-10)
+    )
+    df.drop(columns=["_day", "_typical", "_tpv", "_cum_tpv", "_cum_vol"],
+            inplace=True, errors="ignore")
+
     # ── ETH/BTC ratio (marktbreedte / altcoin season indicator) ───────────────
     try:
         df_eth = load_ohlcv(symbol="ETHUSDT", interval="1h")
@@ -242,6 +316,11 @@ def build_features(
     # Positief → markt wordt meer bullish, negatief → shorts nemen het over
     if "funding_rate" in df.columns:
         df["funding_momentum"] = df["funding_rate"].diff(72)  # 72h = 3 days
+
+    # Fear & Greed momentum: 7-daagse verandering in sentiment index
+    # Positief = sentiment verbetert (kopen), negatief = sentiment verslechtert (verkopen)
+    if "fear_greed" in df.columns:
+        df["fear_greed_momentum"] = df["fear_greed"].diff(7)
 
     # ── 4h features (hogere timeframe context) ────────────────────────────────
     if df_4h is None:
@@ -281,7 +360,10 @@ def build_features(
     )
 
     # ── Selecteer en schoon op ────────────────────────────────────────────────
-    keep      = config.FEATURE_COLS + ["target", "close"]
+    # FILTER_COLS (bijv. market_regime) worden ALTIJD meegenomen voor de backtest-filter,
+    # maar staan NIET in FEATURE_COLS — worden dus niet als model-input gebruikt.
+    filter_cols = getattr(config, "FILTER_COLS", [])
+    keep      = config.FEATURE_COLS + filter_cols + ["target", "close"]
     available = [c for c in keep if c in df.columns]
     df_feat   = df[available].dropna()
     df_feat["target"] = df_feat["target"].astype(int)

@@ -75,20 +75,33 @@ def _get_models() -> dict:
         print("  XGBoost niet gevonden — sla over. (pip install xgboost)")
 
     try:
+        import json
         import lightgbm as lgb
+
+        # Standaard handgetuned params (fallback als Optuna nog niet gerund is)
+        lgb_params: dict = {
+            "n_estimators":      400,
+            "max_depth":         4,
+            "learning_rate":     0.03,
+            "subsample":         0.7,
+            "colsample_bytree":  0.7,
+            "min_child_samples": 80,
+            "reg_alpha":         0.1,
+            "reg_lambda":        1.0,
+            "random_state":      42,
+            "verbose":           -1,
+        }
+        # Laad Optuna-geoptimaliseerde params als beschikbaar (gegenereerd door train_model)
+        params_path = config.DATA_DIR / "lgb_best_params.json"
+        if params_path.exists():
+            with open(params_path) as _f:
+                tuned = json.load(_f)
+            lgb_params.update(tuned)
+            lgb_params["random_state"] = 42
+            lgb_params["verbose"]      = -1
+
         models["LightGBM"] = (
-            lgb.LGBMClassifier(
-                n_estimators=400,
-                max_depth=4,           # stap G: was 6
-                learning_rate=0.03,    # stap G: was 0.05
-                subsample=0.7,
-                colsample_bytree=0.7,
-                min_child_samples=80,  # stap G: was 40
-                reg_alpha=0.1,         # stap G: L1 (nieuw)
-                reg_lambda=1.0,        # stap G: L2 (nieuw)
-                random_state=42,
-                verbose=-1,
-            ),
+            lgb.LGBMClassifier(**lgb_params),
             "seagreen",
         )
     except ImportError:

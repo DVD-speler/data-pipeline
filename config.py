@@ -21,7 +21,8 @@ MIN_HOURS_PER_DAY = 23
 
 # ── Model instellingen ─────────────────────────────────────────────────────────
 # Stap D: horizon van 4h naar 12h — minder ruis, meer ruimte voor de predictie
-PREDICTION_HORIZON_H = 12
+# Sprint 3: test 24h horizon → top features zijn 24h+ in nature (prev_day_return, spx_return_24h, return_30d)
+PREDICTION_HORIZON_H = 24
 
 # Stap A: testset verkleind van 365 naar 90 dagen → model ziet meer marktcycli
 TEST_SIZE_DAYS       = 90
@@ -61,14 +62,14 @@ FEATURE_COLS_1H = [
     "volume_ratio",             # volume t.o.v. 24h gemiddelde
     "volume_spike_48h",         # volume t.o.v. 48h gemiddelde (spike detectie)
     "price_position",
-    # Multi-horizon momentum (nieuw: kortetermijn vs. langetermijn)
+    # Multi-horizon momentum
     "return_2h",
     "return_4h",
     "return_6h",
     "return_12h",
-    # Volatiliteitsregime (nieuw)
+    # Volatiliteitsregime
     "vol_regime",               # recente 4h-vol / 24h-vol (>1=expanding, <1=squeeze)
-    # Trendkwaliteit (nieuw)
+    # Trendkwaliteit
     "trend_consistency_12h",    # fractie stijgende candles (close-to-close, 12h)
     "buy_pressure",             # fractie stijgende candles (open-to-close, 24h)
     # Technische indicatoren (1h)
@@ -91,8 +92,17 @@ FEATURE_COLS_1H = [
     "return_7d",                # 7-daags BTC rendement (weektrend)
     "return_30d",               # 30-daags BTC rendement (maandtrend)
     "ath_7d_distance",          # Afstand van 7-daags ATH (negatief = in correctie)
+    # Regime detectie (Fase 1)
+    "adx",                      # ADX(14) trendsterkte 0-100 (>20 = trending markt)
+    "vwap_distance",            # (close − dag-VWAP) / close: positie vs. gewogen gemiddelde
 ]
+# Regime-only columns: in de feature matrix voor backtest-filter, NIET als model feature.
+# adx_trend en market_regime geven expliciete richting → over-confidence in bullish val-periode
+#   → threshold zakt naar 0.50 → model overfits op val-regime.
+# Oplossing: model leert slechts trendsterkte (adx), backtest-filter gebruikt market_regime.
+FILTER_COLS = ["market_regime"]   # altijd in feature matrix, nooit in model-input
 # Verwijderd (feature importance ≈ 0 of gebroken data):
+#   "return_4h"       — 0.000 belang (letterlijk nul) in meerdere runs → verwijderd Fase 2
 #   "direction_bias"  — 0.000762 belang, biedt geen additioneel signaal boven p1_probability
 #   "returns"         — 0.002264 belang, ruwe 1h return is te lawaaierig voor 12h-predictie
 #   "oi_change_24h"   — Binance OI API limiteert tot 30 dagen history; slechts 4% dekking

@@ -69,12 +69,32 @@ def run_backtest(
         else pd.Series(0, index=results.index)
     )
 
-    # ── Stap B: regime filter ─────────────────────────────────────────────────
+    # ── Regime filter ─────────────────────────────────────────────────────────
     if regime_filter and "price_vs_ema200" in test_df.columns:
         above_ema200 = (test_df["price_vs_ema200"] > 1.0).reindex(results.index, fill_value=True)
-        # Alleen long boven EMA200, alleen short onder EMA200
-        results["signal_long"]  = results["signal_long"]  * above_ema200.astype(int)
-        results["signal_short"] = results["signal_short"] * (~above_ema200).astype(int)
+        # Longs: boven EMA200 + geen bevestigde beartrend (market_regime != -1)
+        # Blokkeert longs in confirmed bear (ADX > 20 en -DI > +DI), ook al is prijs > EMA200
+        if "market_regime" in test_df.columns:
+            not_confirmed_bear = (test_df["market_regime"] != -1).reindex(results.index, fill_value=True)
+            results["signal_long"] = results["signal_long"] * above_ema200.astype(int) * not_confirmed_bear.astype(int)
+        else:
+            results["signal_long"] = results["signal_long"] * above_ema200.astype(int)
+
+        # Shorts: dubbele macro-gate
+        #   1. Onder EMA200 (prijs in downtrend)
+        #   2. return_30d < -3% (macro 30-daagse trend negatief)
+        #   3. return_7d  < -1% (recente week ook negatief — blokkeert recovery-bounces)
+        # Blokkeert shorts bij kortstondige crashes met snelle recovery (zoals aug 2025 Japan-crash)
+        if use_short and "return_30d" in test_df.columns and "return_7d" in test_df.columns:
+            macro_bear = (
+                (test_df["return_30d"] < -0.03) & (test_df["return_7d"] < -0.01)
+            ).reindex(results.index, fill_value=False)
+            results["signal_short"] = results["signal_short"] * (~above_ema200 & macro_bear).astype(int)
+        elif use_short and "return_30d" in test_df.columns:
+            macro_bear = (test_df["return_30d"] < -0.03).reindex(results.index, fill_value=False)
+            results["signal_short"] = results["signal_short"] * (~above_ema200 & macro_bear).astype(int)
+        else:
+            results["signal_short"] = results["signal_short"] * (~above_ema200).astype(int)
 
     results["signal"] = results["signal_long"] - results["signal_short"]
 

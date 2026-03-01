@@ -15,6 +15,8 @@ Gebruik:
   python main.py --phase walkforward       # walk-forward validatie
   python main.py --phase horizon_scan      # horizons vergelijken (12h, 24h, 48h)
   python main.py --phase signal            # live signaal genereren (laatste uur)
+  python main.py --phase simulation        # maand-simulaties met SL/TP, kapitaaloverzicht
+  python main.py --phase live_alert       # live signaal + paper trade update + Discord alert
 """
 
 import argparse
@@ -276,6 +278,8 @@ def main():
             "walkforward",
             "horizon_scan",
             "signal",
+            "simulation",
+            "live_alert",
         ],
         help="Welke fase uitvoeren (standaard: all)",
     )
@@ -319,6 +323,35 @@ def main():
         fase_horizon_scan()
     elif args.phase == "signal":
         fase_signal()
+    elif args.phase == "simulation":
+        fase_simulation()
+    elif args.phase == "live_alert":
+        fase_live_alert()
+
+
+def fase_simulation():
+    print("\n" + "=" * 60)
+    print("SIMULATIE — Maandoverzicht met alerts, SL/TP, kapitaal")
+    print("=" * 60)
+    from src.simulation import run_simulation
+    run_simulation(
+        initial_capital=1000.0,
+        risk_pct=0.01,    # 1% risico per trade
+        sl_pct=0.02,      # 2% stop loss
+        tp_pct=0.06,      # 6% take profit
+    )
+
+
+def fase_live_alert():
+    print("\n" + "=" * 60)
+    print("LIVE ALERT — Signaal + paper trade update + Discord")
+    print("=" * 60)
+    from src.live_alert import run_live_alert
+    run_live_alert(
+        risk_pct=0.01,    # 1% risico per trade
+        sl_pct=0.02,      # 2% stop loss
+        tp_pct=0.06,      # 6% take profit
+    )
 
 
 if __name__ == "__main__":

@@ -80,8 +80,8 @@ def time_split_with_validation(
 def _optimize_threshold_from_probas(
     probas: np.ndarray,
     val_df: pd.DataFrame,
-    thr_min: float = 0.50,
-    thr_max: float = 0.75,
+    thr_min: float = 0.65,
+    thr_max: float = 0.85,
     min_trades: int = 10,
 ) -> float:
     """
@@ -114,8 +114,8 @@ def _optimize_threshold_from_probas(
 def optimize_threshold(
     model,
     val_df: pd.DataFrame,
-    thr_min: float = 0.50,
-    thr_max: float = 0.75,
+    thr_min: float = 0.65,
+    thr_max: float = 0.85,
     min_trades: int = 10,
 ) -> float:
     """
@@ -177,6 +177,84 @@ def optimize_short_threshold(
     return round(best_thr, 2)
 
 
+# ── Optuna hyperparameter search ─────────────────────────────────────────────
+
+def optuna_tune(
+    X_train: pd.DataFrame,
+    y_train: pd.Series,
+    val_df: pd.DataFrame,
+    n_trials: int = 50,
+) -> dict:
+    """
+    Gebruik Optuna om LightGBM hyperparameters te optimaliseren op de validatieset.
+    Objective: maximaliseer val-Sharpe (long-only, geen position sizing).
+
+    Returns dict met beste hyperparameters, of lege dict als Optuna/LightGBM niet beschikbaar is.
+    """
+    try:
+        import optuna
+        import lightgbm as lgb
+    except ImportError:
+        print("  Optuna of LightGBM niet beschikbaar — standaard parameters gebruikt.")
+        return {}
+
+    optuna.logging.set_verbosity(optuna.logging.WARNING)
+
+    n = len(X_train)
+    time_weights = np.linspace(0.5, 1.0, n)
+
+    from sklearn.metrics import roc_auc_score as _roc_auc
+
+    def objective(trial: optuna.Trial) -> float:
+        # Zoekruimte bewust beperkt tot geregulariseerde waarden.
+        # Diepe bomen / lage min_child_samples → hoge val-AUC maar overfit op regimecluster val.
+        # Conservatieve params → lager val-AUC maar betere walk-forward generalisatie.
+        params = {
+            "n_estimators":      trial.suggest_int("n_estimators", 200, 600),
+            "max_depth":         trial.suggest_int("max_depth", 3, 5),      # was 3-6; 5 max
+            "learning_rate":     trial.suggest_float("learning_rate", 0.01, 0.07, log=True),
+            "subsample":         trial.suggest_float("subsample", 0.5, 0.85),
+            "colsample_bytree":  trial.suggest_float("colsample_bytree", 0.4, 0.70),  # was 0.9 max
+            "min_child_samples": trial.suggest_int("min_child_samples", 50, 200),     # was 30 min
+            "reg_alpha":         trial.suggest_float("reg_alpha", 0.0, 0.5),
+            "reg_lambda":        trial.suggest_float("reg_lambda", 0.5, 4.0),
+            "random_state":      42,
+            "verbose":           -1,
+        }
+        model = lgb.LGBMClassifier(**params)
+        model.fit(X_train[config.FEATURE_COLS], y_train, sample_weight=time_weights)
+
+        # Objective: ROC AUC op validatieset — regime-agnostisch discriminatievermogen.
+        # Sharpe als objective overfit op het regime van de valperiode (aug-nov 2025: bull).
+        probas = model.predict_proba(val_df[config.FEATURE_COLS])[:, 1]
+        return _roc_auc(val_df["target"], probas)
+
+    print(f"\nOptuna hyperparameter search ({n_trials} trials)...")
+    study = optuna.create_study(direction="maximize")
+    study.optimize(objective, n_trials=n_trials, show_progress_bar=False)
+
+    best = study.best_params
+    best["random_state"] = 42
+    best["verbose"]      = -1
+    print(f"  Beste val-AUC: {study.best_value:.4f}")
+    for k, v in best.items():
+        if k not in ("random_state", "verbose"):
+            print(f"    {k}: {v}")
+
+    # Sla de Optuna-params op als CANDIDATE (niet als de actieve walkforward-params).
+    # lgb_best_params.json wordt NIET overschreven — die bevat de stabiele, gevalideerde params.
+    # lgb_optuna_params.json is voor analyse; handmatig promoten naar lgb_best_params.json
+    # als walkforward bevestigt dat ze beter zijn.
+    import json
+    saveable = {k: v for k, v in best.items() if k not in ("random_state", "verbose")}
+    candidate_path = config.DATA_DIR / "lgb_optuna_params.json"
+    with open(candidate_path, "w") as f:
+        json.dump(saveable, f, indent=2)
+    print(f"  Optuna kandidaat-params: {candidate_path.name} (niet automatisch actief)")
+
+    return best
+
+
 # ── Training ──────────────────────────────────────────────────────────────────
 
 def train_model(df: pd.DataFrame) -> tuple:
@@ -201,21 +279,41 @@ def train_model(df: pd.DataFrame) -> tuple:
     print(f"Target (train): stijging={y_train.mean():.1%}  daling={(1-y_train.mean()):.1%}")
 
     # Primair model: LightGBM met tijdsgewichten (recentere data zwaarder).
+    # Parameters worden geladen uit lgb_best_params.json (stabiel, gevalideerd via walkforward).
+    # Optuna wordt als research-tool gedraaid; zijn output gaat naar lgb_optuna_params.json
+    # maar overschrijft lgb_best_params.json NIET automatisch.
     # Fallback naar Random Forest als LightGBM niet geïnstalleerd is.
     try:
+        import json
         import lightgbm as lgb
-        model = lgb.LGBMClassifier(
-            n_estimators=400,
-            max_depth=4,           # diepere boom = meer overfit; 4 is stabieler voor ~10k rijen
-            learning_rate=0.03,
-            subsample=0.7,
-            colsample_bytree=0.7,
-            min_child_samples=80,  # hogere regularisatie = minder overfit, scherper threshold
-            reg_alpha=0.1,
-            reg_lambda=1.0,
-            random_state=42,
-            verbose=-1,
-        )
+
+        # Laad stabiele params (handgetuned of eerder gevalideerd via walkforward)
+        stable_path = config.DATA_DIR / "lgb_best_params.json"
+        if stable_path.exists():
+            with open(stable_path) as _f:
+                lgb_params = json.load(_f)
+            lgb_params["random_state"] = 42
+            lgb_params["verbose"]      = -1
+            print("\nStabiele LightGBM-params geladen uit lgb_best_params.json")
+        else:
+            lgb_params = {
+                "n_estimators":      400,
+                "max_depth":         4,
+                "learning_rate":     0.03,
+                "subsample":         0.7,
+                "colsample_bytree":  0.6,
+                "min_child_samples": 100,
+                "reg_alpha":         0.1,
+                "reg_lambda":        1.5,
+                "random_state":      42,
+                "verbose":           -1,
+            }
+            print("\nGebruik standaard LightGBM-params (geen lgb_best_params.json gevonden)")
+
+        # Optuna als research-tool: vindt kandidaat-params (niet automatisch actief)
+        optuna_tune(train, y_train, val, n_trials=50)
+
+        model = lgb.LGBMClassifier(**lgb_params)
         n = len(X_train)
         time_weights = np.linspace(0.5, 1.0, n)
         print("\nModel trainen (LightGBM, tijdsgewichten 0.5→1.0)...")

@@ -1,0 +1,67 @@
+name: Trading Signal (elke 2 uur)
+
+# Draait elke 2 uur op :05 (GitHub Actions heeft ~1 min vertraging).
+# Handmatig triggeren via de Actions-tab op GitHub is ook mogelijk.
+on:
+  schedule:
+    - cron: '5 */2 * * *'
+  workflow_dispatch:
+
+jobs:
+  signal:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # nodig om paper_trades.json terug te committen
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Installeer dependencies
+        run: pip install -r requirements.txt
+
+      # Cache de SQLite database tussen runs (wekelijkse rotatie).
+      # Bij cache miss: volledige download van 35 dagen (720h minimum voor return_30d).
+      # Bij cache hit: alleen de laatste paar uur worden incrementeel toegevoegd.
+      - name: Herstel OHLCV database uit cache
+        uses: actions/cache@v4
+        with:
+          path: data/ohlcv.db
+          key: ohlcv-weekly-${{ github.run_id }}
+          restore-keys: |
+            ohlcv-weekly-
+
+      - name: Download OHLCV (incrementeel of 35 dagen bij lege cache)
+        run: |
+          python - <<'EOF'
+          import pathlib
+          from src.data_fetcher import download_ohlcv
+          days = 2 if pathlib.Path("data/ohlcv.db").exists() else 35
+          print(f"OHLCV download: {days} dagen")
+          download_ohlcv(days=days)
+          EOF
+
+      - name: Update externe data (Fear & Greed, SPX, EURUSD, funding)
+        run: python main.py --phase external_data
+
+      - name: Genereer signaal en update paper trades
+        run: python main.py --phase live_alert
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+
+      # Commit de bijgewerkte bestanden terug naar de repo.
+      # git diff --cached --quiet voorkomt een lege commit als er niets veranderd is.
+      - name: Commit gewijzigde bestanden
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/external/ data/paper_trades.json data/latest_signal.json
+          git diff --cached --quiet || git commit -m "signal: $(date -u '+%Y-%m-%d %H:%M UTC')"
+          git pull --rebase origin main
+          git push
