@@ -32,9 +32,10 @@ def simulate_month(
     start_date: str,
     end_date: str,
     initial_capital: float = 1000.0,
-    risk_pct: float = 0.01,    # % van kapitaal dat je maximaal verliest bij SL
-    sl_pct: float = 0.02,      # Stop loss: 2% van entry price
-    tp_pct: float = 0.06,      # Take profit: 6% van entry price (3× SL)
+    risk_pct: float = 0.01,
+    sl_pct: float = 0.02,
+    tp_pct: float = 0.06,
+    symbol: str = config.SYMBOL,
 ) -> tuple[list[dict], float]:
     """
     Simuleer tradingalerts voor een gegeven periode.
@@ -44,11 +45,11 @@ def simulate_month(
     (trades_list, eindkapitaal)
     """
     # ── Laad data ────────────────────────────────────────────────────────────
-    features = pd.read_parquet(config.DATA_DIR / "features.parquet")
-    ohlcv    = load_ohlcv()
+    features = pd.read_parquet(config.symbol_path(symbol, "features.parquet"))
+    ohlcv    = load_ohlcv(symbol=symbol)
 
-    model                = load_model()
-    long_thr, short_thr  = load_optimal_threshold()
+    model                = load_model(symbol=symbol)
+    long_thr, short_thr  = load_optimal_threshold(symbol=symbol)
 
     # Normaliseer tijdzones voor vergelijking
     tz = features.index.tz
@@ -313,6 +314,7 @@ def run_simulation(
     risk_pct: float = 0.01,
     sl_pct: float = 0.02,
     tp_pct: float = 0.06,
+    symbol: str = config.SYMBOL,
 ) -> None:
     """
     Draai simulaties voor meerdere representatieve maanden en print de resultaten.
@@ -323,10 +325,10 @@ def run_simulation(
       3. Nov–Dec 2025   — herstel + bear (mix)
       4. Jan 2026       — meest recente testperiode
     """
-    long_thr, short_thr = load_optimal_threshold()
+    long_thr, short_thr = load_optimal_threshold(symbol=symbol)
 
     print("\n" + "═" * 120)
-    print(f"  BTCUSDT HANDELSSIMULATIE  |  Model: LightGBM 24h horizon")
+    print(f"  {symbol} HANDELSSIMULATIE  |  Model: LightGBM 24h horizon")
     print(f"  Beschikbare data: 2024-03-29 t/m 2026-02-26")
     print(f"  Thresholds: long ≥ {long_thr:.2f}  |  short ≤ {short_thr:.2f}  (short vereist ook macro bear filter)")
     print(f"  Positiegrootte: {risk_pct*100:.0f}% risico / {sl_pct*100:.0f}% SL = {risk_pct/sl_pct*100:.0f}% van kapitaal per trade")
@@ -343,7 +345,8 @@ def run_simulation(
 
     for label, start, end in periods:
         cap = initial_capital   # Reset kapitaal per maand (aparte simulatie)
-        trades, final_cap = simulate_month(start, end, cap, risk_pct, sl_pct, tp_pct)
+        trades, final_cap = simulate_month(start, end, cap, risk_pct, sl_pct, tp_pct,
+                                           symbol=symbol)
         print_month_report(label, trades, cap, final_cap, risk_pct, sl_pct, tp_pct)
 
 

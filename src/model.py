@@ -184,6 +184,7 @@ def optuna_tune(
     y_train: pd.Series,
     val_df: pd.DataFrame,
     n_trials: int = 50,
+    symbol: str = config.SYMBOL,
 ) -> dict:
     """
     Gebruik Optuna om LightGBM hyperparameters te optimaliseren op de validatieset.
@@ -247,7 +248,7 @@ def optuna_tune(
     # als walkforward bevestigt dat ze beter zijn.
     import json
     saveable = {k: v for k, v in best.items() if k not in ("random_state", "verbose")}
-    candidate_path = config.DATA_DIR / "lgb_optuna_params.json"
+    candidate_path = config.symbol_path(symbol, "lgb_optuna_params.json")
     with open(candidate_path, "w") as f:
         json.dump(saveable, f, indent=2)
     print(f"  Optuna kandidaat-params: {candidate_path.name} (niet automatisch actief)")
@@ -257,7 +258,7 @@ def optuna_tune(
 
 # ── Training ──────────────────────────────────────────────────────────────────
 
-def train_model(df: pd.DataFrame) -> tuple:
+def train_model(df: pd.DataFrame, symbol: str = config.SYMBOL) -> tuple:
     """
     Traint een LightGBM classifier (met fallback naar Random Forest) en evalueert
     op de testset met long + short signalen.
@@ -288,7 +289,7 @@ def train_model(df: pd.DataFrame) -> tuple:
         import lightgbm as lgb
 
         # Laad stabiele params (handgetuned of eerder gevalideerd via walkforward)
-        stable_path = config.DATA_DIR / "lgb_best_params.json"
+        stable_path = config.symbol_path(symbol, "lgb_best_params.json")
         if stable_path.exists():
             with open(stable_path) as _f:
                 lgb_params = json.load(_f)
@@ -311,7 +312,7 @@ def train_model(df: pd.DataFrame) -> tuple:
             print("\nGebruik standaard LightGBM-params (geen lgb_best_params.json gevonden)")
 
         # Optuna als research-tool: vindt kandidaat-params (niet automatisch actief)
-        optuna_tune(train, y_train, val, n_trials=50)
+        optuna_tune(train, y_train, val, n_trials=50, symbol=symbol)
 
         model = lgb.LGBMClassifier(**lgb_params)
         n = len(X_train)
@@ -347,7 +348,7 @@ def train_model(df: pd.DataFrame) -> tuple:
 
     # Sla beide thresholds op voor gebruik in backtest en live signaal
     import json
-    thr_path = config.DATA_DIR / "optimal_threshold.json"
+    thr_path = config.symbol_path(symbol, "optimal_threshold.json")
     with open(thr_path, "w") as f:
         json.dump({
             "threshold":       optimal_thr,
@@ -401,7 +402,7 @@ def train_model(df: pd.DataFrame) -> tuple:
     _plot_roc_curve(y_test, probas)
     _plot_confusion_matrix(y_test, y_pred)
 
-    model_path = config.DATA_DIR / "model.pkl"
+    model_path = config.symbol_path(symbol, "model.pkl")
     joblib.dump(model, model_path)
     print(f"\nModel opgeslagen: {model_path}  ({model_type})")
     print(f"Thresholds opgeslagen: {thr_path}")
@@ -411,8 +412,8 @@ def train_model(df: pd.DataFrame) -> tuple:
 
 # ── Laden ─────────────────────────────────────────────────────────────────────
 
-def load_model() -> RandomForestClassifier:
-    model_path = config.DATA_DIR / "model.pkl"
+def load_model(symbol: str = config.SYMBOL) -> RandomForestClassifier:
+    model_path = config.symbol_path(symbol, "model.pkl")
     if not model_path.exists():
         raise FileNotFoundError(
             f"Geen model gevonden op {model_path}. Voer eerst train_model() uit."
@@ -420,7 +421,7 @@ def load_model() -> RandomForestClassifier:
     return joblib.load(model_path)
 
 
-def load_optimal_threshold() -> tuple[float, float]:
+def load_optimal_threshold(symbol: str = config.SYMBOL) -> tuple[float, float]:
     """
     Laad de geoptimaliseerde long- en short-drempelwaarden.
     Valt terug op config.SIGNAL_THRESHOLD / 0.0 bij geen opgeslagen threshold.
@@ -430,7 +431,7 @@ def load_optimal_threshold() -> tuple[float, float]:
     (long_threshold, short_threshold)
     """
     import json
-    thr_path = config.DATA_DIR / "optimal_threshold.json"
+    thr_path = config.symbol_path(symbol, "optimal_threshold.json")
     if thr_path.exists():
         with open(thr_path) as f:
             data = json.load(f)

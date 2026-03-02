@@ -6,6 +6,13 @@ DATA_DIR = ROOT_DIR / "data"
 DATA_DIR.mkdir(exist_ok=True)
 (DATA_DIR / "stats").mkdir(exist_ok=True)
 
+
+def symbol_path(symbol: str, filename: str) -> Path:
+    """Geef het pad terug voor een symbool-specifiek bestand.
+    Voorbeeld: symbol_path("BTCUSDT", "model.pkl") → data/BTCUSDT_model.pkl
+    """
+    return DATA_DIR / f"{symbol}_{filename}"
+
 # ── Binance API ────────────────────────────────────────────────────────────────
 BINANCE_BASE_URL = "https://api.binance.com"
 

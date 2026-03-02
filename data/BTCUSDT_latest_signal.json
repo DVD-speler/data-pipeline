@@ -1,0 +1,10 @@
+{
+  "tijdstip": "2026-02-26 12:00:00+00:00",
+  "signaal": "LONG",
+  "kans_stijging": "66.8%",
+  "long_threshold": "0.66",
+  "short_threshold": "0.31",
+  "regime_boven_ema200": "True",
+  "horizon": "24 uur",
+  "prijs": 68171.56
+}

@@ -26,15 +26,12 @@ from src.backtest import generate_live_signal
 from src.data_fetcher import load_ohlcv
 from src.stats import compute_direction_bias, compute_p1_heatmap
 
-PAPER_TRADES_PATH = config.DATA_DIR / "paper_trades.json"
-
-
 # ── State management ────────────────────────────────────────────────────────────
 
-def load_paper_state() -> dict:
+def load_paper_state(path) -> dict:
     """Laad paper trading state, of maak een lege state aan bij eerste run."""
-    if PAPER_TRADES_PATH.exists():
-        with open(PAPER_TRADES_PATH) as f:
+    if path.exists():
+        with open(path) as f:
             return json.load(f)
     return {
         "open_position": None,
@@ -44,9 +41,9 @@ def load_paper_state() -> dict:
     }
 
 
-def save_paper_state(state: dict) -> None:
+def save_paper_state(state: dict, path) -> None:
     """Sla paper trading state op als JSON."""
-    with open(PAPER_TRADES_PATH, "w") as f:
+    with open(path, "w") as f:
         json.dump(state, f, indent=2, default=str)
 
 
@@ -146,6 +143,7 @@ def run_live_alert(
     risk_pct: float = 0.01,
     sl_pct: float = 0.02,
     tp_pct: float = 0.06,
+    symbol: str = config.SYMBOL,
 ) -> None:
     """
     Voer één check-cyclus uit:
@@ -155,16 +153,18 @@ def run_live_alert(
     4. Stuur Discord alerts
     5. Sla state op
     """
+    paper_trades_path = config.symbol_path(symbol, "paper_trades.json")
+
     print("\n── Live Alert ──────────────────────────────────────────────────────────")
 
     # ── Laad data ─────────────────────────────────────────────────────────────
-    df = load_ohlcv()
-    p1p2 = pd.read_csv(config.DATA_DIR / "p1p2_labels.csv")
+    df = load_ohlcv(symbol=symbol)
+    p1p2 = pd.read_csv(config.symbol_path(symbol, "p1p2_labels.csv"))
     p1_heatmap = compute_p1_heatmap(p1p2)
     direction_bias = compute_direction_bias(p1p2)
 
     # ── Genereer live signaal ─────────────────────────────────────────────────
-    signaal = generate_live_signal(df, p1p2, p1_heatmap, direction_bias)
+    signaal = generate_live_signal(df, p1p2, p1_heatmap, direction_bias, symbol=symbol)
 
     latest_ts = df.index[-1]
     latest_row = df.iloc[-1]
@@ -178,7 +178,7 @@ def run_live_alert(
     print(f"  Prijs    : ${signaal['prijs']:,.0f}")
 
     # ── Paper trading state ───────────────────────────────────────────────────
-    state = load_paper_state()
+    state = load_paper_state(paper_trades_path)
     print(f"  Kapitaal : €{state['capital']:,.2f}")
 
     # ── Check open positie ────────────────────────────────────────────────────
@@ -198,7 +198,7 @@ def run_live_alert(
 
             gross_pct = state["closed_trades"][-1]["gross_return_pct"]
             msg = (
-                f"{icon} **TRADE GESLOTEN** — BTCUSDT\n"
+                f"{icon} **TRADE GESLOTEN** — {symbol}\n"
                 f"📈 **{pos['direction']}** | ${pos['entry_price']:,.0f} → ${exit_info['exit_price']:,.0f}\n"
                 f"🎯 Reden: {exit_info['exit_reason']} | Rendement: {sign}{gross_pct:.2f}%\n"
                 f"💰 P&L: {sign}€{pnl_euro:.2f} | Kapitaal: €{state['capital']:,.2f}"
@@ -243,27 +243,28 @@ def run_live_alert(
         print(f"  {direction} | Entry ${entry_price:,.0f} | SL ${sl_price:,.0f} | TP ${tp_price:,.0f}")
         print(f"  Positie: ${position_size:,.0f} | Risico: €{capital*risk_pct:.2f}")
 
-        btc_amount = round(position_size / entry_price, 6)
+        coin_name = symbol.replace("USDT", "")
+        coin_amount = round(position_size / entry_price, 6)
         icon = "🟢" if direction == "LONG" else "🔴"
         regime_label = "boven EMA200" if signaal.get("regime_boven_ema200") else "onder EMA200"
         msg = (
-            f"{icon} **{direction} SIGNAAL** — BTCUSDT\n"
+            f"{icon} **{direction} SIGNAAL** — {symbol}\n"
             f"⏰ {pd.Timestamp(latest_ts).strftime('%d-%m-%Y %H:%M')} UTC\n"
             f"💰 Entry: ${entry_price:,.0f} | SL: ${sl_price:,.0f} (−{sl_pct*100:.0f}%) | "
             f"TP: ${tp_price:,.0f} (+{tp_pct*100:.0f}%)\n"
             f"📊 Proba: {signaal['kans_stijging']} | Regime: {regime_label}\n"
-            f"💼 Positie: ${position_size:,.0f} ({btc_amount:.6f} BTC) | Risico: €{capital*risk_pct:.2f} ({risk_pct*100:.0f}% kapitaal)"
+            f"💼 Positie: ${position_size:,.0f} ({coin_amount:.6f} {coin_name}) | Risico: €{capital*risk_pct:.2f} ({risk_pct*100:.0f}% kapitaal)"
         )
         send_discord_alert(msg)
 
     # ── Opslaan ───────────────────────────────────────────────────────────────
     state["last_checked"] = str(latest_ts)
-    save_paper_state(state)
+    save_paper_state(state, paper_trades_path)
 
     # Sla ook latest_signal.json op (voor workflow commit en debugging)
     import json as _json
-    with open(config.DATA_DIR / "latest_signal.json", "w") as f:
+    with open(config.symbol_path(symbol, "latest_signal.json"), "w") as f:
         _json.dump(signaal, f, indent=2, default=str)
 
-    print(f"\n  State opgeslagen: {PAPER_TRADES_PATH}")
+    print(f"\n  State opgeslagen: {paper_trades_path}")
     print("── Klaar ───────────────────────────────────────────────────────────────")

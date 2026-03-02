@@ -27,7 +27,7 @@ import sys
 # ── Fases ─────────────────────────────────────────────────────────────────────
 
 
-def fase_data():
+def fase_data(symbol: str = None):
     print("=" * 60)
     print("FASE 1 — Data Verzameling")
     print("=" * 60)
@@ -38,14 +38,15 @@ def fase_data():
     print(f"Timeframes: {config.INTERVALS}")
     download_ohlcv()
     # Laad primair symbool voor gebruik in volgende fases
-    df = load_ohlcv()
+    sym = symbol or config.SYMBOL
+    df = load_ohlcv(symbol=sym)
     print(
         f"\nPrimair dataset geladen: {len(df)} candles  ({df.index[0].date()} → {df.index[-1].date()})"
     )
     return df
 
 
-def fase_external_data():
+def fase_external_data(symbol: str = None):
     print("\n" + "=" * 60)
     print("FASE 1b — Externe Data Downloaden")
     print("=" * 60)
@@ -54,7 +55,7 @@ def fase_external_data():
     download_all_external(force=True)
 
 
-def fase_p1p2(df=None):
+def fase_p1p2(df=None, symbol: str = None):
     print("\n" + "=" * 60)
     print("FASE 2 — P1/P2 Labels Berekenen")
     print("=" * 60)
@@ -62,15 +63,17 @@ def fase_p1p2(df=None):
     from src.data_fetcher import load_ohlcv
     from src.p1p2_engine import compute_p1p2
 
+    sym = symbol or config.SYMBOL
     if df is None:
-        df = load_ohlcv()
+        df = load_ohlcv(symbol=sym)
     p1p2 = compute_p1p2(df)
-    p1p2.to_csv(config.DATA_DIR / "p1p2_labels.csv", index=False)
-    print(f"Opgeslagen: {config.DATA_DIR / 'p1p2_labels.csv'}")
+    out = config.symbol_path(sym, "p1p2_labels.csv")
+    p1p2.to_csv(out, index=False)
+    print(f"Opgeslagen: {out}")
     return p1p2
 
 
-def fase_stats(p1p2=None):
+def fase_stats(p1p2=None, symbol: str = None):
     print("\n" + "=" * 60)
     print("FASE 3 — Kansstatistieken & Heatmaps")
     print("=" * 60)
@@ -79,13 +82,14 @@ def fase_stats(p1p2=None):
     from src.data_fetcher import load_ohlcv
     from src.stats import run_stats
 
+    sym = symbol or config.SYMBOL
     if p1p2 is None:
-        p1p2 = pd.read_csv(config.DATA_DIR / "p1p2_labels.csv")
-    df_ohlcv = load_ohlcv()
+        p1p2 = pd.read_csv(config.symbol_path(sym, "p1p2_labels.csv"))
+    df_ohlcv = load_ohlcv(symbol=sym)
     return run_stats(p1p2, df_ohlcv)
 
 
-def fase_features(p1_heatmap=None, direction_bias=None):
+def fase_features(p1_heatmap=None, direction_bias=None, symbol: str = None):
     print("\n" + "=" * 60)
     print("FASE 4 — Feature Engineering")
     print("=" * 60)
@@ -95,8 +99,9 @@ def fase_features(p1_heatmap=None, direction_bias=None):
     from src.features import build_features
     from src.stats import compute_direction_bias, compute_p1_heatmap
 
-    df = load_ohlcv()
-    p1p2 = pd.read_csv(config.DATA_DIR / "p1p2_labels.csv")
+    sym = symbol or config.SYMBOL
+    df = load_ohlcv(symbol=sym)
+    p1p2 = pd.read_csv(config.symbol_path(sym, "p1p2_labels.csv"))
 
     if p1_heatmap is None or direction_bias is None:
         # Bepaal de train-cutoff op basis van de houdperiode (val + test).
@@ -111,8 +116,8 @@ def fase_features(p1_heatmap=None, direction_bias=None):
         if direction_bias is None:
             direction_bias = compute_direction_bias(train_p1p2)
 
-    features = build_features(df, p1p2, p1_heatmap, direction_bias)
-    out = config.DATA_DIR / "features.parquet"
+    features = build_features(df, p1p2, p1_heatmap, direction_bias, symbol=sym)
+    out = config.symbol_path(sym, "features.parquet")
     features.to_parquet(out)
     print(f"Feature matrix: {features.shape[0]} rijen × {features.shape[1]} kolommen")
     print(f"Kolommen: {list(features.columns)}")
@@ -120,20 +125,21 @@ def fase_features(p1_heatmap=None, direction_bias=None):
     return features
 
 
-def fase_model(features=None):
+def fase_model(features=None, symbol: str = None):
     print("\n" + "=" * 60)
-    print("FASE 5a — Model Trainen (Random Forest)")
+    print("FASE 5a — Model Trainen (LightGBM)")
     print("=" * 60)
     import pandas as pd
     import config
     from src.model import train_model
 
+    sym = symbol or config.SYMBOL
     if features is None:
-        features = pd.read_parquet(config.DATA_DIR / "features.parquet")
-    return train_model(features)
+        features = pd.read_parquet(config.symbol_path(sym, "features.parquet"))
+    return train_model(features, symbol=sym)
 
 
-def fase_model_compare(features=None):
+def fase_model_compare(features=None, symbol: str = None):
     print("\n" + "=" * 60)
     print("FASE 5b — Model Vergelijking (RF vs XGBoost vs LightGBM)")
     print("=" * 60)
@@ -141,10 +147,11 @@ def fase_model_compare(features=None):
     import config
     from src.model_compare import compare_models
 
+    sym = symbol or config.SYMBOL
     if features is None:
-        features = pd.read_parquet(config.DATA_DIR / "features.parquet")
+        features = pd.read_parquet(config.symbol_path(sym, "features.parquet"))
 
-    comparison = compare_models(features)
+    comparison = compare_models(features, symbol=sym)
 
     print("\n=== Vergelijkingstabel ===")
     print(comparison.to_string(index=False))
@@ -152,7 +159,7 @@ def fase_model_compare(features=None):
     return comparison
 
 
-def fase_backtest(model=None, test_df=None, probas=None):
+def fase_backtest(model=None, test_df=None, probas=None, symbol: str = None):
     print("\n" + "=" * 60)
     print("FASE 6 — Backtest (long + short, position sizing, stop-loss)")
     print("=" * 60)
@@ -161,13 +168,14 @@ def fase_backtest(model=None, test_df=None, probas=None):
     from src.backtest import compute_metrics, plot_results, run_backtest
     from src.model import load_model, load_optimal_threshold, time_split
 
+    sym = symbol or config.SYMBOL
     if model is None:
-        model = load_model()
-        features = pd.read_parquet(config.DATA_DIR / "features.parquet")
+        model = load_model(symbol=sym)
+        features = pd.read_parquet(config.symbol_path(sym, "features.parquet"))
         _, test_df = time_split(features)
         probas = model.predict_proba(test_df[config.FEATURE_COLS])[:, 1]
 
-    long_thr, short_thr = load_optimal_threshold()
+    long_thr, short_thr = load_optimal_threshold(symbol=sym)
     results = run_backtest(
         test_df, probas,
         threshold=long_thr,
@@ -189,7 +197,7 @@ def fase_backtest(model=None, test_df=None, probas=None):
     return results, metrics
 
 
-def fase_walkforward(model_name: str = "RandomForest"):
+def fase_walkforward(model_name: str = "RandomForest", symbol: str = None):
     print("\n" + "=" * 60)
     print(f"FASE 6b — Walk-Forward Validatie ({model_name})")
     print("=" * 60)
@@ -197,14 +205,15 @@ def fase_walkforward(model_name: str = "RandomForest"):
     import config
     from src.backtest import run_walkforward
 
-    features = pd.read_parquet(config.DATA_DIR / "features.parquet")
-    fold_df, all_results = run_walkforward(features, model_name=model_name)
+    sym = symbol or config.SYMBOL
+    features = pd.read_parquet(config.symbol_path(sym, "features.parquet"))
+    fold_df, all_results = run_walkforward(features, model_name=model_name, symbol=sym)
 
     print(f"\nResultaten opgeslagen in: {config.DATA_DIR / 'stats'}/")
     return fold_df, all_results
 
 
-def fase_horizon_scan():
+def fase_horizon_scan(symbol: str = None):
     print("\n" + "=" * 60)
     print("FASE 7 — Horizon Scan (12h / 24h / 48h)")
     print("=" * 60)
@@ -212,7 +221,8 @@ def fase_horizon_scan():
     import config
     from src.horizon_scan import scan_horizons
 
-    features = pd.read_parquet(config.DATA_DIR / "features.parquet")
+    sym = symbol or config.SYMBOL
+    features = pd.read_parquet(config.symbol_path(sym, "features.parquet"))
     scan_df = scan_horizons(features)
 
     if not scan_df.empty:
@@ -221,7 +231,7 @@ def fase_horizon_scan():
     return scan_df
 
 
-def fase_signal():
+def fase_signal(symbol: str = None):
     print("\n" + "=" * 60)
     print("LIVE SIGNAAL — Meest recente uur")
     print("=" * 60)
@@ -231,14 +241,15 @@ def fase_signal():
     from src.data_fetcher import download_ohlcv, load_ohlcv
     from src.stats import compute_direction_bias, compute_p1_heatmap
 
+    sym = symbol or config.SYMBOL
     # Eerst updaten naar de laatste candle
     download_ohlcv()
-    df = load_ohlcv()
-    p1p2 = pd.read_csv(config.DATA_DIR / "p1p2_labels.csv")
+    df = load_ohlcv(symbol=sym)
+    p1p2 = pd.read_csv(config.symbol_path(sym, "p1p2_labels.csv"))
     p1_heatmap = compute_p1_heatmap(p1p2)
     direction_bias = compute_direction_bias(p1p2)
 
-    signaal = generate_live_signal(df, p1p2, p1_heatmap, direction_bias)
+    signaal = generate_live_signal(df, p1p2, p1_heatmap, direction_bias, symbol=sym)
 
     print("\n" + "─" * 40)
     for k, v in signaal.items():
@@ -246,7 +257,7 @@ def fase_signal():
     print("─" * 40)
 
     # Ook opslaan als JSON
-    out = config.DATA_DIR / "latest_signal.json"
+    out = config.symbol_path(sym, "latest_signal.json")
     with open(out, "w") as f:
         json.dump(signaal, f, indent=2)
     print(f"\nOpgeslagen: {out}")
@@ -289,68 +300,80 @@ def main():
         choices=["RandomForest", "XGBoost", "LightGBM"],
         help="Model voor walk-forward validatie (standaard: LightGBM)",
     )
+    parser.add_argument(
+        "--symbol",
+        default=None,
+        choices=["BTCUSDT", "ETHUSDT"],
+        help="Handelssymbool (standaard: BTCUSDT uit config)",
+    )
     args = parser.parse_args()
 
+    sym = args.symbol  # None = gebruik config.SYMBOL als default in elke fase
+
     if args.phase == "all":
-        df = fase_data()
-        p1p2 = fase_p1p2(df)
-        p1_heatmap, _, direction_bias = fase_stats(p1p2)
-        features = fase_features(p1_heatmap, direction_bias)
-        model, test_df, probas = fase_model(features)
-        fase_backtest(model, test_df, probas)
-        fase_model_compare(features)
+        df = fase_data(symbol=sym)
+        p1p2 = fase_p1p2(df, symbol=sym)
+        p1_heatmap, _, direction_bias = fase_stats(p1p2, symbol=sym)
+        features = fase_features(p1_heatmap, direction_bias, symbol=sym)
+        model, test_df, probas = fase_model(features, symbol=sym)
+        fase_backtest(model, test_df, probas, symbol=sym)
+        fase_model_compare(features, symbol=sym)
         print("\n✓ Volledige pipeline succesvol afgerond.")
         print(f"  Heatmaps en grafieken staan in: data/stats/")
     elif args.phase == "data":
-        fase_data()
+        fase_data(symbol=sym)
     elif args.phase == "external_data":
-        fase_external_data()
+        fase_external_data(symbol=sym)
     elif args.phase == "p1p2":
-        fase_p1p2()
+        fase_p1p2(symbol=sym)
     elif args.phase == "stats":
-        fase_stats()
+        fase_stats(symbol=sym)
     elif args.phase == "features":
-        fase_features()
+        fase_features(symbol=sym)
     elif args.phase == "model":
-        fase_model()
+        fase_model(symbol=sym)
     elif args.phase == "model_compare":
-        fase_model_compare()
+        fase_model_compare(symbol=sym)
     elif args.phase == "backtest":
-        fase_backtest()
+        fase_backtest(symbol=sym)
     elif args.phase == "walkforward":
-        fase_walkforward(model_name=args.wf_model)
+        fase_walkforward(model_name=args.wf_model, symbol=sym)
     elif args.phase == "horizon_scan":
-        fase_horizon_scan()
+        fase_horizon_scan(symbol=sym)
     elif args.phase == "signal":
-        fase_signal()
+        fase_signal(symbol=sym)
     elif args.phase == "simulation":
-        fase_simulation()
+        fase_simulation(symbol=sym)
     elif args.phase == "live_alert":
-        fase_live_alert()
+        fase_live_alert(symbol=sym)
 
 
-def fase_simulation():
+def fase_simulation(symbol: str = None):
     print("\n" + "=" * 60)
     print("SIMULATIE — Maandoverzicht met alerts, SL/TP, kapitaal")
     print("=" * 60)
+    import config
     from src.simulation import run_simulation
     run_simulation(
         initial_capital=1000.0,
-        risk_pct=0.01,    # 1% risico per trade
-        sl_pct=0.02,      # 2% stop loss
-        tp_pct=0.06,      # 6% take profit
+        risk_pct=0.01,
+        sl_pct=0.02,
+        tp_pct=0.06,
+        symbol=symbol or config.SYMBOL,
     )
 
 
-def fase_live_alert():
+def fase_live_alert(symbol: str = None):
     print("\n" + "=" * 60)
     print("LIVE ALERT — Signaal + paper trade update + Discord")
     print("=" * 60)
+    import config
     from src.live_alert import run_live_alert
     run_live_alert(
-        risk_pct=0.01,    # 1% risico per trade
-        sl_pct=0.02,      # 2% stop loss
-        tp_pct=0.06,      # 6% take profit
+        risk_pct=0.01,
+        sl_pct=0.02,
+        tp_pct=0.06,
+        symbol=symbol or config.SYMBOL,
     )
 
 

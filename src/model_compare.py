@@ -35,7 +35,7 @@ warnings.filterwarnings("ignore", category=UserWarning)
 
 # ── Model definities ──────────────────────────────────────────────────────────
 
-def _get_models() -> dict:
+def _get_models(symbol: str = config.SYMBOL) -> dict:
     """
     Geeft een dict terug met naam → (model_instantie, kleur-voor-plot).
     XGBoost en LightGBM worden lazily geïmporteerd.
@@ -92,7 +92,7 @@ def _get_models() -> dict:
             "verbose":           -1,
         }
         # Laad Optuna-geoptimaliseerde params als beschikbaar (gegenereerd door train_model)
-        params_path = config.DATA_DIR / "lgb_best_params.json"
+        params_path = config.symbol_path(symbol, "lgb_best_params.json")
         if params_path.exists():
             with open(params_path) as _f:
                 tuned = json.load(_f)
@@ -112,7 +112,7 @@ def _get_models() -> dict:
 
 # ── Vergelijking ──────────────────────────────────────────────────────────────
 
-def compare_models(df: pd.DataFrame) -> pd.DataFrame:
+def compare_models(df: pd.DataFrame, symbol: str = config.SYMBOL) -> pd.DataFrame:
     """
     Train alle beschikbare modellen op dezelfde train/validatie/test split en
     vergelijk hun prestaties op classificatie- én trading-metrieken.
@@ -147,7 +147,7 @@ def compare_models(df: pd.DataFrame) -> pd.DataFrame:
     print(f"Validatie  : {len(val):>6} rijen  ({val.index[0].date()} → {val.index[-1].date()})")
     print(f"Test       : {len(test):>6} rijen  ({test.index[0].date()} → {test.index[-1].date()})")
 
-    models_dict = _get_models()
+    models_dict = _get_models(symbol=symbol)
     rows     = []
     roc_data = {}
     # Bewaar val-kansen per model voor ensemble gewichten
@@ -310,7 +310,7 @@ def compare_models(df: pd.DataFrame) -> pd.DataFrame:
     # Sla het beste individuele model op (Ensemble kan niet als joblib-object worden opgeslagen)
     best_single = comparison[comparison["model"] != "Ensemble"].iloc[0]["model"]
     best_model, _, _ = roc_data[best_single]
-    best_path = config.DATA_DIR / "model_best.pkl"
+    best_path = config.symbol_path(symbol, "model_best.pkl")
     joblib.dump({"name": best_single, "model": best_model}, best_path)
     print(f"  Beste individuele model opgeslagen: {best_path.name}  ({best_single})")
 

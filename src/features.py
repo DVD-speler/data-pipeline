@@ -150,6 +150,7 @@ def build_features(
     p1_heatmap: pd.DataFrame,
     direction_bias: pd.DataFrame,
     df_4h: pd.DataFrame = None,
+    symbol: str = config.SYMBOL,
 ) -> pd.DataFrame:
     """
     Bouw de feature matrix voor ML-training.
@@ -290,19 +291,25 @@ def build_features(
     df.drop(columns=["_day", "_typical", "_tpv", "_cum_tpv", "_cum_vol"],
             inplace=True, errors="ignore")
 
-    # ── ETH/BTC ratio (marktbreedte / altcoin season indicator) ───────────────
+    # ── ETH/BTC ratio (marktbreedte / dominantie indicator) ───────────────────
+    # Voor BTC-model: ETH/BTC ratio — positief = ETH outperformt = altcoin season
+    # Voor ETH-model: BTC/ETH ratio — BTC dominantie-indicator (omgekeerd perspectief)
+    # Kolomnaam blijft "eth_btc_ratio" zodat de feature list identiek blijft.
     try:
-        df_eth = load_ohlcv(symbol="ETHUSDT", interval="1h")
-        eth_btc = (df_eth["close"] / df_ohlcv["close"]).reindex(df.index)
-        # 24h rendement van het ETH/BTC ratio: positief = ETH outperformt = altcoin season
-        df["eth_btc_ratio"] = eth_btc.pct_change(24)
+        if symbol == "BTCUSDT":
+            df_other = load_ohlcv(symbol="ETHUSDT", interval="1h")
+            ratio = (df_other["close"] / df_ohlcv["close"]).reindex(df.index)
+        else:
+            df_other = load_ohlcv(symbol="BTCUSDT", interval="1h")
+            ratio = (df_other["close"] / df_ohlcv["close"]).reindex(df.index)
+        df["eth_btc_ratio"] = ratio.pct_change(24)
     except Exception:
         df["eth_btc_ratio"] = 0.0
 
     # ── Externe features (Fear & Greed, SPX, EUR/USD, Funding Rate, OI) ───────
     try:
         from src.external_data import load_all_external
-        df_ext = load_all_external(df.index)
+        df_ext = load_all_external(df.index, symbol=symbol)
         for col in df_ext.columns:
             df[col] = df_ext[col]
     except Exception as e:
@@ -325,7 +332,7 @@ def build_features(
     # ── 4h features (hogere timeframe context) ────────────────────────────────
     if df_4h is None:
         try:
-            df_4h = load_ohlcv(symbol=config.SYMBOL, interval="4h")
+            df_4h = load_ohlcv(symbol=symbol, interval="4h")
         except Exception:
             df_4h = None
 

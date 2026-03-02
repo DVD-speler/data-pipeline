@@ -244,6 +244,7 @@ def compute_random_baseline(
 def run_walkforward(
     df: pd.DataFrame,
     model_name: str = "RandomForest",
+    symbol: str = config.SYMBOL,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """
     Walk-forward backtest: traint maandelijks opnieuw op een rollend venster.
@@ -257,7 +258,7 @@ def run_walkforward(
     step_h  = config.WALKFORWARD_STEP_DAYS  * 24
     val_h   = config.VALIDATION_SIZE_DAYS   * 24
 
-    models_dict = _get_models()
+    models_dict = _get_models(symbol=symbol)
     if model_name not in models_dict:
         raise ValueError(f"Model '{model_name}' niet gevonden. Beschikbaar: {list(models_dict.keys())}")
 
@@ -437,16 +438,17 @@ def _plot_walkforward(
 
 # ── Live signaal ──────────────────────────────────────────────────────────────
 
-def generate_live_signal(df_ohlcv, p1p2, p1_heatmap, direction_bias) -> dict:
+def generate_live_signal(df_ohlcv, p1p2, p1_heatmap, direction_bias,
+                         symbol: str = config.SYMBOL) -> dict:
     """
     Genereer een signaal voor het meest recente uur.
     Gebruikt de geoptimaliseerde drempelwaarde en regime filter.
     """
     from src.features import build_features
 
-    features  = build_features(df_ohlcv, p1p2, p1_heatmap, direction_bias)
-    model     = load_model()
-    threshold, threshold_short = load_optimal_threshold()
+    features  = build_features(df_ohlcv, p1p2, p1_heatmap, direction_bias, symbol=symbol)
+    model     = load_model(symbol=symbol)
+    threshold, threshold_short = load_optimal_threshold(symbol=symbol)
 
     last_row  = features.iloc[[-1]]
     proba     = float(model.predict_proba(last_row[config.FEATURE_COLS])[0, 1])

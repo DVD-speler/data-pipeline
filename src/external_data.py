@@ -200,13 +200,13 @@ def _download_funding_rate(symbol: str = "BTCUSDT") -> pd.DataFrame:
     return df
 
 
-def fetch_funding_rate() -> pd.DataFrame:
-    """BTC perpetual futures funding rate (8-uurlijks → forward-fill naar 1h)."""
-    name = "funding_rate"
+def fetch_funding_rate(symbol: str = "BTCUSDT") -> pd.DataFrame:
+    """Perpetual futures funding rate (8-uurlijks → forward-fill naar 1h)."""
+    name = f"{symbol}_funding_rate"
     if not _cache_is_fresh(name):
-        print("  Downloading BTC Funding Rate...")
+        print(f"  Downloading {symbol} Funding Rate...")
         try:
-            df = _download_funding_rate()
+            df = _download_funding_rate(symbol=symbol)
             _save_cache(name, df)
             return df
         except Exception as e:
@@ -264,13 +264,13 @@ def _download_open_interest(symbol: str = "BTCUSDT") -> pd.DataFrame:
     return df[["oi_change_24h"]]
 
 
-def fetch_open_interest() -> pd.DataFrame:
-    """BTC open interest 24h-verandering (uurlijks, Binance futures public API)."""
-    name = "open_interest"
+def fetch_open_interest(symbol: str = "BTCUSDT") -> pd.DataFrame:
+    """Open interest 24h-verandering (uurlijks, Binance futures public API)."""
+    name = f"{symbol}_open_interest"
     if not _cache_is_fresh(name):
-        print("  Downloading BTC Open Interest...")
+        print(f"  Downloading {symbol} Open Interest...")
         try:
-            df = _download_open_interest()
+            df = _download_open_interest(symbol=symbol)
             _save_cache(name, df)
             return df
         except Exception as e:
@@ -291,16 +291,14 @@ _DEFAULTS = {
     "oi_change_24h":     0.0,
 }
 
-_SOURCES = {
-    "fear_greed":     fetch_fear_greed,
-    "spx":            fetch_spx,
-    "eurusd":         fetch_eurusd,
-    "funding_rate":   fetch_funding_rate,
-    "open_interest":  fetch_open_interest,
+_SOURCES_GLOBAL = {
+    "fear_greed": fetch_fear_greed,
+    "spx":        fetch_spx,
+    "eurusd":     fetch_eurusd,
 }
 
 
-def load_all_external(index: pd.DatetimeIndex) -> pd.DataFrame:
+def load_all_external(index: pd.DatetimeIndex, symbol: str = "BTCUSDT") -> pd.DataFrame:
     """
     Laad alle externe features en aligneer ze op de gegeven uurlijkse BTC-index.
 
@@ -317,9 +315,13 @@ def load_all_external(index: pd.DatetimeIndex) -> pd.DataFrame:
     -------
     pd.DataFrame met externe features, geïndexeerd op 'index'
     """
+    sources = dict(_SOURCES_GLOBAL)
+    sources["funding_rate"]  = lambda: fetch_funding_rate(symbol=symbol)
+    sources["open_interest"] = lambda: fetch_open_interest(symbol=symbol)
+
     base = pd.DataFrame(index=index)
 
-    for name, fetch_fn in _SOURCES.items():
+    for name, fetch_fn in sources.items():
         try:
             df_ext = fetch_fn()
             if df_ext.empty:
@@ -361,19 +363,28 @@ def load_all_external(index: pd.DatetimeIndex) -> pd.DataFrame:
 def download_all_external(force: bool = True) -> None:
     """
     Download alle externe data opnieuw (overschrijft cache).
+    Downloadt globale bronnen (F&G, SPX, EURUSD) éénmaal en
+    symbool-specifieke bronnen (funding rate, OI) voor alle config.SYMBOLS.
 
     Parameters
     ----------
     force : True = verwijder eerst de cache om verse download te garanderen
     """
+    import config as _cfg
     if force:
         for f in EXTERNAL_DIR.glob("*.parquet"):
             f.unlink()
         print("Cache gewist. Start verse download...")
 
-    for name, fetch_fn in _SOURCES.items():
+    for name, fetch_fn in _SOURCES_GLOBAL.items():
         print(f"\n[{name}]")
         fetch_fn()
+
+    for sym in _cfg.SYMBOLS:
+        print(f"\n[{sym} funding_rate]")
+        fetch_funding_rate(symbol=sym)
+        print(f"\n[{sym} open_interest]")
+        fetch_open_interest(symbol=sym)
 
     print(f"\nKlaar. Gecached in: {EXTERNAL_DIR}/")
 
