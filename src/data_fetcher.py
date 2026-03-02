@@ -71,6 +71,95 @@ def _fetch_klines(symbol: str, interval: str, start_ms: int) -> list:
     return resp.json()
 
 
+# ── yfinance fallback (voor US IPs waar Binance geblokkeerd is) ────────────────
+
+_YF_SYMBOL_MAP = {
+    "BTCUSDT": "BTC-USD",
+    "ETHUSDT": "ETH-USD",
+}
+
+
+def _download_single_yfinance(
+    symbol: str,
+    interval: str,
+    days: int,
+    conn: sqlite3.Connection,
+) -> int:
+    """
+    Fallback OHLCV-download via yfinance.
+    Wordt gebruikt wanneer Binance een 451 (geo-blokkering) teruggeeft,
+    zoals op GitHub Actions runners die op US-servers draaien.
+
+    yfinance ondersteunt geen 4h interval — 4h wordt opgebouwd door 1h te
+    resamplen via OHLCV-aggregatie.
+    """
+    import yfinance as yf
+
+    yf_ticker = _YF_SYMBOL_MAP.get(symbol, symbol.replace("USDT", "-USD"))
+    yf_interval = "1h"   # download altijd 1h; 4h wordt daarna geresampeld
+    period_str  = f"{min(days, 729)}d"   # yfinance max voor 1h = 730 dagen
+
+    print(f"  [{symbol} {interval}] yfinance fallback: {yf_ticker} {period_str} @ 1h")
+
+    df = yf.download(
+        yf_ticker,
+        period=period_str,
+        interval=yf_interval,
+        auto_adjust=True,
+        progress=False,
+    )
+
+    if df.empty:
+        print(f"  Geen data van yfinance voor {yf_ticker}")
+        return 0
+
+    # Normaliseer kolommen (yfinance geeft soms MultiIndex of capitalized namen)
+    if isinstance(df.columns, pd.MultiIndex):
+        df.columns = df.columns.droplevel(1)
+    df.columns = [c.lower() for c in df.columns]
+
+    # Zorg voor UTC-aware index
+    if df.index.tz is None:
+        df.index = df.index.tz_localize("UTC")
+    else:
+        df.index = df.index.tz_convert("UTC")
+
+    # Resampel 1h → 4h indien gevraagd
+    if interval == "4h":
+        df = df.resample("4h", closed="left", label="left").agg(
+            open=("open", "first"),
+            high=("high", "max"),
+            low=("low", "min"),
+            close=("close", "last"),
+            volume=("volume", "sum"),
+        ).dropna(subset=["close"])
+
+    interval_ms = 4 * 3600 * 1000 if interval == "4h" else 3600 * 1000
+
+    rows = [
+        (
+            symbol,
+            interval,
+            int(ts.timestamp() * 1000),
+            float(row["open"]),
+            float(row["high"]),
+            float(row["low"]),
+            float(row["close"]),
+            float(row["volume"]),
+            int(ts.timestamp() * 1000) + interval_ms - 1,
+        )
+        for ts, row in df.iterrows()
+    ]
+
+    conn.executemany(
+        "INSERT OR IGNORE INTO ohlcv VALUES (?,?,?,?,?,?,?,?,?)",
+        rows,
+    )
+    conn.commit()
+    print(f"  Klaar. {len(rows)} candles opgeslagen via yfinance.")
+    return len(rows)
+
+
 # ── Enkelvoudige download (één symbool / één interval) ────────────────────────
 
 def _download_single(
@@ -115,6 +204,14 @@ def _download_single(
         while current_start < now_ms:
             try:
                 klines = _fetch_klines(symbol, interval, current_start)
+            except requests.exceptions.HTTPError as exc:
+                # 451 = geo-blokkering (bijv. GitHub Actions op US-servers)
+                if exc.response is not None and exc.response.status_code == 451:
+                    print(f"\n  Binance 451 (geo-blokkering) — overschakelen naar yfinance...")
+                    return _download_single_yfinance(symbol, interval, days, conn)
+                print(f"\n  API-fout: {exc}  — opnieuw proberen over 10s...")
+                time.sleep(10)
+                continue
             except requests.RequestException as exc:
                 print(f"\n  API-fout: {exc}  — opnieuw proberen over 10s...")
                 time.sleep(10)
