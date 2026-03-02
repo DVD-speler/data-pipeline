@@ -209,7 +209,7 @@ def run_live_alert(
                   f"| SL ${pos['sl_price']:,.0f} | TP ${pos['tp_price']:,.0f}")
 
     # ── Nieuw signaal ─────────────────────────────────────────────────────────
-    if state["open_position"] is None and signaal["signaal"] != "WACHT":
+    if state["open_position"] is None and signaal["signaal"] in ("LONG", "SHORT"):
         direction = signaal["signaal"]
         # Gebruik de prijs en tijdstip van het signaal (features-laatste-rij),
         # niet df.index[-1] — die kan later liggen door dead zone filtering.
@@ -243,6 +243,7 @@ def run_live_alert(
         print(f"  {direction} | Entry ${entry_price:,.0f} | SL ${sl_price:,.0f} | TP ${tp_price:,.0f}")
         print(f"  Positie: ${position_size:,.0f} | Risico: €{capital*risk_pct:.2f}")
 
+        btc_amount = round(position_size / entry_price, 6)
         icon = "🟢" if direction == "LONG" else "🔴"
         regime_label = "boven EMA200" if signaal.get("regime_boven_ema200") else "onder EMA200"
         msg = (
@@ -251,7 +252,7 @@ def run_live_alert(
             f"💰 Entry: ${entry_price:,.0f} | SL: ${sl_price:,.0f} (−{sl_pct*100:.0f}%) | "
             f"TP: ${tp_price:,.0f} (+{tp_pct*100:.0f}%)\n"
             f"📊 Proba: {signaal['kans_stijging']} | Regime: {regime_label}\n"
-            f"💼 Positie: ${position_size:,.0f} | Risico: €{capital*risk_pct:.2f} ({risk_pct*100:.0f}% kapitaal)"
+            f"💼 Positie: ${position_size:,.0f} ({btc_amount:.6f} BTC) | Risico: €{capital*risk_pct:.2f} ({risk_pct*100:.0f}% kapitaal)"
         )
         send_discord_alert(msg)
 
