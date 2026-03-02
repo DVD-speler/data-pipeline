@@ -258,5 +258,11 @@ def run_live_alert(
     # ── Opslaan ───────────────────────────────────────────────────────────────
     state["last_checked"] = str(latest_ts)
     save_paper_state(state)
+
+    # Sla ook latest_signal.json op (voor workflow commit en debugging)
+    import json as _json
+    with open(config.DATA_DIR / "latest_signal.json", "w") as f:
+        _json.dump(signaal, f, indent=2, default=str)
+
     print(f"\n  State opgeslagen: {PAPER_TRADES_PATH}")
     print("── Klaar ───────────────────────────────────────────────────────────────")
