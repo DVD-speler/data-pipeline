@@ -1,6 +1,16 @@
 {
-  "open_position": null,
+  "open_position": {
+    "direction": "WACHT (onder EMA200 \u2014 long geblokkeerd)",
+    "entry_price": 65743.0,
+    "sl_price": 67058.0,
+    "tp_price": 61798.0,
+    "open_time": "2026-03-01 21:00:00+00:00",
+    "horizon_end": "2026-03-02 21:00:00+00:00",
+    "position_size": 500.0,
+    "risk_euro": 10.0,
+    "proba": "69.2%"
+  },
   "closed_trades": [],
   "capital": 1000.0,
-  "last_checked": null
+  "last_checked": "2026-03-02 21:00:00+00:00"
 }
