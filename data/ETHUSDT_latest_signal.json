@@ -1,10 +1,10 @@
 {
-  "tijdstip": "2026-03-01 22:00:00+00:00",
+  "tijdstip": "2026-03-02 01:00:00+00:00",
   "signaal": "WACHT",
-  "kans_stijging": "42.5%",
+  "kans_stijging": "27.1%",
   "long_threshold": "0.72",
   "short_threshold": "0.30",
-  "regime_boven_ema200": "False",
+  "regime_boven_ema200": "True",
   "horizon": "24 uur",
-  "prijs": 1926.2791748046875
+  "prijs": 1963.8245849609375
 }
