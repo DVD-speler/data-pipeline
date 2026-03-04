@@ -1,15 +1,5 @@
 {
-  "open_position": {
-    "direction": "SHORT",
-    "entry_price": 1946.0,
-    "sl_price": 1985.0,
-    "tp_price": 1829.0,
-    "open_time": "2026-03-03 14:00:00+00:00",
-    "horizon_end": "2026-03-04 14:00:00+00:00",
-    "position_size": 493.27,
-    "risk_euro": 9.87,
-    "proba": "28.8%"
-  },
+  "open_position": null,
   "closed_trades": [
     {
       "direction": "SHORT",
@@ -44,8 +34,25 @@
       "gross_return_pct": -2.02,
       "pnl_euro": -11.09,
       "capital_after": 986.54
+    },
+    {
+      "direction": "SHORT",
+      "entry_price": 1946.0,
+      "sl_price": 1985.0,
+      "tp_price": 1829.0,
+      "open_time": "2026-03-03 14:00:00+00:00",
+      "horizon_end": "2026-03-04 14:00:00+00:00",
+      "position_size": 493.27,
+      "risk_euro": 9.87,
+      "proba": "28.8%",
+      "exit_price": 1985.0,
+      "exit_reason": "SL \u2717",
+      "exit_time": "2026-03-04 16:00:00+00:00",
+      "gross_return_pct": -2.0,
+      "pnl_euro": -10.87,
+      "capital_after": 975.67
     }
   ],
-  "capital": 986.54,
-  "last_checked": "2026-03-04 14:00:00+00:00"
+  "capital": 975.67,
+  "last_checked": "2026-03-04 16:00:00+00:00"
 }
