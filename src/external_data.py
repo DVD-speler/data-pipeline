@@ -295,20 +295,20 @@ def _download_deribit_dvol(days: int = 730) -> pd.DataFrame:
     start_ms = now_ms - days * 24 * 3600 * 1000
     resolution = 3600   # 1 uur in seconden
 
+    # Deribit returns max 1000 candles per call — paginate with sliding window
+    chunk_ms = 1000 * resolution * 1000   # 1000 uur in ms
     all_data = []
     current = start_ms
-    batch_count = days * 24 // 700 + 1   # max ~700 candles per call
 
-    for _ in range(batch_count):
-        if current >= now_ms:
-            break
+    while current < now_ms:
+        chunk_end = min(current + chunk_ms, now_ms)
         resp = requests.get(
             f"{DERIBIT_BASE}/get_volatility_index_data",
             params={
                 "currency":        "BTC",
                 "resolution":      resolution,
                 "start_timestamp": current,
-                "end_timestamp":   now_ms,
+                "end_timestamp":   chunk_end,
             },
             timeout=15,
         )
@@ -316,11 +316,10 @@ def _download_deribit_dvol(days: int = 730) -> pd.DataFrame:
         result = resp.json().get("result", {})
         data   = result.get("data", [])
         if not data:
-            break
+            current = chunk_end + resolution * 1000
+            continue
         all_data.extend(data)
         current = data[-1][0] + resolution * 1000
-        if len(data) < 100:
-            break
         time.sleep(0.1)
 
     if not all_data:
