@@ -277,15 +277,24 @@ def run_live_alert(
                 f"📍 SL: ${pos['sl_price']:,.0f} | TP: ${pos['tp_price']:,.0f} | "
                 f"Sluit uiterlijk: {pd.Timestamp(pos['horizon_end']).strftime('%d-%m %H:%M')} UTC"
             )
+        elif "death cross" in sig_label.lower() or "EMA50" in sig_label:
+            reden = (
+                f"**Death cross actief** (EMA50 onder EMA200) → long geblokkeerd\n"
+                f"📊 Proba: {signaal['kans_stijging']} | Drempel: {signaal['long_threshold']} "
+                f"| Regime: {signaal.get('market_regime', '?')}"
+            )
         elif "EMA200" in sig_label:
             reden = (
                 f"Proba hoog genoeg ({signaal['kans_stijging']} ≥ {signaal['long_threshold']}) "
                 f"maar prijs **onder EMA200** → long geblokkeerd door regime-filter"
             )
         else:
+            regime = signaal.get("market_regime", "")
+            base_thr = signaal.get("long_threshold_base", signaal["long_threshold"])
+            regime_info = f" (regime: {regime}, offset toegepast)" if regime else ""
             reden = (
                 f"Proba te laag voor signaal: **{signaal['kans_stijging']}** "
-                f"(long drempel: {signaal['long_threshold']})"
+                f"(drempel: {signaal['long_threshold']}{regime_info})"
             )
 
         wacht_msg = (

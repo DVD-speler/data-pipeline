@@ -61,8 +61,18 @@ def run_backtest(
     h = horizon if horizon is not None else config.PREDICTION_HORIZON_H
 
     results = test_df[["close", "target"]].copy()
-    results["proba"]       = probas
-    results["signal_long"] = (results["proba"] >= threshold).astype(int)
+    results["proba"] = probas
+
+    # ── Regime-adaptieve drempel ──────────────────────────────────────────────
+    # In bull-regimes wordt de drempel verlaagd (meer kansen), in bear verhoogd
+    # (alleen longs met zeer hoge modelzekerheid). Offsets uit config.
+    if "market_regime" in test_df.columns:
+        regime = test_df["market_regime"].reindex(results.index, fill_value=0).astype(int)
+        offsets = config.REGIME_THRESHOLD_OFFSETS
+        eff_thr = regime.map(lambda r: threshold + offsets.get(r, 0.0)).clip(0.50, 0.95)
+        results["signal_long"] = (results["proba"] >= eff_thr).astype(int)
+    else:
+        results["signal_long"] = (results["proba"] >= threshold).astype(int)
     results["signal_short"] = (
         (results["proba"] <= threshold_short).astype(int)
         if use_short and threshold_short > 0
@@ -79,6 +89,16 @@ def run_backtest(
             results["signal_long"] = results["signal_long"] * above_ema200.astype(int) * not_confirmed_bear.astype(int)
         else:
             results["signal_long"] = results["signal_long"] * above_ema200.astype(int)
+
+        # Death cross filter: EMA50 < EMA200 → longs extra geblokkeerd.
+        # Detectie: ema_ratio_50 (close/ema50) > price_vs_ema200 (close/ema200) → ema50 < ema200.
+        # Vangt bear-transitie op vóór de prijs onder EMA200 zakt (bull trap voorkomen).
+        if "ema_ratio_50" in test_df.columns:
+            no_death_cross = (
+                test_df["ema_ratio_50"].reindex(results.index, fill_value=1.0)
+                <= test_df["price_vs_ema200"].reindex(results.index, fill_value=1.0)
+            )
+            results["signal_long"] = results["signal_long"] * no_death_cross.astype(int)
 
         # Shorts: dubbele macro-gate
         #   1. Onder EMA200 (prijs in downtrend)
@@ -452,28 +472,51 @@ def generate_live_signal(df_ohlcv, p1p2, p1_heatmap, direction_bias,
 
     last_row  = features.iloc[[-1]]
     proba     = float(model.predict_proba(last_row[config.FEATURE_COLS])[0, 1])
+
+    # Regime-check: prijs boven EMA200
     regime_ok = (
-        last_row["price_vs_ema200"].iloc[0] > 1.0
+        float(last_row["price_vs_ema200"].iloc[0]) > 1.0
         if "price_vs_ema200" in last_row.columns
         else True
     )
 
-    if proba >= threshold and regime_ok:
+    # Regime-adaptieve drempel: verhoog drempel in bear, verlaag in bull
+    market_regime = 0
+    if "market_regime" in last_row.columns:
+        market_regime = int(last_row["market_regime"].iloc[0])
+    regime_offset    = config.REGIME_THRESHOLD_OFFSETS.get(market_regime, 0.0)
+    eff_threshold    = float(np.clip(threshold + regime_offset, 0.50, 0.95))
+
+    # Death cross: EMA50 < EMA200 → extra blokkade (bull trap voorkomen)
+    death_cross = False
+    if "ema_ratio_50" in last_row.columns and "price_vs_ema200" in last_row.columns:
+        death_cross = (
+            float(last_row["ema_ratio_50"].iloc[0])
+            > float(last_row["price_vs_ema200"].iloc[0])
+        )
+
+    if proba >= eff_threshold and regime_ok and not death_cross:
         signaal = "LONG"
     elif proba <= threshold_short and threshold_short > 0 and not regime_ok:
         signaal = "SHORT"
-    elif proba >= threshold and not regime_ok:
+    elif death_cross and proba >= eff_threshold:
+        signaal = "WACHT (death cross — EMA50 onder EMA200)"
+    elif proba >= eff_threshold and not regime_ok:
         signaal = "WACHT (onder EMA200 — long geblokkeerd)"
     else:
         signaal = "WACHT"
 
+    regime_labels = {1: "bull", 0: "ranging", -1: "bear"}
     return {
         "tijdstip":            str(last_row.index[0]),
         "signaal":             signaal,
         "kans_stijging":       f"{proba:.1%}",
-        "long_threshold":      f"{threshold:.2f}",
+        "long_threshold":      f"{eff_threshold:.2f}",
+        "long_threshold_base": f"{threshold:.2f}",
         "short_threshold":     f"{threshold_short:.2f}" if threshold_short > 0 else "uitgeschakeld",
         "regime_boven_ema200": regime_ok,
+        "market_regime":       regime_labels.get(market_regime, "onbekend"),
+        "death_cross":         death_cross,
         "horizon":             f"{config.PREDICTION_HORIZON_H} uur",
         "prijs":               float(last_row["close"].iloc[0]),
     }

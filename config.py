@@ -102,6 +102,8 @@ FEATURE_COLS_1H = [
     # Regime detectie (Fase 1)
     "adx",                      # ADX(14) trendsterkte 0-100 (>20 = trending markt)
     "vwap_distance",            # (close − dag-VWAP) / close: positie vs. gewogen gemiddelde
+    # Volatiliteitsregime (opties-markt)
+    "btc_dvol",                 # Deribit BTC implied volatility index (genormaliseerd 0–1)
 ]
 # Regime-only columns: in de feature matrix voor backtest-filter, NIET als model feature.
 # adx_trend en market_regime geven expliciete richting → over-confidence in bullish val-periode
@@ -127,6 +129,13 @@ FEATURE_COLS = FEATURE_COLS_1H + FEATURE_COLS_4H
 
 # ── Horizon scan ───────────────────────────────────────────────────────────────
 HORIZON_SCAN = [12, 24, 48]   # te testen voorspellingstijdshorizons (in uren)
+
+# ── Regime-adaptieve drempelwaarden ───────────────────────────────────────────
+# Offset toegepast bovenop de geoptimaliseerde threshold, per marktregime.
+# market_regime: +1=bevestigde bull (ADX>20, +DI>-DI), 0=ranging, -1=bevestigde bear
+# Bull  → lagere drempel (meer trades in gunstige markt)
+# Bear  → hogere drempel (alleen longs met extreem hoge zekerheid)
+REGIME_THRESHOLD_OFFSETS = {1: -0.05, 0: 0.0, -1: 0.08}
 
 # ── Backtest ───────────────────────────────────────────────────────────────────
 TRADE_FEE     = 0.001

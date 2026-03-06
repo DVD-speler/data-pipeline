@@ -280,6 +280,77 @@ def fetch_open_interest(symbol: str = "BTCUSDT") -> pd.DataFrame:
     return pd.DataFrame(columns=["oi_change_24h"])
 
 
+# ── 6. Deribit BTC Implied Volatility (DVOL) ─────────────────────────────────
+
+DERIBIT_BASE = "https://www.deribit.com/api/v2/public"
+
+
+def _download_deribit_dvol(days: int = 730) -> pd.DataFrame:
+    """
+    Download Deribit BTC DVOL index (implied volatility) via gratis public API.
+    DVOL waarden liggen typisch tussen 30 (lage vol) en 150 (hoge vol/angst).
+    Genormaliseerd naar 0–1 door te delen door 100.
+    """
+    now_ms   = int(datetime.now(timezone.utc).timestamp() * 1000)
+    start_ms = now_ms - days * 24 * 3600 * 1000
+    resolution = 3600   # 1 uur in seconden
+
+    all_data = []
+    current = start_ms
+    batch_count = days * 24 // 700 + 1   # max ~700 candles per call
+
+    for _ in range(batch_count):
+        if current >= now_ms:
+            break
+        resp = requests.get(
+            f"{DERIBIT_BASE}/get_volatility_index_data",
+            params={
+                "currency":        "BTC",
+                "resolution":      resolution,
+                "start_timestamp": current,
+                "end_timestamp":   now_ms,
+            },
+            timeout=15,
+        )
+        resp.raise_for_status()
+        result = resp.json().get("result", {})
+        data   = result.get("data", [])
+        if not data:
+            break
+        all_data.extend(data)
+        current = data[-1][0] + resolution * 1000
+        if len(data) < 100:
+            break
+        time.sleep(0.1)
+
+    if not all_data:
+        return pd.DataFrame(columns=["btc_dvol"])
+
+    # Elk item: [timestamp_ms, open, high, low, close]
+    df = pd.DataFrame(all_data, columns=["ts", "open", "high", "low", "close"])
+    df.index = pd.to_datetime(df["ts"], unit="ms", utc=True)
+    df = df[~df.index.duplicated(keep="last")].sort_index()
+    # Normaliseer: DVOL 0-100 → 0-1 (typisch: 0.30–0.80 = normale range)
+    df["btc_dvol"] = df["close"] / 100.0
+    return df[["btc_dvol"]]
+
+
+def fetch_deribit_dvol() -> pd.DataFrame:
+    """Deribit BTC Implied Volatility Index (DVOL), uurlijks, genormaliseerd 0–1."""
+    name = "btc_dvol"
+    if not _cache_is_fresh(name):
+        print("  Downloading Deribit BTC DVOL...")
+        try:
+            df = _download_deribit_dvol()
+            _save_cache(name, df)
+            return df
+        except Exception as e:
+            print(f"  Waarschuwing: Deribit DVOL download mislukt ({e})")
+    if _cache_path(name).exists():
+        return _load_cache(name)
+    return pd.DataFrame(columns=["btc_dvol"])
+
+
 # ── Gecombineerde loader ───────────────────────────────────────────────────────
 
 # Neutrale defaults per feature (worden gebruikt als data ontbreekt)
@@ -289,12 +360,14 @@ _DEFAULTS = {
     "eurusd_return_24h": 0.0,
     "funding_rate":      0.0,
     "oi_change_24h":     0.0,
+    "btc_dvol":          0.45,   # ~45% IV = neutrale volatiliteit
 }
 
 _SOURCES_GLOBAL = {
     "fear_greed": fetch_fear_greed,
     "spx":        fetch_spx,
     "eurusd":     fetch_eurusd,
+    "btc_dvol":   fetch_deribit_dvol,
 }
 
 
