@@ -1,10 +1,11 @@
-name: Trading Signal (elke 2 uur)
+name: Trading Signal (elk uur)
 
-# Draait elke 2 uur op :05 (GitHub Actions heeft ~1 min vertraging).
+# Draait elk uur op :05 tussen 5:00-23:00 UTC (= 6:00-00:00 CET wintertijd).
+# Zomertijd (CEST, UTC+2): loopt van 7:00-01:00 CEST — pas aan naar '5 4-22 * * *' indien gewenst.
 # Handmatig triggeren via de Actions-tab op GitHub is ook mogelijk.
 on:
   schedule:
-    - cron: '5 */2 * * *'
+    - cron: '5 5-23 * * *'
   workflow_dispatch:
 
 jobs:
