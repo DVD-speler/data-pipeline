@@ -1,11 +1,10 @@
 name: Trading Signal (elk uur)
 
-# Draait elk uur op :05 tussen 5:00-23:00 UTC (= 6:00-00:00 CET wintertijd).
-# Zomertijd (CEST, UTC+2): loopt van 7:00-01:00 CEST — pas aan naar '5 4-22 * * *' indien gewenst.
+# Draait elk uur op :05, 24/7.
 # Handmatig triggeren via de Actions-tab op GitHub is ook mogelijk.
 on:
   schedule:
-    - cron: '5 5-23 * * *'
+    - cron: '5 * * * *'
   workflow_dispatch:
 
 jobs:
