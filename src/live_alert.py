@@ -179,6 +179,7 @@ def run_live_alert(
 
     # ── Paper trading state ───────────────────────────────────────────────────
     state = load_paper_state(paper_trades_path)
+    had_open_pos = state["open_position"] is not None   # bewaar vóór eventuele sluiting
     print(f"  Kapitaal : €{state['capital']:,.2f}")
 
     # ── Check open positie ────────────────────────────────────────────────────
@@ -209,6 +210,7 @@ def run_live_alert(
                   f"| SL ${pos['sl_price']:,.0f} | TP ${pos['tp_price']:,.0f}")
 
     # ── Nieuw signaal ─────────────────────────────────────────────────────────
+    opened_new_position = False
     if state["open_position"] is None and signaal["signaal"] in ("LONG", "SHORT"):
         direction = signaal["signaal"]
         # Gebruik de prijs en tijdstip van het signaal (features-laatste-rij),
@@ -255,7 +257,43 @@ def run_live_alert(
             f"📊 Proba: {signaal['kans_stijging']} | Regime: {regime_label}\n"
             f"💼 Positie: ${position_size:,.0f} ({coin_amount:.6f} {coin_name}) | Risico: €{capital*risk_pct:.2f} ({risk_pct*100:.0f}% kapitaal)"
         )
+        opened_new_position = True
         send_discord_alert(msg)
+
+    # ── WACHT bericht (geen nieuwe trade geopend deze run) ────────────────────
+    if not opened_new_position:
+        ts_str = pd.Timestamp(latest_ts).strftime("%d-%m-%Y %H:%M")
+        sig_label = signaal["signaal"]
+
+        if had_open_pos and state["open_position"] is not None:
+            # Positie loopt nog — nieuw signaal (indien aanwezig) genegeerd
+            pos = state["open_position"]
+            hours_open = round(
+                (pd.Timestamp(latest_ts) - pd.Timestamp(pos["open_time"])).total_seconds() / 3600, 1
+            )
+            reden = (
+                f"Al een **{pos['direction']}** positie open "
+                f"({hours_open}h geleden, entry ${pos['entry_price']:,.0f})\n"
+                f"📍 SL: ${pos['sl_price']:,.0f} | TP: ${pos['tp_price']:,.0f} | "
+                f"Sluit uiterlijk: {pd.Timestamp(pos['horizon_end']).strftime('%d-%m %H:%M')} UTC"
+            )
+        elif "EMA200" in sig_label:
+            reden = (
+                f"Proba hoog genoeg ({signaal['kans_stijging']} ≥ {signaal['long_threshold']}) "
+                f"maar prijs **onder EMA200** → long geblokkeerd door regime-filter"
+            )
+        else:
+            reden = (
+                f"Proba te laag voor signaal: **{signaal['kans_stijging']}** "
+                f"(long drempel: {signaal['long_threshold']})"
+            )
+
+        wacht_msg = (
+            f"⏸️ **WACHT** — {symbol}\n"
+            f"⏰ {ts_str} UTC | Prijs: ${signaal['prijs']:,.0f}\n"
+            f"💡 {reden}"
+        )
+        send_discord_alert(wacht_msg)
 
     # ── Opslaan ───────────────────────────────────────────────────────────────
     state["last_checked"] = str(latest_ts)
