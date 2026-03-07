@@ -1,5 +1,15 @@
 {
-  "open_position": null,
+  "open_position": {
+    "direction": "SHORT",
+    "entry_price": 1981.0,
+    "sl_price": 2020.0,
+    "tp_price": 1862.0,
+    "open_time": "2026-03-06 20:00:00+00:00",
+    "horizon_end": "2026-03-07 20:00:00+00:00",
+    "position_size": 487.84,
+    "risk_euro": 9.76,
+    "proba": "29.6%"
+  },
   "closed_trades": [
     {
       "direction": "SHORT",
@@ -54,5 +64,5 @@
     }
   ],
   "capital": 975.67,
-  "last_checked": "2026-03-07 19:00:00+00:00"
+  "last_checked": "2026-03-07 20:00:00+00:00"
 }
