@@ -1,10 +1,9 @@
 name: Trading Signal (elk uur)
 
-# Draait elk uur op :05, 24/7.
-# Handmatig triggeren via de Actions-tab op GitHub is ook mogelijk.
+# Getriggerd via cron-job.org (workflow_dispatch) voor exacte timing op :05.
+# GitHub's eigen scheduler is uitgeschakeld — die heeft tot 60 min vertraging.
+# Handmatig triggeren via de Actions-tab op GitHub is ook nog steeds mogelijk.
 on:
-  schedule:
-    - cron: '5 * * * *'
   workflow_dispatch:
 
 jobs:
