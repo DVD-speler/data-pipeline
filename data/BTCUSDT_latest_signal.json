@@ -1,13 +1,13 @@
 {
-  "tijdstip": "2026-03-10 16:00:00+00:00",
-  "signaal": "LONG",
-  "kans_stijging": "70.2%",
-  "long_threshold": "0.60",
+  "tijdstip": "2026-03-10 17:00:00+00:00",
+  "signaal": "WACHT",
+  "kans_stijging": "69.7%",
+  "long_threshold": "0.73",
   "long_threshold_base": "0.65",
   "short_threshold": "0.30",
   "regime_boven_ema200": true,
-  "market_regime": "bull",
+  "market_regime": "bear",
   "death_cross": false,
   "horizon": "24 uur",
-  "prijs": 71110.0
+  "prijs": 70918.828125
 }
