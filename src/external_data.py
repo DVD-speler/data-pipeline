@@ -163,6 +163,72 @@ def fetch_eurusd() -> pd.DataFrame:
     return pd.DataFrame(columns=["eurusd_return_24h"])
 
 
+def _download_yfinance_daily(ticker: str, years: int = 10) -> pd.DataFrame:
+    """Download dagelijkse OHLCV via yfinance (geen uurlimiet — gaat jaren terug)."""
+    try:
+        import yfinance as yf
+    except ImportError:
+        raise ImportError("yfinance niet gevonden. Installeer via: pip install yfinance")
+
+    df = yf.download(ticker, interval="1d", period=f"{years * 365}d",
+                     progress=False, auto_adjust=True)
+    if df.empty:
+        return pd.DataFrame()
+
+    if isinstance(df.columns, pd.MultiIndex):
+        df.columns = df.columns.get_level_values(0)
+
+    if df.index.tz is None:
+        df.index = df.index.tz_localize("UTC")
+    else:
+        df.index = df.index.tz_convert("UTC")
+
+    # Normaliseer naar middernacht UTC zodat join met dagcandles matcht
+    df.index = df.index.normalize()
+    df = df[~df.index.duplicated(keep="last")]
+    return df[["Close"]]
+
+
+def fetch_spx_daily() -> pd.DataFrame:
+    """S&P500 dagelijks rendement — 5-daags en 1-daags (voor dagmodel)."""
+    name = "spx_daily"
+    if not _cache_is_fresh(name):
+        print("  Downloading S&P500 dagelijks (SPY)...")
+        try:
+            df = _download_yfinance_daily("SPY", years=10)
+            df.columns = ["spx_close"]
+            df["spx_return_1d"] = df["spx_close"].pct_change(1)
+            df["spx_return_1w"] = df["spx_close"].pct_change(5)
+            df = df[["spx_return_1d", "spx_return_1w"]]
+            _save_cache(name, df)
+            return df
+        except Exception as e:
+            print(f"  Waarschuwing: SPX dagelijks download mislukt ({e})")
+    if _cache_path(name).exists():
+        return _load_cache(name)
+    return pd.DataFrame(columns=["spx_return_1d", "spx_return_1w"])
+
+
+def fetch_eurusd_daily() -> pd.DataFrame:
+    """EUR/USD dagelijks rendement — 5-daags en 1-daags (voor dagmodel)."""
+    name = "eurusd_daily"
+    if not _cache_is_fresh(name):
+        print("  Downloading EUR/USD dagelijks...")
+        try:
+            df = _download_yfinance_daily("EURUSD=X", years=10)
+            df.columns = ["eurusd_close"]
+            df["eurusd_return_1d"] = df["eurusd_close"].pct_change(1)
+            df["eurusd_return_1w"] = df["eurusd_close"].pct_change(5)
+            df = df[["eurusd_return_1d", "eurusd_return_1w"]]
+            _save_cache(name, df)
+            return df
+        except Exception as e:
+            print(f"  Waarschuwing: EURUSD dagelijks download mislukt ({e})")
+    if _cache_path(name).exists():
+        return _load_cache(name)
+    return pd.DataFrame(columns=["eurusd_return_1d", "eurusd_return_1w"])
+
+
 # ── 4. BTC Funding Rate (Binance Futures) ────────────────────────────────────
 
 def _download_funding_rate(symbol: str = "BTCUSDT") -> pd.DataFrame:
@@ -285,7 +351,7 @@ def fetch_open_interest(symbol: str = "BTCUSDT") -> pd.DataFrame:
 DERIBIT_BASE = "https://www.deribit.com/api/v2/public"
 
 
-def _download_deribit_dvol(days: int = 730) -> pd.DataFrame:
+def _download_deribit_dvol(days: int = 1000) -> pd.DataFrame:
     """
     Download Deribit BTC DVOL index (implied volatility) via gratis public API.
     DVOL waarden liggen typisch tussen 30 (lage vol) en 150 (hoge vol/angst).
@@ -451,6 +517,12 @@ def download_all_external(force: bool = True) -> None:
     for name, fetch_fn in _SOURCES_GLOBAL.items():
         print(f"\n[{name}]")
         fetch_fn()
+
+    # Dagelijkse SPX/EURUSD voor het dagmodel (geen uurlimiet, jaren terug)
+    print("\n[spx_daily]")
+    fetch_spx_daily()
+    print("\n[eurusd_daily]")
+    fetch_eurusd_daily()
 
     for sym in _cfg.SYMBOLS:
         print(f"\n[{sym} funding_rate]")
