@@ -1,0 +1,68 @@
+name: Trading Signal (dagelijks)
+
+# Getriggerd via cron-job.org (workflow_dispatch) elke dag om 07:05 UTC.
+# GitHub's eigen scheduler is uitgeschakeld — die heeft tot 60 min vertraging.
+# Handmatig triggeren via de Actions-tab op GitHub is ook mogelijk.
+on:
+  workflow_dispatch:
+
+jobs:
+  daily-signal:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # nodig om latest_signal.json terug te committen
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Installeer dependencies
+        run: pip install -r requirements.txt
+
+      # Gedeelde cache met uurmodel — zelfde ohlcv.db bevat alle intervals.
+      - name: Herstel OHLCV database uit cache
+        uses: actions/cache@v4
+        with:
+          path: data/ohlcv.db
+          key: ohlcv-weekly-${{ github.run_id }}
+          restore-keys: |
+            ohlcv-weekly-
+
+      - name: Download dagelijkse OHLCV (1000 dagen)
+        run: |
+          python - <<'EOF'
+          from src.data_fetcher import download_ohlcv
+          print("OHLCV dagelijks download: 1000 dagen")
+          download_ohlcv(days=1000, intervals=["1d"])
+          EOF
+
+      - name: Update externe data (Fear & Greed, SPX, EURUSD, funding)
+        run: python main.py --phase external_data
+
+      - name: Genereer BTC dagelijks signaal
+        run: python main.py --phase live_alert_daily --symbol BTCUSDT
+        env:
+          DISCORD_WEBHOOK_URL_DAILY: ${{ secrets.DISCORD_WEBHOOK_URL_DAILY }}
+
+      - name: Genereer ETH dagelijks signaal
+        run: python main.py --phase live_alert_daily --symbol ETHUSDT
+        env:
+          DISCORD_WEBHOOK_URL_DAILY: ${{ secrets.DISCORD_WEBHOOK_URL_DAILY }}
+
+      # Commit de bijgewerkte signaalbestanden terug naar de repo.
+      - name: Commit gewijzigde bestanden
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/external/ \
+                  data/BTCUSDT_1d_latest_signal.json \
+                  data/ETHUSDT_1d_latest_signal.json
+          git diff --cached --quiet || git commit -m "daily-signal: $(date -u '+%Y-%m-%d %H:%M UTC')"
+          git pull --rebase origin master
+          git push

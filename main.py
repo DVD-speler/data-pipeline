@@ -16,7 +16,13 @@ Gebruik:
   python main.py --phase horizon_scan      # horizons vergelijken (12h, 24h, 48h)
   python main.py --phase signal            # live signaal genereren (laatste uur)
   python main.py --phase simulation        # maand-simulaties met SL/TP, kapitaaloverzicht
-  python main.py --phase live_alert       # live signaal + paper trade update + Discord alert
+  python main.py --phase live_alert        # live signaal + paper trade update + Discord alert
+
+Dagelijks model (1d candles, aparte Discord webhook):
+  python main.py --phase features_daily    # dagelijkse feature matrix bouwen
+  python main.py --phase model_daily       # dagelijks model trainen (LightGBM)
+  python main.py --phase backtest_daily    # dagelijkse backtest uitvoeren
+  python main.py --phase live_alert_daily  # dagelijks signaal + Discord (DISCORD_DAILY_WEBHOOK_URL)
 """
 
 import argparse
@@ -291,6 +297,10 @@ def main():
             "signal",
             "simulation",
             "live_alert",
+            # Dagelijks model
+            "features_daily",
+            "model_daily",
+            "live_alert_daily",
         ],
         help="Welke fase uitvoeren (standaard: all)",
     )
@@ -346,6 +356,12 @@ def main():
         fase_simulation(symbol=sym)
     elif args.phase == "live_alert":
         fase_live_alert(symbol=sym)
+    elif args.phase == "features_daily":
+        fase_features_daily(symbol=sym)
+    elif args.phase == "model_daily":
+        fase_model_daily(symbol=sym)
+    elif args.phase == "live_alert_daily":
+        fase_live_alert_daily(symbol=sym)
 
 
 def fase_simulation(symbol: str = None):
@@ -375,6 +391,100 @@ def fase_live_alert(symbol: str = None):
         tp_pct=0.06,
         symbol=symbol or config.SYMBOL,
     )
+
+
+# ── Dagelijks model fases ──────────────────────────────────────────────────────
+
+
+def fase_features_daily(symbol: str = None):
+    print("\n" + "=" * 60)
+    print("FASE — Dagelijkse Feature Engineering")
+    print("=" * 60)
+    import config_daily as cfg_daily
+    from src.data_fetcher import load_ohlcv
+    from src.features_daily import build_features_daily
+
+    sym = symbol or cfg_daily.SYMBOL
+    df = load_ohlcv(symbol=sym, interval="1d")
+    features = build_features_daily(df, symbol=sym)
+    out = cfg_daily.symbol_path_daily(sym, "features.parquet")
+    features.to_parquet(out)
+    print(f"Dagelijkse feature matrix: {features.shape[0]} rijen × {features.shape[1]} kolommen")
+    print(f"Opgeslagen: {out}")
+    return features
+
+
+def fase_model_daily(features=None, symbol: str = None):
+    print("\n" + "=" * 60)
+    print("FASE — Dagelijks Model Trainen (LightGBM)")
+    print("=" * 60)
+    import shutil
+    import pandas as pd
+    import config
+    import config_daily as cfg_daily
+    from src.model import train_model
+
+    sym = symbol or cfg_daily.SYMBOL
+    if features is None:
+        features = pd.read_parquet(cfg_daily.symbol_path_daily(sym, "features.parquet"))
+
+    # Dagmodel-params (min_child_samples=15 i.p.v. 175 — aangepast voor ~275 trainrows)
+    daily_params_src   = cfg_daily.symbol_path_daily(sym, "lgb_best_params.json")
+    hourly_params_path = config.symbol_path(sym, "lgb_best_params.json")
+    hourly_params_bak  = config.symbol_path(sym, "lgb_best_params.json.bak")
+
+    # Patch config zodat train_model de dagelijkse features en split gebruikt
+    orig_feature_cols   = config.FEATURE_COLS
+    orig_filter_cols    = config.FILTER_COLS
+    orig_test_days      = config.TEST_SIZE_DAYS
+    orig_val_days       = config.VALIDATION_SIZE_DAYS
+    config.FEATURE_COLS         = cfg_daily.FEATURE_COLS_DAILY
+    config.FILTER_COLS          = cfg_daily.FILTER_COLS_DAILY
+    config.TEST_SIZE_DAYS       = cfg_daily.TEST_SIZE_DAYS
+    config.VALIDATION_SIZE_DAYS = cfg_daily.VALIDATION_SIZE_DAYS
+
+    # Wissel tijdelijk naar dagmodel-params
+    if hourly_params_path.exists():
+        shutil.copy2(hourly_params_path, hourly_params_bak)
+    if daily_params_src.exists():
+        shutil.copy2(daily_params_src, hourly_params_path)
+
+    try:
+        model, test_df, probas = train_model(features, symbol=sym)
+    finally:
+        config.FEATURE_COLS         = orig_feature_cols
+        config.FILTER_COLS          = orig_filter_cols
+        config.TEST_SIZE_DAYS       = orig_test_days
+        config.VALIDATION_SIZE_DAYS = orig_val_days
+        # Herstel originele uurmodel-params
+        if hourly_params_bak.exists():
+            shutil.copy2(hourly_params_bak, hourly_params_path)
+            hourly_params_bak.unlink()
+
+    # Kopieer model en threshold naar dagmodel-pad (BTCUSDT_1d_*.*)
+    src_model = config.symbol_path(sym, "model.pkl")
+    dst_model = cfg_daily.symbol_path_daily(sym, "model.pkl")
+    if src_model.exists():
+        shutil.copy2(src_model, dst_model)
+        print(f"Dagmodel opgeslagen: {dst_model}")
+
+    src_thr = config.symbol_path(sym, "optimal_threshold.json")
+    dst_thr = cfg_daily.symbol_path_daily(sym, "optimal_threshold.json")
+    if src_thr.exists():
+        shutil.copy2(src_thr, dst_thr)
+        print(f"Drempelwaarden opgeslagen: {dst_thr}")
+
+    return model, test_df, probas
+
+
+
+def fase_live_alert_daily(symbol: str = None):
+    print("\n" + "=" * 60)
+    print("DAGELIJKS SIGNAAL — Richtingsindicator + Discord")
+    print("=" * 60)
+    import config_daily as cfg_daily
+    from src.live_alert_daily import run_live_alert_daily
+    run_live_alert_daily(symbol=symbol or cfg_daily.SYMBOL)
 
 
 if __name__ == "__main__":

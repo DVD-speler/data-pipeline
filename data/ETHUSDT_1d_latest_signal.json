@@ -1,0 +1,11 @@
+{
+  "signaal": "BEARISH",
+  "richting": "BEARISH",
+  "kans_stijging": 0.4050608268997589,
+  "prijs": 2051.97,
+  "tijdstip": "2026-03-11 00:00:00+00:00",
+  "market_regime": 1.0,
+  "regime_label": "bull (ADX+)",
+  "death_cross": true,
+  "boven_ema200": false
+}
