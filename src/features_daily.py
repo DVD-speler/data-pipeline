@@ -131,8 +131,9 @@ def build_features_daily(
         df_ext = load_all_external(df.index, symbol=symbol)
         for col in df_ext.columns:
             df[col] = df_ext[col]
-    except Exception as e:
+    except (KeyError, ValueError, TypeError) as e:
         print(f"  Waarschuwing: externe data laden mislukt ({e}) — defaults gebruikt")
+        import traceback; traceback.print_exc()
 
     # SPX en EURUSD via dagelijkse download (geen uurlimiet, matcht op middernacht UTC)
     # Uurdata (spx_return_24h) werkt niet voor dagindexen — join vindt nooit matches.

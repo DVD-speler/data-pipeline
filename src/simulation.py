@@ -66,8 +66,11 @@ def simulate_month(
     period["proba"] = probas
 
     # Long: proba >= threshold EN boven EMA200 EN niet confirmed bear
-    above_ema200    = period["price_vs_ema200"] > 1.0
-    not_bear_regime = period.get("market_regime", pd.Series(1, index=period.index)) != -1
+    above_ema200 = period["price_vs_ema200"] > 1.0
+    if "market_regime" in period.columns:
+        not_bear_regime = period["market_regime"] != -1
+    else:
+        not_bear_regime = pd.Series(True, index=period.index)
     long_signal     = (period["proba"] >= long_thr) & above_ema200 & not_bear_regime
 
     # Short: proba <= threshold_short EN onder EMA200 EN macro bearmarkt

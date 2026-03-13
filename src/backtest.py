@@ -243,9 +243,14 @@ def compute_random_baseline(
 
     for _ in range(n_simulations):
         shuffled_signal = rng.permutation(signal_values)
-        # Herbereken strategie-rendement met willekeurig signaal (long-only, geen fees vermeden)
-        strat_ret = np.where(shuffled_signal > 0, trade_return - 2 * fee, 0.0)
-        active    = strat_ret[shuffled_signal != 0]
+        # Herbereken strategie-rendement met willekeurig signaal.
+        # Long (+1): trade_return - 2*fee  |  Short (-1): -(trade_return) - 2*fee
+        strat_ret = np.where(
+            shuffled_signal > 0,  trade_return - 2 * fee,
+            np.where(
+            shuffled_signal < 0, -trade_return - 2 * fee, 0.0)
+        )
+        active = strat_ret[shuffled_signal != 0]
         if len(active) > 1 and active.std() > 0:
             s = (active.mean() / active.std()) * np.sqrt(hours_per_year / h)
         else:

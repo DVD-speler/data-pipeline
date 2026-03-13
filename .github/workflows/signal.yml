@@ -1,0 +1,121 @@
+name: Trading Signal
+
+# Getriggerd via cron-job.org (workflow_dispatch) voor exacte timing.
+# Uurmodel: elk uur op :05 UTC  → request body: {"ref":"master","inputs":{"type":"hourly"}}
+# Dagmodel:  07:05 UTC dagelijks → request body: {"ref":"master","inputs":{"type":"daily"}}
+# Handmatig triggeren via de Actions-tab is ook mogelijk.
+on:
+  workflow_dispatch:
+    inputs:
+      type:
+        description: 'Signaaltype: hourly of daily'
+        required: true
+        default: 'hourly'
+        type: choice
+        options:
+          - hourly
+          - daily
+
+jobs:
+  signal:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Installeer dependencies
+        run: pip install -r requirements.txt
+
+      # Cache de SQLite database tussen runs (wekelijkse rotatie).
+      # Bij cache miss: volledige download; bij cache hit: incrementeel.
+      - name: Herstel OHLCV database uit cache
+        uses: actions/cache@v4
+        with:
+          path: data/ohlcv.db
+          key: ohlcv-weekly-${{ github.run_id }}
+          restore-keys: |
+            ohlcv-weekly-
+
+      # ── Uurmodel ──────────────────────────────────────────────────────────────
+      - name: Download OHLCV 1h (incrementeel of 35 dagen bij lege cache)
+        if: ${{ inputs.type == 'hourly' }}
+        run: |
+          python - <<'EOF'
+          import pathlib
+          from src.data_fetcher import download_ohlcv
+          days = 2 if pathlib.Path("data/ohlcv.db").exists() else 35
+          print(f"OHLCV 1h download: {days} dagen")
+          download_ohlcv(days=days)
+          EOF
+
+      - name: Genereer BTC uurlijks signaal
+        if: ${{ inputs.type == 'hourly' }}
+        run: python main.py --phase live_alert --symbol BTCUSDT
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+
+      - name: Genereer ETH uurlijks signaal
+        if: ${{ inputs.type == 'hourly' }}
+        run: python main.py --phase live_alert --symbol ETHUSDT
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+
+      # ── Dagmodel ──────────────────────────────────────────────────────────────
+      - name: Download OHLCV 1d (1000 dagen)
+        if: ${{ inputs.type == 'daily' }}
+        run: |
+          python - <<'EOF'
+          from src.data_fetcher import download_ohlcv
+          print("OHLCV 1d download: 1000 dagen")
+          download_ohlcv(days=1000, intervals=["1d"])
+          EOF
+
+      - name: Genereer BTC dagelijks signaal
+        if: ${{ inputs.type == 'daily' }}
+        run: python main.py --phase live_alert_daily --symbol BTCUSDT
+        env:
+          DISCORD_WEBHOOK_URL_DAILY: ${{ secrets.DISCORD_WEBHOOK_URL_DAILY }}
+
+      - name: Genereer ETH dagelijks signaal
+        if: ${{ inputs.type == 'daily' }}
+        run: python main.py --phase live_alert_daily --symbol ETHUSDT
+        env:
+          DISCORD_WEBHOOK_URL_DAILY: ${{ secrets.DISCORD_WEBHOOK_URL_DAILY }}
+
+      # ── Gedeeld: externe data update ──────────────────────────────────────────
+      - name: Update externe data (Fear & Greed, SPX, EURUSD, funding)
+        run: python main.py --phase external_data
+
+      # ── Gedeeld: commit resultaten ────────────────────────────────────────────
+      - name: Commit gewijzigde bestanden (uurmodel)
+        if: ${{ inputs.type == 'hourly' }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/external/ \
+                  data/BTCUSDT_paper_trades.json data/BTCUSDT_latest_signal.json \
+                  data/ETHUSDT_paper_trades.json data/ETHUSDT_latest_signal.json
+          git diff --cached --quiet || git commit -m "signal: $(date -u '+%Y-%m-%d %H:%M UTC')"
+          git pull --rebase origin master
+          git push
+
+      - name: Commit gewijzigde bestanden (dagmodel)
+        if: ${{ inputs.type == 'daily' }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/external/ \
+                  data/BTCUSDT_1d_latest_signal.json \
+                  data/ETHUSDT_1d_latest_signal.json
+          git diff --cached --quiet || git commit -m "daily-signal: $(date -u '+%Y-%m-%d %H:%M UTC')"
+          git pull --rebase origin master
+          git push

@@ -46,6 +46,11 @@ def send_discord_alert(content: str) -> None:
         print(f"  [Discord] Verbindingsfout: {e}")
 
 
+def send_alert(content: str) -> None:
+    """Stuur alert naar Discord."""
+    send_discord_alert(content)
+
+
 # ── Signaal generatie ────────────────────────────────────────────────────────
 
 
@@ -163,7 +168,7 @@ def run_live_alert_daily(symbol: str = cfg.SYMBOL) -> None:
         f"📊 Regime: {regime} | Proba: {proba:.1%}\n"
         f"{filter_str}"
     )
-    send_discord_alert(msg)
+    send_alert(msg)
 
     # ── Opslaan ───────────────────────────────────────────────────────────────
     out_path = cfg.symbol_path_daily(symbol, "latest_signal.json")
