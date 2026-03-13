@@ -1,1 +1,16 @@
-{"open_position": null, "closed_trades": [], "capital": 1000.0, "last_checked": null}
+{
+  "open_position": {
+    "direction": "LONG",
+    "entry_price": 72842.0,
+    "sl_price": 71385.0,
+    "tp_price": 77212.0,
+    "open_time": "2026-03-13 13:00:00+00:00",
+    "horizon_end": "2026-03-14 13:00:00+00:00",
+    "position_size": 500.0,
+    "risk_euro": 10.0,
+    "proba": "71.6%"
+  },
+  "closed_trades": [],
+  "capital": 1000.0,
+  "last_checked": "2026-03-13 13:00:00+00:00"
+}

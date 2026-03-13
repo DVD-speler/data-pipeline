@@ -1,1 +1,6 @@
-{"open_position": null, "closed_trades": [], "capital": 1000.0, "last_checked": null}
+{
+  "open_position": null,
+  "closed_trades": [],
+  "capital": 1000.0,
+  "last_checked": "2026-03-13 13:00:00+00:00"
+}
