@@ -31,8 +31,13 @@ from src.stats import compute_direction_bias, compute_p1_heatmap
 def load_paper_state(path) -> dict:
     """Laad paper trading state, of maak een lege state aan bij eerste run."""
     if path.exists():
-        with open(path) as f:
-            return json.load(f)
+        try:
+            with open(path) as f:
+                content = f.read().strip()
+                if content:
+                    return json.loads(content)
+        except (json.JSONDecodeError, ValueError):
+            print(f"  Waarschuwing: {path.name} onleesbaar — nieuwe state aangemaakt.")
     return {
         "open_position": None,
         "closed_trades": [],
