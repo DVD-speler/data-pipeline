@@ -6,8 +6,8 @@
     "tp_price": 74092.0,
     "open_time": "2026-03-12 09:00:00+00:00",
     "horizon_end": "2026-03-13 09:00:00+00:00",
-    "position_size": 528.55,
-    "risk_euro": 10.57,
+    "position_size": 536.04,
+    "risk_euro": 10.72,
     "proba": "71.6%"
   },
   "closed_trades": [
@@ -384,8 +384,25 @@
       "gross_return_pct": 2.85,
       "pnl_euro": 13.8,
       "capital_after": 1057.1
+    },
+    {
+      "direction": "LONG",
+      "entry_price": 69898.0,
+      "sl_price": 68500.0,
+      "tp_price": 74092.0,
+      "open_time": "2026-03-12 09:00:00+00:00",
+      "horizon_end": "2026-03-13 09:00:00+00:00",
+      "position_size": 528.55,
+      "risk_euro": 10.57,
+      "proba": "71.6%",
+      "exit_price": 72019.6953125,
+      "exit_reason": "24h \u23f0",
+      "exit_time": "2026-03-13 10:00:00+00:00",
+      "gross_return_pct": 3.04,
+      "pnl_euro": 14.99,
+      "capital_after": 1072.09
     }
   ],
-  "capital": 1057.1,
-  "last_checked": "2026-03-13 09:00:00+00:00"
+  "capital": 1072.09,
+  "last_checked": "2026-03-13 10:00:00+00:00"
 }
