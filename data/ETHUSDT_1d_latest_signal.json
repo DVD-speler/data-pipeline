@@ -1,11 +1,11 @@
 {
   "signaal": "NEUTRAAL",
   "richting": "NEUTRAAL",
-  "kans_stijging": 0.47266984545685714,
-  "prijs": 2049.0615234375,
-  "tijdstip": "2026-03-12 18:00:00+00:00",
-  "market_regime": 0.0,
-  "regime_label": "ranging",
+  "kans_stijging": 0.4746371692892555,
+  "prijs": 2106.34716796875,
+  "tijdstip": "2026-03-13 02:00:00+00:00",
+  "market_regime": 1.0,
+  "regime_label": "bull (ADX+)",
   "death_cross": false,
   "boven_ema200": true
 }
