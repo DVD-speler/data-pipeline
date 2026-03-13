@@ -3,18 +3,20 @@ name: Trading Signal
 # Getriggerd via cron-job.org (workflow_dispatch) voor exacte timing.
 # Uurmodel: elk uur op :05 UTC  → request body: {"ref":"master","inputs":{"type":"hourly"}}
 # Dagmodel:  07:05 UTC dagelijks → request body: {"ref":"master","inputs":{"type":"daily"}}
+# 4h model:  elk 4 uur op :05 UTC → request body: {"ref":"master","inputs":{"type":"4h"}}
 # Handmatig triggeren via de Actions-tab is ook mogelijk.
 on:
   workflow_dispatch:
     inputs:
       type:
-        description: 'Signaaltype: hourly of daily'
+        description: 'Signaaltype: hourly, daily of 4h'
         required: true
         default: 'hourly'
         type: choice
         options:
           - hourly
           - daily
+          - 4h
 
 jobs:
   signal:
@@ -91,6 +93,30 @@ jobs:
         env:
           DISCORD_WEBHOOK_URL_DAILY: ${{ secrets.DISCORD_WEBHOOK_URL_DAILY }}
 
+      # ── 4h model ──────────────────────────────────────────────────────────────
+      - name: Download OHLCV 4h (incrementeel of 35 dagen bij lege cache)
+        if: ${{ inputs.type == '4h' }}
+        run: |
+          python - <<'EOF'
+          import pathlib
+          from src.data_fetcher import download_ohlcv
+          days = 2 if pathlib.Path("data/ohlcv.db").exists() else 35
+          print(f"OHLCV 4h download: {days} dagen")
+          download_ohlcv(days=days, intervals=["4h"])
+          EOF
+
+      - name: Genereer BTC 4h signaal
+        if: ${{ inputs.type == '4h' }}
+        run: python main.py --phase live_alert_4h --symbol BTCUSDT
+        env:
+          DISCORD_WEBHOOK_URL_4H: ${{ secrets.DISCORD_WEBHOOK_URL_4H }}
+
+      - name: Genereer ETH 4h signaal
+        if: ${{ inputs.type == '4h' }}
+        run: python main.py --phase live_alert_4h --symbol ETHUSDT
+        env:
+          DISCORD_WEBHOOK_URL_4H: ${{ secrets.DISCORD_WEBHOOK_URL_4H }}
+
       # ── Gedeeld: externe data update ──────────────────────────────────────────
       - name: Update externe data (Fear & Greed, SPX, EURUSD, funding)
         run: python main.py --phase external_data
@@ -117,5 +143,17 @@ jobs:
                   data/BTCUSDT_1d_latest_signal.json \
                   data/ETHUSDT_1d_latest_signal.json
           git diff --cached --quiet || git commit -m "daily-signal: $(date -u '+%Y-%m-%d %H:%M UTC')"
+          git pull --rebase origin master
+          git push
+
+      - name: Commit gewijzigde bestanden (4h model)
+        if: ${{ inputs.type == '4h' }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/external/ \
+                  data/BTCUSDT_4h_paper_trades.json data/BTCUSDT_4h_latest_signal.json \
+                  data/ETHUSDT_4h_latest_signal.json
+          git diff --cached --quiet || git commit -m "4h-signal: $(date -u '+%Y-%m-%d %H:%M UTC')"
           git pull --rebase origin master
           git push

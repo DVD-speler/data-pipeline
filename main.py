@@ -301,6 +301,10 @@ def main():
             "features_daily",
             "model_daily",
             "live_alert_daily",
+            # 4h model
+            "features_4h",
+            "model_4h",
+            "live_alert_4h",
         ],
         help="Welke fase uitvoeren (standaard: all)",
     )
@@ -362,6 +366,12 @@ def main():
         fase_model_daily(symbol=sym)
     elif args.phase == "live_alert_daily":
         fase_live_alert_daily(symbol=sym)
+    elif args.phase == "features_4h":
+        fase_features_4h(symbol=sym)
+    elif args.phase == "model_4h":
+        fase_model_4h(symbol=sym)
+    elif args.phase == "live_alert_4h":
+        fase_live_alert_4h(symbol=sym)
 
 
 def fase_simulation(symbol: str = None):
@@ -485,6 +495,95 @@ def fase_live_alert_daily(symbol: str = None):
     import config_daily as cfg_daily
     from src.live_alert_daily import run_live_alert_daily
     run_live_alert_daily(symbol=symbol or cfg_daily.SYMBOL)
+
+
+# ── 4h model fases ────────────────────────────────────────────────────────────
+
+
+def fase_features_4h(symbol: str = None):
+    print("\n" + "=" * 60)
+    print("FASE — 4h Feature Engineering")
+    print("=" * 60)
+    import config_4h as cfg_4h
+    from src.data_fetcher import load_ohlcv
+    from src.features_4h import build_features_4h
+
+    sym = symbol or cfg_4h.SYMBOL
+    df = load_ohlcv(symbol=sym, interval="4h")
+    features = build_features_4h(df, symbol=sym)
+    out = cfg_4h.symbol_path_4h(sym, "features.parquet")
+    features.to_parquet(out)
+    print(f"4h feature matrix: {features.shape[0]} rijen × {features.shape[1]} kolommen")
+    print(f"Opgeslagen: {out}")
+    return features
+
+
+def fase_model_4h(features=None, symbol: str = None):
+    print("\n" + "=" * 60)
+    print("FASE — 4h Model Trainen (LightGBM)")
+    print("=" * 60)
+    import shutil
+    import pandas as pd
+    import config
+    import config_4h as cfg_4h
+    from src.model import train_model
+
+    sym = symbol or cfg_4h.SYMBOL
+    if features is None:
+        features = pd.read_parquet(cfg_4h.symbol_path_4h(sym, "features.parquet"))
+
+    params_src         = cfg_4h.symbol_path_4h(sym, "lgb_best_params.json")
+    hourly_params_path = config.symbol_path(sym, "lgb_best_params.json")
+    hourly_params_bak  = config.symbol_path(sym, "lgb_best_params.json.bak")
+
+    # Patch config zodat train_model de 4h features en split gebruikt
+    orig_feature_cols   = config.FEATURE_COLS
+    orig_filter_cols    = config.FILTER_COLS
+    orig_test_days      = config.TEST_SIZE_DAYS
+    orig_val_days       = config.VALIDATION_SIZE_DAYS
+    config.FEATURE_COLS         = cfg_4h.FEATURE_COLS_4H_MODEL
+    config.FILTER_COLS          = cfg_4h.FILTER_COLS_4H
+    config.TEST_SIZE_DAYS       = cfg_4h.TEST_SIZE_DAYS
+    config.VALIDATION_SIZE_DAYS = cfg_4h.VALIDATION_SIZE_DAYS
+
+    if hourly_params_path.exists():
+        shutil.copy2(hourly_params_path, hourly_params_bak)
+    if params_src.exists():
+        shutil.copy2(params_src, hourly_params_path)
+
+    try:
+        model, test_df, probas = train_model(features, symbol=sym)
+    finally:
+        config.FEATURE_COLS         = orig_feature_cols
+        config.FILTER_COLS          = orig_filter_cols
+        config.TEST_SIZE_DAYS       = orig_test_days
+        config.VALIDATION_SIZE_DAYS = orig_val_days
+        if hourly_params_bak.exists():
+            shutil.copy2(hourly_params_bak, hourly_params_path)
+            hourly_params_bak.unlink()
+
+    src_model = config.symbol_path(sym, "model.pkl")
+    dst_model = cfg_4h.symbol_path_4h(sym, "model.pkl")
+    if src_model.exists():
+        shutil.copy2(src_model, dst_model)
+        print(f"4h model opgeslagen: {dst_model}")
+
+    src_thr = config.symbol_path(sym, "optimal_threshold.json")
+    dst_thr = cfg_4h.symbol_path_4h(sym, "optimal_threshold.json")
+    if src_thr.exists():
+        shutil.copy2(src_thr, dst_thr)
+        print(f"Drempelwaarden opgeslagen: {dst_thr}")
+
+    return model, test_df, probas
+
+
+def fase_live_alert_4h(symbol: str = None):
+    print("\n" + "=" * 60)
+    print("4H SIGNAAL — Richtingsindicator + Discord")
+    print("=" * 60)
+    import config_4h as cfg_4h
+    from src.live_alert_4h import run_live_alert_4h
+    run_live_alert_4h(symbol=symbol or cfg_4h.SYMBOL)
 
 
 if __name__ == "__main__":
