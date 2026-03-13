@@ -70,6 +70,11 @@ def send_discord_alert(content: str) -> None:
         print(f"  [Discord] Verbindingsfout: {e}")
 
 
+def send_alert(content: str) -> None:
+    """Stuur alert naar Discord."""
+    send_discord_alert(content)
+
+
 # ── Positie management ──────────────────────────────────────────────────────────
 
 def check_position_exit(
@@ -204,7 +209,7 @@ def run_live_alert(
                 f"🎯 Reden: {exit_info['exit_reason']} | Rendement: {sign}{gross_pct:.2f}%\n"
                 f"💰 P&L: {sign}€{pnl_euro:.2f} | Kapitaal: €{state['capital']:,.2f}"
             )
-            send_discord_alert(msg)
+            send_alert(msg)
         else:
             print(f"\n  Positie open: {pos['direction']} ${pos['entry_price']:,.0f} "
                   f"| SL ${pos['sl_price']:,.0f} | TP ${pos['tp_price']:,.0f}")
@@ -213,10 +218,13 @@ def run_live_alert(
     opened_new_position = False
     if state["open_position"] is None and signaal["signaal"] in ("LONG", "SHORT"):
         direction = signaal["signaal"]
-        # Gebruik de prijs en tijdstip van het signaal (features-laatste-rij),
-        # niet df.index[-1] — die kan later liggen door dead zone filtering.
-        entry_price = signaal["prijs"]
-        signal_ts = pd.Timestamp(signaal["tijdstip"])
+        # Gebruik de actuele prijs/tijdstip van df.index[-1], NIET signaal["prijs"].
+        # features.iloc[-1] ligt ~24 uur in het verleden (dropna verwijdert de laatste
+        # PREDICTION_HORIZON_H rijen waarvan future_close NaN is). Als we signaal["prijs"]
+        # als entry zouden gebruiken, is de prijs stale én is horizon_end ≈ nu, waardoor
+        # de positie al bij de volgende run sluit (1 uur later).
+        entry_price = latest_close
+        signal_ts = pd.Timestamp(latest_ts)
         capital = state["capital"]
         position_size = capital * risk_pct / sl_pct
 
@@ -299,10 +307,10 @@ def run_live_alert(
 
         wacht_msg = (
             f"⏸️ **WACHT** — {symbol}\n"
-            f"⏰ {ts_str} UTC | Prijs: ${signaal['prijs']:,.0f}\n"
+            f"⏰ {ts_str} UTC | Prijs: ${latest_close:,.0f}\n"
             f"💡 {reden}"
         )
-        send_discord_alert(wacht_msg)
+        send_alert(wacht_msg)
 
     # ── Opslaan ───────────────────────────────────────────────────────────────
     state["last_checked"] = str(latest_ts)

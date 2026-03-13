@@ -44,6 +44,20 @@ def _lookup_heatmap(heatmap: pd.DataFrame, dow_int: int, hour: int) -> float:
     return 0.0
 
 
+def _build_heatmap_lookup(heatmap: pd.DataFrame, default: float = 0.0) -> dict:
+    """Bouw een {(dow_int, hour): value} dict voor vectorized heatmap lookup."""
+    reverse_dow = {v: k for k, v in DOW_LABELS.items()}
+    result = {}
+    for label in heatmap.index:
+        dow_int = reverse_dow.get(label)
+        if dow_int is None:
+            continue
+        for hour in heatmap.columns:
+            val = heatmap.loc[label, int(hour)]
+            result[(dow_int, int(hour))] = float(val) if not np.isnan(val) else default
+    return result
+
+
 # ── Technische indicatoren ────────────────────────────────────────────────────
 
 def _add_ta_indicators(df: pd.DataFrame, suffix: str = "") -> pd.DataFrame:
@@ -176,13 +190,12 @@ def build_features(
     df["hour_of_week"] = df["day_of_week"] * 24 + df["hour"]
     df["session"]      = df["hour"].map(_session)
 
-    # ── P1/P2 statistieken als feature ────────────────────────────────────────
-    df["p1_probability"] = df.apply(
-        lambda r: _lookup_heatmap(p1_heatmap, r["day_of_week"], r["hour"]), axis=1
-    )
-    df["direction_bias"] = df.apply(
-        lambda r: _lookup_heatmap(direction_bias, r["day_of_week"], r["hour"]), axis=1
-    ).fillna(0.5)
+    # ── P1/P2 statistieken als feature (vectorized lookup) ────────────────────
+    p1_dict  = _build_heatmap_lookup(p1_heatmap, default=0.0)
+    dir_dict = _build_heatmap_lookup(direction_bias, default=0.5)
+    dow_hour = list(zip(df["day_of_week"], df["hour"]))
+    df["p1_probability"] = pd.Series(dow_hour, index=df.index).map(p1_dict).fillna(0.0)
+    df["direction_bias"] = pd.Series(dow_hour, index=df.index).map(dir_dict).fillna(0.5)
 
     # ── Prijs- en volumefeatures (rolling, geen look-ahead) ───────────────────
     df["returns"]        = df["close"].pct_change()
@@ -228,16 +241,12 @@ def build_features(
     # buy_pressure: rolling fractie candles die hoger sloten dan openden (24h)
     df["buy_pressure"] = (df["close"] > df["open"]).rolling(24).mean()
 
-    # ── Vorige dag richting ───────────────────────────────────────────────────
+    # ── Vorige dag richting (vectorized) ──────────────────────────────────────
     p1p2 = p1p2.copy()
     p1p2["date"] = pd.to_datetime(p1p2["date"]).dt.date
     prev_return_map = p1p2.set_index("date")["day_return"].to_dict()
-
-    def _prev_day_return(ts):
-        prev_date = (ts - pd.Timedelta(days=1)).date()
-        return prev_return_map.get(prev_date, 0.0)
-
-    df["prev_day_return"] = [_prev_day_return(ts) for ts in df.index]
+    prev_dates = (df.index - pd.Timedelta(days=1)).date
+    df["prev_day_return"] = pd.Series(prev_dates, index=df.index).map(prev_return_map).fillna(0.0)
 
     # ── Technische indicatoren (1h) ───────────────────────────────────────────
     df = _add_ta_indicators(df, suffix="")
@@ -312,8 +321,9 @@ def build_features(
         df_ext = load_all_external(df.index, symbol=symbol)
         for col in df_ext.columns:
             df[col] = df_ext[col]
-    except Exception as e:
+    except (KeyError, ValueError, TypeError) as e:
         print(f"  Waarschuwing: externe data laden mislukt ({e}) — defaults gebruikt")
+        import traceback; traceback.print_exc()
         for col in ["fear_greed", "spx_return_24h", "eurusd_return_24h",
                     "funding_rate", "oi_change_24h"]:
             if col not in df.columns:

@@ -45,6 +45,10 @@ def _create_table(conn: sqlite3.Connection) -> None:
             PRIMARY KEY (symbol, interval, open_time)
         )
     """)
+    conn.execute("""
+        CREATE INDEX IF NOT EXISTS idx_symbol_interval
+        ON ohlcv(symbol, interval)
+    """)
     conn.commit()
 
 
@@ -312,6 +316,29 @@ def load_ohlcv(
     df["datetime"] = pd.to_datetime(df["open_time"], unit="ms", utc=True)
     df = df.set_index("datetime").drop(columns=["symbol", "interval"])
     return df
+
+
+def load_ohlcv_latest(
+    symbol: str = config.SYMBOL,
+    interval: str = config.INTERVAL,
+    n: int = 1,
+) -> pd.DataFrame:
+    """
+    Laad alleen de meest recente n candles uit SQLite.
+    Veel sneller dan load_ohlcv() wanneer alleen de laatste rij nodig is.
+    """
+    conn = _get_conn()
+    df = pd.read_sql(
+        "SELECT * FROM ohlcv WHERE symbol=? AND interval=? ORDER BY open_time DESC LIMIT ?",
+        conn,
+        params=(symbol, interval, n),
+    )
+    conn.close()
+    if df.empty:
+        return df
+    df["datetime"] = pd.to_datetime(df["open_time"], unit="ms", utc=True)
+    df = df.set_index("datetime").drop(columns=["symbol", "interval"])
+    return df.sort_index()
 
 
 if __name__ == "__main__":

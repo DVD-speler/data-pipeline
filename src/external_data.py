@@ -30,9 +30,21 @@ import config
 EXTERNAL_DIR    = config.DATA_DIR / "external"
 EXTERNAL_DIR.mkdir(exist_ok=True)
 
-MAX_CACHE_AGE_H = 6        # herdownload als cache ouder dan N uur
 FUTURES_BASE    = "https://fapi.binance.com"
 FNG_URL         = "https://api.alternative.me/fng/"
+
+# Per-bron cache-leeftijden (in uren)
+# Fear & Greed is dagelijks → 24h; SPX/EURUSD zijn uurlijks → 1h;
+# funding rate is 8-uurlijks → 8h; DVOL is uurlijks → 1h.
+_CACHE_MAX_AGE_H = {
+    "fear_greed":    24,
+    "spx":            1,
+    "eurusd":         1,
+    "btc_dvol":       1,
+    "spx_daily":     24,
+    "eurusd_daily":  24,
+}
+_CACHE_AGE_DEFAULT = 6   # fallback voor funding_rate, open_interest, etc.
 
 
 # ── Cache helpers ──────────────────────────────────────────────────────────────
@@ -46,7 +58,8 @@ def _cache_is_fresh(name: str) -> bool:
     if not path.exists():
         return False
     age_h = (time.time() - path.stat().st_mtime) / 3600
-    return age_h < MAX_CACHE_AGE_H
+    max_age = _CACHE_MAX_AGE_H.get(name, _CACHE_AGE_DEFAULT)
+    return age_h < max_age
 
 
 def _save_cache(name: str, df: pd.DataFrame) -> None:
