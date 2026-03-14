@@ -1,7 +1,7 @@
 {
-  "tijdstip": "2026-03-13 15:00:00+00:00",
+  "tijdstip": "2026-03-13 16:00:00+00:00",
   "signaal": "LONG",
-  "kans_stijging": "67.6%",
+  "kans_stijging": "64.9%",
   "long_threshold": "0.60",
   "long_threshold_base": "0.65",
   "short_threshold": "0.30",
@@ -9,5 +9,5 @@
   "market_regime": "bull",
   "death_cross": false,
   "horizon": "24 uur",
-  "prijs": 72419.8515625
+  "prijs": 71860.2421875
 }
