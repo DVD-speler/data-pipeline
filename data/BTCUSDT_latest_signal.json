@@ -1,5 +1,5 @@
 {
-  "tijdstip": "2026-03-15 14:00:00+00:00",
+  "tijdstip": "2026-03-15 15:00:00+00:00",
   "signaal": "WACHT",
   "kans_stijging": "44.8%",
   "long_threshold": "0.60",
@@ -9,5 +9,5 @@
   "market_regime": "bull",
   "death_cross": false,
   "horizon": "24 uur",
-  "prijs": 71610.1328125
+  "prijs": 71488.0625
 }
