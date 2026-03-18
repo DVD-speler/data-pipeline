@@ -131,7 +131,7 @@ jobs:
                   data/BTCUSDT_paper_trades.json data/BTCUSDT_latest_signal.json \
                   data/ETHUSDT_paper_trades.json data/ETHUSDT_latest_signal.json
           git diff --cached --quiet || git commit -m "signal: $(date -u '+%Y-%m-%d %H:%M UTC')"
-          git pull --rebase origin master
+          git pull --rebase -X theirs origin master
           git push
 
       - name: Commit gewijzigde bestanden (dagmodel)
@@ -143,7 +143,7 @@ jobs:
                   data/BTCUSDT_1d_latest_signal.json \
                   data/ETHUSDT_1d_latest_signal.json
           git diff --cached --quiet || git commit -m "daily-signal: $(date -u '+%Y-%m-%d %H:%M UTC')"
-          git pull --rebase origin master
+          git pull --rebase -X theirs origin master
           git push
 
       - name: Commit gewijzigde bestanden (4h model)
@@ -155,5 +155,5 @@ jobs:
                   data/BTCUSDT_4h_paper_trades.json data/BTCUSDT_4h_latest_signal.json \
                   data/ETHUSDT_4h_latest_signal.json
           git diff --cached --quiet || git commit -m "4h-signal: $(date -u '+%Y-%m-%d %H:%M UTC')"
-          git pull --rebase origin master
+          git pull --rebase -X theirs origin master
           git push
