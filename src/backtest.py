@@ -264,6 +264,167 @@ def compute_random_baseline(
     return {"random_sharpe_p5": p5, "random_sharpe_mean": mean, "random_sharpe_p95": p95}
 
 
+# ── Breakeven Trailing Stop Backtest ─────────────────────────────────────────
+
+def run_backtest_be_trail(
+    test_df: pd.DataFrame,
+    probas: np.ndarray,
+    threshold: float = None,
+    threshold_short: float = config.SIGNAL_THRESHOLD_SHORT,
+    fee: float = config.TRADE_FEE,
+    stop_loss_pct: float = config.STOP_LOSS_PCT,
+    tp_pct: float = 0.06,
+    be_trigger_pct: float = 0.02,
+    allow_second_entry: bool = True,
+    use_short: bool = False,
+    regime_filter: bool = True,
+    horizon: int = None,
+) -> pd.DataFrame:
+    """
+    Backtest met trailing stop-loss naar breakeven (BE).
+
+    Logica per candle:
+      - Wanneer close >= entry * (1 + be_trigger_pct) → SL verplaatst naar entry (BE)
+      - Als allow_second_entry=True én alle open posities op BE staan → tweede trade
+        toegestaan bij nieuw signaal (max 2 simultane posities)
+      - SL/TP/horizon: gedetecteerd op candle-close (geen intrabar high/low beschikbaar)
+
+    Signalen worden identiek berekend als run_backtest() (inclusief regime/death-cross filters).
+    Strategy_return wordt bijgehouden per exit-candle (niet entry-candle).
+    """
+    if threshold is None:
+        threshold, _ = load_optimal_threshold()
+
+    h = horizon if horizon is not None else config.PREDICTION_HORIZON_H
+
+    # Genereer signalen via run_backtest (alle regime-/death-cross filters ingebakken)
+    base = run_backtest(
+        test_df, probas,
+        threshold=threshold,
+        threshold_short=threshold_short,
+        fee=fee,
+        stop_loss=stop_loss_pct,
+        use_short=use_short,
+        use_position_sizing=True,
+        regime_filter=regime_filter,
+        horizon=h,
+    )
+    signals_long  = base["signal_long"].values.astype(int)
+    signals_short = base["signal_short"].values.astype(int)
+
+    closes = test_df["close"].values
+    n      = len(closes)
+
+    # Position sizing: identiek aan run_backtest
+    long_sizes  = np.clip((probas - 0.5) * 2, 0.0, 1.0)
+    short_sizes = np.clip((0.5 - probas) * 2, 0.0, 1.0)
+
+    strategy_returns = np.zeros(n)
+    trade_opened     = np.zeros(n, dtype=int)   # 1 = nieuw positie geopend op deze candle
+    be_triggered     = np.zeros(n, dtype=int)   # 1 = SL naar BE verplaatst op deze candle
+    positions = []  # actieve posities: list of dicts
+
+    for i in range(n):
+        close = closes[i]
+
+        # ── 1. Verwerk exits ──────────────────────────────────────────────────
+        remaining = []
+        for pos in positions:
+            direction = pos["direction"]
+            sl        = pos["sl_price"]
+            tp        = pos["tp_price"]
+            size      = pos["size"]
+            exit_price = None
+
+            if direction == "LONG":
+                if close <= sl:
+                    exit_price = sl           # SL geraakt
+                elif close >= tp:
+                    exit_price = tp           # TP geraakt
+                elif i >= pos["horizon_idx"]:
+                    exit_price = close        # horizon verlopen
+            else:  # SHORT
+                if close >= sl:
+                    exit_price = sl
+                elif close <= tp:
+                    exit_price = tp
+                elif i >= pos["horizon_idx"]:
+                    exit_price = close
+
+            if exit_price is not None:
+                entry = pos["entry_price"]
+                gross_ret = (exit_price - entry) / entry if direction == "LONG" else (entry - exit_price) / entry
+                strategy_returns[i] += size * gross_ret - size * 2 * fee
+            else:
+                # ── BE trigger: SL verplaatsen naar entry ────────────────────
+                if not pos["is_be"]:
+                    if direction == "LONG" and close >= pos["entry_price"] * (1 + be_trigger_pct):
+                        pos["sl_price"] = pos["entry_price"]
+                        pos["is_be"]    = True
+                        be_triggered[i] = 1
+                    elif direction == "SHORT" and close <= pos["entry_price"] * (1 - be_trigger_pct):
+                        pos["sl_price"] = pos["entry_price"]
+                        pos["is_be"]    = True
+                        be_triggered[i] = 1
+                remaining.append(pos)
+
+        positions = remaining
+
+        # ── 2. Nieuwe entry toestaan? ─────────────────────────────────────────
+        n_open  = len(positions)
+        all_be  = all(p["is_be"] for p in positions) if positions else True
+
+        can_long  = (n_open == 0) or (allow_second_entry and all_be and n_open < 2)
+        can_short = (n_open == 0)   # shorts: nooit tweede entry
+
+        if can_long and signals_long[i]:
+            positions.append({
+                "direction":   "LONG",
+                "entry_price": close,
+                "sl_price":    close * (1 - stop_loss_pct),
+                "tp_price":    close * (1 + tp_pct),
+                "is_be":       False,
+                "horizon_idx": i + h,
+                "size":        long_sizes[i],
+            })
+            trade_opened[i] += 1
+
+        if can_short and use_short and signals_short[i]:
+            positions.append({
+                "direction":   "SHORT",
+                "entry_price": close,
+                "sl_price":    close * (1 + stop_loss_pct),
+                "tp_price":    close * (1 - tp_pct),
+                "is_be":       False,
+                "horizon_idx": i + h,
+                "size":        short_sizes[i],
+            })
+            trade_opened[i] += 1
+
+    # ── Resultaten DataFrame ──────────────────────────────────────────────────
+    results = test_df[["close", "target"]].copy()
+    results["proba"]           = probas
+    results["signal_long"]     = signals_long
+    results["signal_short"]    = signals_short
+    results["signal"]          = signals_long - signals_short
+    results["trade_return"]    = results["close"].shift(-h) / results["close"] - 1
+    results["strategy_return"] = strategy_returns
+    results["trade_opened"]    = trade_opened   # 1 = entry op deze candle
+    results["be_triggered"]    = be_triggered   # 1 = SL naar BE op deze candle
+    results["bh_return"]       = results["close"].pct_change()
+    results["cum_strategy"]    = (1 + results["strategy_return"].fillna(0)).cumprod()
+    results["cum_buy_hold"]    = (1 + results["bh_return"].fillna(0)).cumprod()
+    # Metadata voor diagnose (opgeslagen als attrs)
+    results.attrs["be_trail_params"] = {
+        "be_trigger_pct":    be_trigger_pct,
+        "allow_second_entry": allow_second_entry,
+        "tp_pct":            tp_pct,
+        "stop_loss_pct":     stop_loss_pct,
+    }
+
+    return results
+
+
 # ── Walk-forward validatie ────────────────────────────────────────────────────
 
 def run_walkforward(

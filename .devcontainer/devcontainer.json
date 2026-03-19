@@ -21,10 +21,14 @@
         }
     },
     "postCreateCommand": "pip install --upgrade pip && pip install -r requirements.txt && mkdir -p data/stats",
-    "forwardPorts": [8888],
+    "forwardPorts": [8888, 8080],
     "portsAttributes": {
         "8888": {
             "label": "Jupyter Notebook",
+            "onAutoForward": "notify"
+        },
+        "8080": {
+            "label": "Freqtrade UI",
             "onAutoForward": "notify"
         }
     },
