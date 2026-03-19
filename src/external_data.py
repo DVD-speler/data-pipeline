@@ -75,7 +75,7 @@ def _load_cache(name: str) -> pd.DataFrame:
 def _download_fear_greed() -> pd.DataFrame:
     resp = requests.get(
         FNG_URL,
-        params={"limit": 1000, "format": "json"},
+        params={"limit": 2000, "format": "json"},   # 2000 = max (~5.5 jaar history)
         timeout=15,
     )
     resp.raise_for_status()
@@ -220,6 +220,65 @@ def fetch_spx_daily() -> pd.DataFrame:
     if _cache_path(name).exists():
         return _load_cache(name)
     return pd.DataFrame(columns=["spx_return_1d", "spx_return_1w"])
+
+
+def fetch_vix() -> pd.DataFrame:
+    """
+    CBOE Volatility Index (VIX) — aandelenmarkt-angstmeter.
+
+    VIX > 20 = verhoogde angst
+    VIX > 25 = block longs (config.VIX_GATE)
+    VIX > 30 = ernstige marktangst (crashes historisch)
+    VIX > 50 = extreme paniek (COVID maart 2020, aug 2024 Japan-crash = 65+)
+
+    Data: yfinance "^VIX" dagelijks, forward-filled naar uurlijks.
+    Geeft de ruwe VIX-waarde terug (niet een rendement).
+    """
+    name = "vix"
+    if not _cache_is_fresh(name):
+        print("  Downloading VIX (CBOE Volatility Index)...")
+        try:
+            df = _download_yfinance_daily("^VIX", years=10)
+            df.columns = ["vix_level"]
+            _save_cache(name, df)
+            return df
+        except Exception as e:
+            print(f"  Waarschuwing: VIX download mislukt ({e})")
+    if _cache_path(name).exists():
+        return _load_cache(name)
+    return pd.DataFrame(columns=["vix_level"])
+
+
+def fetch_usdjpy() -> pd.DataFrame:
+    """
+    USD/JPY wisselkoers — yen-carry-trade indicator.
+
+    Sterke yen-appreciatie (USD/JPY daalt) = carry trade unwind =
+    gedwongen liquidatie van risk assets (waaronder crypto).
+
+    Biedt:
+      usdjpy_return_24h : dagelijks rendement (proxy voor momentum)
+      usdjpy_return_7d  : 7-daags rendement — gate trigger als < -3%
+                          (yen > 3% gestegen in een week = gevaar)
+
+    Data: yfinance "JPY=X" dagelijks, forward-filled naar uurlijks.
+    """
+    name = "usdjpy"
+    if not _cache_is_fresh(name):
+        print("  Downloading USD/JPY...")
+        try:
+            df = _download_yfinance_daily("JPY=X", years=10)
+            df.columns = ["usdjpy_close"]
+            df["usdjpy_return_24h"] = df["usdjpy_close"].pct_change(1)
+            df["usdjpy_return_7d"]  = df["usdjpy_close"].pct_change(7)
+            df = df[["usdjpy_return_24h", "usdjpy_return_7d"]]
+            _save_cache(name, df)
+            return df
+        except Exception as e:
+            print(f"  Waarschuwing: USD/JPY download mislukt ({e})")
+    if _cache_path(name).exists():
+        return _load_cache(name)
+    return pd.DataFrame(columns=["usdjpy_return_24h", "usdjpy_return_7d"])
 
 
 def fetch_eurusd_daily() -> pd.DataFrame:
@@ -439,6 +498,9 @@ _DEFAULTS = {
     "funding_rate":      0.0,
     "oi_change_24h":     0.0,
     "btc_dvol":          0.45,   # ~45% IV = neutrale volatiliteit
+    "vix_level":         20.0,   # historisch gemiddelde VIX ~20
+    "usdjpy_return_24h": 0.0,
+    "usdjpy_return_7d":  0.0,
 }
 
 _SOURCES_GLOBAL = {
@@ -446,6 +508,8 @@ _SOURCES_GLOBAL = {
     "spx":        fetch_spx,
     "eurusd":     fetch_eurusd,
     "btc_dvol":   fetch_deribit_dvol,
+    "vix":        fetch_vix,
+    "usdjpy":     fetch_usdjpy,
 }
 
 

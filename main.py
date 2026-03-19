@@ -137,12 +137,18 @@ def fase_model(features=None, symbol: str = None):
     print("=" * 60)
     import pandas as pd
     import config
-    from src.model import train_model
+    from src.model import train_model, train_regime_models
 
     sym = symbol or config.SYMBOL
     if features is None:
         features = pd.read_parquet(config.symbol_path(sym, "features.parquet"))
-    return train_model(features, symbol=sym)
+    result = train_model(features, symbol=sym)
+
+    # Train ook regime-specifieke modellen (bull/ranging/bear) als bonus
+    print("\n--- Regime-geconditioneerde modellen ---")
+    train_regime_models(features, symbol=sym)
+
+    return result
 
 
 def fase_model_compare(features=None, symbol: str = None):
@@ -203,9 +209,9 @@ def fase_backtest(model=None, test_df=None, probas=None, symbol: str = None):
     return results, metrics
 
 
-def fase_walkforward(model_name: str = "RandomForest", symbol: str = None):
+def fase_walkforward(model_name: str = "RandomForest", symbol: str = None, use_regime_models: bool = False):
     print("\n" + "=" * 60)
-    print(f"FASE 6b — Walk-Forward Validatie ({model_name})")
+    print(f"FASE 6b — Walk-Forward Validatie ({model_name}{'  +regime' if use_regime_models else ''})")
     print("=" * 60)
     import pandas as pd
     import config
@@ -213,7 +219,8 @@ def fase_walkforward(model_name: str = "RandomForest", symbol: str = None):
 
     sym = symbol or config.SYMBOL
     features = pd.read_parquet(config.symbol_path(sym, "features.parquet"))
-    fold_df, all_results = run_walkforward(features, model_name=model_name, symbol=sym)
+    fold_df, all_results = run_walkforward(features, model_name=model_name, symbol=sym,
+                                           use_regime_models=use_regime_models)
 
     print(f"\nResultaten opgeslagen in: {config.DATA_DIR / 'stats'}/")
     return fold_df, all_results
@@ -320,6 +327,12 @@ def main():
         choices=["BTCUSDT", "ETHUSDT"],
         help="Handelssymbool (standaard: BTCUSDT uit config)",
     )
+    parser.add_argument(
+        "--regime-models",
+        action="store_true",
+        default=False,
+        help="Gebruik regime-conditioned modellen in walk-forward (bull/ranging/bear)",
+    )
     args = parser.parse_args()
 
     sym = args.symbol  # None = gebruik config.SYMBOL als default in elke fase
@@ -351,7 +364,7 @@ def main():
     elif args.phase == "backtest":
         fase_backtest(symbol=sym)
     elif args.phase == "walkforward":
-        fase_walkforward(model_name=args.wf_model, symbol=sym)
+        fase_walkforward(model_name=args.wf_model, symbol=sym, use_regime_models=args.regime_models)
     elif args.phase == "horizon_scan":
         fase_horizon_scan(symbol=sym)
     elif args.phase == "signal":

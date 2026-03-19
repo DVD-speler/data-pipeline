@@ -410,6 +410,80 @@ def train_model(df: pd.DataFrame, symbol: str = config.SYMBOL) -> tuple:
     return model, test, probas
 
 
+# ── Regime-geconditioneerde training ──────────────────────────────────────────
+
+def train_regime_models(df: pd.DataFrame, symbol: str = config.SYMBOL) -> dict:
+    """
+    Traint aparte LightGBM modellen per marktregime (bull/ranging/bear).
+    Vereist kolom 'market_regime' in df (+1=bull, 0=ranging, -1=bear).
+
+    Elke subset krijgt het algemene model als fallback als de regime-subset
+    te klein is (<500 rijen na dead-zone filtering).
+
+    Geeft dict terug: {1: bull_model, 0: ranging_model, -1: bear_model}
+    Slaat modellen op als {symbol}_bull_model.pkl etc.
+    """
+    import json
+    import lightgbm as lgb
+
+    if "market_regime" not in df.columns:
+        print("Geen market_regime kolom — regime-modellen overgeslagen.")
+        return {}
+
+    train, val, _ = time_split_with_validation(df)
+
+    # Laad stabiele params
+    stable_path = config.symbol_path(symbol, "lgb_best_params.json")
+    if stable_path.exists():
+        with open(stable_path) as f:
+            base_params = json.load(f)
+        base_params["random_state"] = 42
+        base_params["verbose"]      = -1
+    else:
+        base_params = {
+            "n_estimators": 400, "max_depth": 4, "learning_rate": 0.03,
+            "subsample": 0.7, "colsample_bytree": 0.6, "min_child_samples": 50,
+            "reg_alpha": 0.1, "reg_lambda": 1.5, "random_state": 42, "verbose": -1,
+        }
+
+    regime_labels = {1: "bull", 0: "ranging", -1: "bear"}
+    regime_models = {}
+
+    for regime, label in regime_labels.items():
+        subset = train[train["market_regime"] == regime]
+        if len(subset) < 500:
+            print(f"  Regime {label:8s}: slechts {len(subset)} rijen — overgeslagen (te weinig data)")
+            continue
+
+        X_sub = subset[config.FEATURE_COLS]
+        y_sub = subset["target"]
+        n = len(X_sub)
+        time_weights = np.linspace(0.5, 1.0, n)
+
+        model = lgb.LGBMClassifier(**base_params)
+        model.fit(X_sub, y_sub, sample_weight=time_weights)
+
+        path = config.symbol_path(symbol, f"{label}_model.pkl")
+        joblib.dump(model, path)
+        regime_models[regime] = model
+        print(f"  Regime {label:8s}: {n:>5} rijen — model opgeslagen: {path.name}")
+
+    return regime_models
+
+
+def load_regime_model(regime: int, symbol: str = config.SYMBOL):
+    """
+    Laad het regime-specifieke model voor het opgegeven regime.
+    Valt terug op het algemene model als er geen regime-model bestaat.
+    """
+    regime_labels = {1: "bull", 0: "ranging", -1: "bear"}
+    label = regime_labels.get(regime, "ranging")
+    path = config.symbol_path(symbol, f"{label}_model.pkl")
+    if path.exists():
+        return joblib.load(path)
+    return load_model(symbol)
+
+
 # ── Laden ─────────────────────────────────────────────────────────────────────
 
 def load_model(symbol: str = config.SYMBOL) -> RandomForestClassifier:

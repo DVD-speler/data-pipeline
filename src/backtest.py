@@ -100,6 +100,47 @@ def run_backtest(
             )
             results["signal_long"] = results["signal_long"] * no_death_cross.astype(int)
 
+        # ── P1: DVOL gate ─────────────────────────────────────────────────────
+        # Hoge BTC implied volatility (Deribit DVOL) → markt prijst staartrisico in.
+        # btc_dvol > config.DVOL_GATE (0.65) blokkeert nieuwe longs.
+        # Vangt flash-crash omgevingen (aug 2024) die EMA-filters missen.
+        if "btc_dvol" in test_df.columns:
+            low_dvol = (
+                test_df["btc_dvol"].reindex(results.index, fill_value=0.45)
+                < config.DVOL_GATE
+            )
+            results["signal_long"] = results["signal_long"] * low_dvol.astype(int)
+
+        # ── P1: return_30d gate ───────────────────────────────────────────────
+        # BTC > 10% gedaald in 30 dagen → sustained downtrend, geen nieuwe longs.
+        # Vangt langzame bearmarkten (sep 2025) die boven EMA200 blijven hangen.
+        if "return_30d" in test_df.columns:
+            monthly_ok = (
+                test_df["return_30d"].reindex(results.index, fill_value=0.0)
+                >= config.RETURN_30D_LONG_GATE
+            )
+            results["signal_long"] = results["signal_long"] * monthly_ok.astype(int)
+
+        # ── P2: VIX gate ──────────────────────────────────────────────────────
+        # Aandelenmarkt-angst (VIX > config.VIX_GATE = 25) blokkeert longs.
+        # VIX spikte naar 65+ tijdens aug 2024 crash; dagelijks forward-filled.
+        if "vix_level" in test_df.columns:
+            low_vix = (
+                test_df["vix_level"].reindex(results.index, fill_value=20.0)
+                < config.VIX_GATE
+            )
+            results["signal_long"] = results["signal_long"] * low_vix.astype(int)
+
+        # ── P2: USD/JPY gate ──────────────────────────────────────────────────
+        # Snelle yen-appreciatie → carry trade unwind → risk-off in alle markten.
+        # usdjpy_return_7d < config.USDJPY_RETURN_7D_GATE (-3%) blokkeert longs.
+        if "usdjpy_return_7d" in test_df.columns:
+            jpy_ok = (
+                test_df["usdjpy_return_7d"].reindex(results.index, fill_value=0.0)
+                >= config.USDJPY_RETURN_7D_GATE
+            )
+            results["signal_long"] = results["signal_long"] * jpy_ok.astype(int)
+
         # Shorts: dubbele macro-gate
         #   1. Onder EMA200 (prijs in downtrend)
         #   2. return_30d < -3% (macro 30-daagse trend negatief)
@@ -131,8 +172,22 @@ def run_backtest(
 
     # ── Position sizing ───────────────────────────────────────────────────────
     if use_position_sizing:
-        long_size  = ((results["proba"] - 0.5) * 2).clip(0, 1)
-        short_size = ((0.5 - results["proba"]) * 2).clip(0, 1)
+        base_long  = ((results["proba"] - 0.5) * 2).clip(0, 1)
+        base_short = ((0.5 - results["proba"]) * 2).clip(0, 1)
+        # P1: Volatiliteit-geschaalde positiegrootte.
+        # Hogere marktvolatiliteit → kleinere positie → minder verlies in crashes.
+        # Formule: size = base / (1 + VOL_SIZE_SCALE × volatility_24h)
+        # Bij vol=0.02 (rustig): schalingsfactor ~0.91 (klein effect)
+        # Bij vol=0.06 (crash):  schalingsfactor ~0.77 (23% kleinere positie)
+        if "volatility_24h" in test_df.columns:
+            vol = test_df["volatility_24h"].reindex(
+                results.index, fill_value=0.02
+            ).clip(lower=0.001)
+            vol_scale = (1.0 / (1.0 + config.VOL_SIZE_SCALE * vol)).clip(0.2, 1.0)
+        else:
+            vol_scale = 1.0
+        long_size  = (base_long  * vol_scale).clip(0, 1)
+        short_size = (base_short * vol_scale).clip(0, 1)
     else:
         long_size  = results["signal_long"].astype(float)
         short_size = results["signal_short"].astype(float)
@@ -152,6 +207,40 @@ def run_backtest(
     results["bh_return"]    = results["close"].pct_change()
     results["cum_strategy"] = (1 + results["strategy_return"].fillna(0)).cumprod()
     results["cum_buy_hold"] = (1 + results["bh_return"].fillna(0)).cumprod()
+
+    # ── P3: Drawdown circuit breaker ──────────────────────────────────────────
+    # Zodra de cumulatieve drawdown de drempel overschrijdt (config.MAX_DRAWDOWN_GATE),
+    # worden alle signalen geblokkeerd voor config.CIRCUIT_BREAKER_COOLDOWN_H uur.
+    # Dit voorkomt dat een verliesgevende periode verder uitgehold wordt.
+    #
+    # Implementatie: herschrijf strategy_return naar 0 voor geblokkeerde periodes
+    # en herbereken cum_strategy zodat de equity-curve klopt.
+    max_dd_gate  = getattr(config, "MAX_DRAWDOWN_GATE",        -0.15)
+    cooldown_h   = getattr(config, "CIRCUIT_BREAKER_COOLDOWN_H", 168)  # 7 dagen
+
+    if max_dd_gate < 0:   # gate = 0.0 schakelt de breaker uit
+        cum      = results["cum_strategy"].values.copy()
+        signals  = results["signal"].values.copy()
+        strat_r  = results["strategy_return"].values.copy()
+
+        peak          = cum[0]
+        blocked_until = -1   # index tot waar geblokkeerd
+
+        for i in range(len(cum)):
+            if i <= blocked_until:
+                # Blokkeer signalen tijdens cooldown
+                strat_r[i] = 0.0
+            else:
+                if cum[i] > peak:
+                    peak = cum[i]
+                dd = cum[i] / peak - 1
+                if dd < max_dd_gate:
+                    blocked_until = i + cooldown_h
+                    strat_r[i]    = 0.0   # ook huidige candle blokkeren
+
+        # Herbereken cumulatief met gecorrigeerde returns
+        results["strategy_return"] = strat_r
+        results["cum_strategy"]    = (1 + results["strategy_return"].fillna(0)).cumprod()
 
     return results
 
@@ -431,10 +520,14 @@ def run_walkforward(
     df: pd.DataFrame,
     model_name: str = "RandomForest",
     symbol: str = config.SYMBOL,
+    use_regime_models: bool = False,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """
     Walk-forward backtest: traint maandelijks opnieuw op een rollend venster.
     Gebruikt per fold ook threshold-optimalisatie op een interne validatieset.
+
+    use_regime_models: traint aparte bull/ranging/bear modellen per fold en
+    routeert elke rij naar het passende model bij het voorspellen.
     """
     from src.model import optimize_threshold
     from src.model_compare import _get_models
@@ -484,7 +577,40 @@ def run_walkforward(
         from src.model import optimize_short_threshold
         opt_thr       = optimize_threshold(model, val)
         opt_short_thr = optimize_short_threshold(model, val)
-        probas        = model.predict_proba(test[config.FEATURE_COLS])[:, 1]
+
+        # Regime-geconditioneerde voorspelling (optioneel)
+        if use_regime_models and "market_regime" in train.columns and model_name == "LightGBM":
+            import lightgbm as lgb
+            import json as _json
+            stable_path = config.symbol_path(symbol, "lgb_best_params.json")
+            if stable_path.exists():
+                with open(stable_path) as _f:
+                    _rp = _json.load(_f)
+                _rp["random_state"] = 42
+                _rp["verbose"] = -1
+            else:
+                _rp = model.get_params()
+
+            regime_mdls = {}
+            for _reg, _lbl in {1: "bull", 0: "ranging", -1: "bear"}.items():
+                _sub = train[train["market_regime"] == _reg]
+                if len(_sub) >= 300:
+                    _tw = np.linspace(0.5, 1.0, len(_sub))
+                    _rm = lgb.LGBMClassifier(**_rp)
+                    _rm.fit(_sub[config.FEATURE_COLS], _sub["target"], sample_weight=_tw)
+                    regime_mdls[_reg] = _rm
+
+            # Voorspel per rij met regime-model, val terug op algemeen model
+            probas = np.empty(len(test))
+            if "market_regime" in test.columns:
+                for _i, (_idx, _row) in enumerate(test.iterrows()):
+                    _reg = int(_row["market_regime"]) if not pd.isna(_row["market_regime"]) else 0
+                    _mdl = regime_mdls.get(_reg, model)
+                    probas[_i] = _mdl.predict_proba(_row[config.FEATURE_COLS].values.reshape(1, -1))[0, 1]
+            else:
+                probas = model.predict_proba(test[config.FEATURE_COLS])[:, 1]
+        else:
+            probas = model.predict_proba(test[config.FEATURE_COLS])[:, 1]
 
         results = run_backtest(
             test, probas,

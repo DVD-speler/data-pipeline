@@ -21,7 +21,7 @@ SYMBOL    = "BTCUSDT"
 INTERVAL  = "1h"
 SYMBOLS   = ["BTCUSDT", "ETHUSDT"]
 INTERVALS = ["1h", "4h"]
-DAYS_HISTORY = 730
+DAYS_HISTORY = 1826  # 5 jaar (dekt volledige BTC 4-jaar cyclus incl. 2022 bearmarkt)
 
 # ── P1/P2 definitie ────────────────────────────────────────────────────────────
 MIN_HOURS_PER_DAY = 23
@@ -104,6 +104,10 @@ FEATURE_COLS_1H = [
     "vwap_distance",            # (close − dag-VWAP) / close: positie vs. gewogen gemiddelde
     # Volatiliteitsregime (opties-markt)
     "btc_dvol",                 # Deribit BTC implied volatility index (genormaliseerd 0–1)
+    # P2 macro features
+    "vix_level",                # CBOE VIX aandelenmarkt-angstmeter (ruwe waarde, ~20 gemiddeld)
+    "usdjpy_return_24h",        # USD/JPY dagelijks rendement (negatief = yen sterker = risk-off)
+    "usdjpy_return_7d",         # USD/JPY 7-daags rendement — carry trade unwind detector
 ]
 # Regime-only columns: in de feature matrix voor backtest-filter, NIET als model feature.
 # adx_trend en market_regime geven expliciete richting → over-confidence in bullish val-periode
@@ -140,3 +144,31 @@ REGIME_THRESHOLD_OFFSETS = {1: -0.05, 0: 0.0, -1: 0.08}
 # ── Backtest ───────────────────────────────────────────────────────────────────
 TRADE_FEE     = 0.001
 STOP_LOSS_PCT = 0.02
+
+# ── Macro gates (P1/P2 verbeteringen) ─────────────────────────────────────────
+# P1 — DVOL gate: BTC implied volatility te hoog → markt prijst crash in
+# btc_dvol is genormaliseerd op 0–1 (Deribit DVOL index / 100)
+# P3 — Drawdown circuit breaker
+# Zodra drawdown > MAX_DRAWDOWN_GATE → stop trading voor CIRCUIT_BREAKER_COOLDOWN_H uur
+# Zet MAX_DRAWDOWN_GATE = 0.0 om uit te schakelen
+MAX_DRAWDOWN_GATE            = -0.15   # -15% drawdown van peak triggert pauze
+CIRCUIT_BREAKER_COOLDOWN_H   =  168    # 7 dagen cooldown (168 uur)
+
+DVOL_GATE = 0.65          # Blokkeert longs als btc_dvol > 0.65 (DVOL index > 65)
+
+# P1 — Maandelijkse terugval gate
+# Blokkeert nieuwe longs als BTC de afgelopen 30 dagen > 10% gedaald is
+RETURN_30D_LONG_GATE = -0.10
+
+# P1 — Volatiliteit-gewogen positiegrootte
+# Schalingsfactor: hogere waarde = kleiner positie bij hoge volatiliteit
+# size = base_size / (1 + VOL_SIZE_SCALE * volatility_24h)
+VOL_SIZE_SCALE = 5.0
+
+# P2 — VIX gate: aandelenmarkt-angst blokkeert crypto longs
+# VIX > 25 = elevated fear (historisch gemiddelde ~20, crashes >30)
+VIX_GATE = 25.0
+
+# P2 — USD/JPY gate: sterke yen-appreciatie signaleert carry trade unwind
+# Blokkeert longs als JPY de afgelopen 7 dagen > 3% sterker is geworden
+USDJPY_RETURN_7D_GATE = -0.03   # negatief = JPY wordt duurder (USD/JPY daalt)

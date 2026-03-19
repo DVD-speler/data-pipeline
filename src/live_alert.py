@@ -16,15 +16,59 @@ Gebruik:
 
 import json
 import os
+from datetime import timezone
 from pathlib import Path
 
 import pandas as pd
 import requests
 
 import config
+import config_daily as cfg_daily
 from src.backtest import generate_live_signal
 from src.data_fetcher import load_ohlcv
 from src.stats import compute_direction_bias, compute_p1_heatmap
+
+
+# ── P2: Daily model regime gate ───────────────────────────────────────────────
+
+def _load_daily_regime(symbol: str) -> dict:
+    """
+    Laad het meest recente dagelijkse regime signaal.
+
+    Retourneert een dict met:
+      is_bear     : bool — dagmodel ziet bearmarkt (proba < 0.40)
+      proba       : float — dagelijkse stijgingskans
+      richting    : str — "BULLISH" / "BEARISH" / "NEUTRAAL" / "ONBEKEND"
+      is_fresh    : bool — signaal < 30 uur oud (anders stale = negeren)
+
+    Als het bestand niet bestaat of verouderd is, wordt een neutraal
+    resultaat (is_bear=False) teruggegeven zodat de 1h-bot gewoon doorloopt.
+    """
+    path = cfg_daily.symbol_path_daily(symbol, "latest_signal.json")
+    neutral = {"is_bear": False, "proba": 0.5, "richting": "ONBEKEND", "is_fresh": False}
+
+    if not path.exists():
+        return neutral
+
+    try:
+        with open(path) as f:
+            data = json.load(f)
+
+        tijdstip = pd.Timestamp(data.get("tijdstip", ""))
+        if tijdstip.tzinfo is None:
+            tijdstip = tijdstip.tz_localize("UTC")
+        now = pd.Timestamp.now(tz=timezone.utc)
+        leeftijd_uur = (now - tijdstip).total_seconds() / 3600
+
+        is_fresh = leeftijd_uur < 30   # max 30 uur oud
+
+        proba    = float(data.get("kans_stijging", 0.5))
+        richting = data.get("richting", data.get("signaal", "ONBEKEND"))
+        is_bear  = (proba < 0.40) and is_fresh
+
+        return {"is_bear": is_bear, "proba": proba, "richting": richting, "is_fresh": is_fresh}
+    except Exception:
+        return neutral
 
 # ── State management ────────────────────────────────────────────────────────────
 
@@ -218,6 +262,19 @@ def run_live_alert(
         else:
             print(f"\n  Positie open: {pos['direction']} ${pos['entry_price']:,.0f} "
                   f"| SL ${pos['sl_price']:,.0f} | TP ${pos['tp_price']:,.0f}")
+
+    # ── P2: Daily model regime gate ───────────────────────────────────────────
+    # Wanneer het dagmodel BEARISH is (proba < 0.40), blokkeren we alle nieuwe longs.
+    # De dagelijkse trend is een trager, stabieler signaal dan de 1h-indicatoren:
+    # als de dagtrend negatief is, zijn 1h-longs statistisch minder betrouwbaar.
+    daily_regime = _load_daily_regime(symbol)
+    if daily_regime["is_bear"] and signaal["signaal"] == "LONG":
+        print(
+            f"\n  ⛔ Daily regime gate: LONG geblokkeerd\n"
+            f"     Dagmodel: {daily_regime['richting']} "
+            f"(proba {daily_regime['proba']:.1%} < 40%) — bearmarkt gedetecteerd"
+        )
+        signaal["signaal"] = f"WACHT (daily regime bear — proba {daily_regime['proba']:.1%})"
 
     # ── Nieuw signaal ─────────────────────────────────────────────────────────
     opened_new_position = False
