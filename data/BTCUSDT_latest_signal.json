@@ -1,7 +1,7 @@
 {
-  "tijdstip": "2026-03-20 16:00:00+00:00",
+  "tijdstip": "2026-03-20 17:00:00+00:00",
   "signaal": "WACHT",
-  "kans_stijging": "59.8%",
+  "kans_stijging": "63.9%",
   "long_threshold": "0.65",
   "long_threshold_base": "0.65",
   "short_threshold": "0.34",
@@ -9,5 +9,5 @@
   "market_regime": "ranging",
   "death_cross": true,
   "horizon": "24 uur",
-  "prijs": 69857.6171875
+  "prijs": 69819.046875
 }
