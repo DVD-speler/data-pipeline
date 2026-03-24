@@ -1,7 +1,7 @@
 {
-  "tijdstip": "2026-03-23 08:00:00+00:00",
+  "tijdstip": "2026-03-23 09:00:00+00:00",
   "signaal": "WACHT (death cross \u2014 EMA50 onder EMA200)",
-  "kans_stijging": "73.1%",
+  "kans_stijging": "66.3%",
   "long_threshold": "0.60",
   "long_threshold_base": "0.65",
   "short_threshold": "0.34",
@@ -9,5 +9,5 @@
   "market_regime": "bull",
   "death_cross": true,
   "horizon": "24 uur",
-  "prijs": 68303.515625
+  "prijs": 68417.78125
 }
