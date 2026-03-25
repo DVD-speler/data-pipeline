@@ -1,13 +1,13 @@
 {
   "signaal": "WACHT",
   "richting": "BEARISH",
-  "kans_stijging": 0.19814004813472802,
-  "prijs": 2115.49462890625,
-  "tijdstip": "2026-03-24 20:00:00+00:00",
+  "kans_stijging": 0.23915848184599964,
+  "prijs": 2155.78515625,
+  "tijdstip": "2026-03-25 00:00:00+00:00",
   "market_regime": 0.0,
   "regime_label": "ranging",
   "death_cross": false,
-  "boven_ema200": false,
+  "boven_ema200": true,
   "long_threshold": 0.68,
   "long_threshold_base": 0.68,
   "short_threshold": 0.32
