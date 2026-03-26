@@ -19,6 +19,7 @@ import os
 from datetime import timezone
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 import requests
 
@@ -26,6 +27,7 @@ import config
 import config_daily as cfg_daily
 from src.backtest import generate_live_signal, load_exit_proba
 from src.data_fetcher import load_ohlcv
+from src.levels import precompute_swings, get_recent_levels, compute_structural_sl_tp
 from src.stats import compute_direction_bias, compute_p1_heatmap
 
 
@@ -308,6 +310,21 @@ def run_live_alert(
         )
         signaal["signaal"] = f"WACHT (daily regime bear — proba {daily_regime['proba']:.1%})"
 
+    # ── Laad high/low data voor structurele SL/TP ─────────────────────────────
+    try:
+        from src.data_fetcher import load_ohlcv
+        _ohlcv_raw = load_ohlcv(symbol=symbol, interval="1h")
+        _ohlcv_raw = _ohlcv_raw[_ohlcv_raw.index <= latest_ts].tail(500)
+        _highs = _ohlcv_raw["high"].values
+        _lows  = _ohlcv_raw["low"].values
+        _swings = precompute_swings(_highs, _lows)
+        _supports, _resistances = get_recent_levels(_swings, len(_highs))
+        _use_structural = True
+    except Exception as _e:
+        print(f"  Waarschuwing: structurele niveaus niet beschikbaar ({_e}) — fallback op vaste pct")
+        _use_structural = False
+        _supports, _resistances = np.array([]), np.array([])
+
     # ── Nieuw signaal ─────────────────────────────────────────────────────────
     opened_new_position = False
     if state["open_position"] is None and signaal["signaal"] in ("LONG", "SHORT"):
@@ -322,12 +339,22 @@ def run_live_alert(
         capital = state["capital"]
         position_size = capital * risk_pct / sl_pct
 
-        if direction == "LONG":
-            sl_price = entry_price * (1 - sl_pct)
-            tp_price = entry_price * (1 + tp_pct)
+        if _use_structural:
+            sl_price, tp_price = compute_structural_sl_tp(
+                entry_price, direction, _supports, _resistances,
+                fallback_sl_pct=sl_pct, fallback_tp_pct=tp_pct,
+            )
+            sl_pct_actual = abs(entry_price - sl_price) / entry_price
+            tp_pct_actual = abs(tp_price - entry_price) / entry_price
+            print(f"  Structurele niveaus: SL={sl_pct_actual:.1%} afstand, TP={tp_pct_actual:.1%} afstand "
+                  f"(R/R={tp_pct_actual/max(sl_pct_actual,0.001):.1f})")
         else:
-            sl_price = entry_price * (1 + sl_pct)
-            tp_price = entry_price * (1 - tp_pct)
+            if direction == "LONG":
+                sl_price = entry_price * (1 - sl_pct)
+                tp_price = entry_price * (1 + tp_pct)
+            else:
+                sl_price = entry_price * (1 + sl_pct)
+                tp_price = entry_price * (1 - tp_pct)
 
         horizon_end = signal_ts + pd.Timedelta(hours=config.MAX_HOLD_HOURS)
 
@@ -354,8 +381,8 @@ def run_live_alert(
         msg = (
             f"{icon} **{direction} SIGNAAL** — {symbol}\n"
             f"⏰ {pd.Timestamp(latest_ts).strftime('%d-%m-%Y %H:%M')} UTC\n"
-            f"💰 Entry: ${entry_price:,.0f} | SL: ${sl_price:,.0f} (−{sl_pct*100:.0f}%) | "
-            f"TP: ${tp_price:,.0f} (+{tp_pct*100:.0f}%)\n"
+            f"💰 Entry: ${entry_price:,.0f} | SL: ${sl_price:,.0f} (−{abs(entry_price-sl_price)/entry_price*100:.1f}%) | "
+            f"TP: ${tp_price:,.0f} (+{abs(tp_price-entry_price)/entry_price*100:.1f}%)\n"
             f"📊 Proba: {signaal['kans_stijging']} | Regime: {regime_label}\n"
             f"💼 Positie: ${position_size:,.0f} ({coin_amount:.6f} {coin_name}) | Risico: €{capital*risk_pct:.2f} ({risk_pct*100:.0f}% kapitaal)"
         )

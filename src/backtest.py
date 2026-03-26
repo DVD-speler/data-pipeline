@@ -370,6 +370,9 @@ def run_backtest_be_trail(
     horizon: int = None,
     exit_proba_long: float = None,
     exit_proba_short: float = None,
+    use_structural_levels: bool = False,
+    highs: np.ndarray = None,
+    lows: np.ndarray = None,
 ) -> pd.DataFrame:
     """
     Backtest met trailing stop-loss naar breakeven (BE) en model-gestuurd sluitmodel.
@@ -393,6 +396,12 @@ def run_backtest_be_trail(
         exit_proba_short = config.EXIT_PROBA_SHORT
 
     h = horizon if horizon is not None else config.MAX_HOLD_HOURS
+
+    # ── Pre-compute swing levels voor structurele SL/TP ──────────────────────
+    swings = None
+    if use_structural_levels and highs is not None and lows is not None:
+        from src.levels import precompute_swings
+        swings = precompute_swings(highs, lows)
 
     # Genereer signalen via run_backtest (alle regime-/death-cross filters ingebakken)
     base = run_backtest(
@@ -480,11 +489,21 @@ def run_backtest_be_trail(
         can_short = (n_open == 0)   # shorts: nooit tweede entry
 
         if can_long and signals_long[i]:
+            if swings is not None:
+                from src.levels import get_recent_levels, compute_structural_sl_tp
+                supports, resistances = get_recent_levels(swings, i)
+                sl_p, tp_p = compute_structural_sl_tp(
+                    close, "LONG", supports, resistances,
+                    fallback_sl_pct=stop_loss_pct, fallback_tp_pct=tp_pct,
+                )
+            else:
+                sl_p = close * (1 - stop_loss_pct)
+                tp_p = close * (1 + tp_pct)
             positions.append({
                 "direction":   "LONG",
                 "entry_price": close,
-                "sl_price":    close * (1 - stop_loss_pct),
-                "tp_price":    close * (1 + tp_pct),
+                "sl_price":    sl_p,
+                "tp_price":    tp_p,
                 "is_be":       False,
                 "horizon_idx": i + h,
                 "size":        long_sizes[i],
@@ -492,11 +511,21 @@ def run_backtest_be_trail(
             trade_opened[i] += 1
 
         if can_short and use_short and signals_short[i]:
+            if swings is not None:
+                from src.levels import get_recent_levels, compute_structural_sl_tp
+                supports, resistances = get_recent_levels(swings, i)
+                sl_p, tp_p = compute_structural_sl_tp(
+                    close, "SHORT", supports, resistances,
+                    fallback_sl_pct=stop_loss_pct, fallback_tp_pct=tp_pct,
+                )
+            else:
+                sl_p = close * (1 + stop_loss_pct)
+                tp_p = close * (1 - tp_pct)
             positions.append({
                 "direction":   "SHORT",
                 "entry_price": close,
-                "sl_price":    close * (1 + stop_loss_pct),
-                "tp_price":    close * (1 - tp_pct),
+                "sl_price":    sl_p,
+                "tp_price":    tp_p,
                 "is_be":       False,
                 "horizon_idx": i + h,
                 "size":        short_sizes[i],
