@@ -145,6 +145,15 @@ REGIME_THRESHOLD_OFFSETS = {1: -0.05, 0: 0.0, -1: 0.08}
 TRADE_FEE     = 0.001
 STOP_LOSS_PCT = 0.02
 
+# ── Model-gestuurd sluitmodel ─────────────────────────────────────────────────
+# Sluit LONG als proba daalt onder EXIT_PROBA_LONG (model ziet kans niet meer).
+# Sluit SHORT als proba stijgt boven EXIT_PROBA_SHORT.
+# Initiële waarden; worden geoptimaliseerd via backtest-sweep en opgeslagen in
+# {symbol}_exit_proba.json (overschrijft deze defaults voor dat symbool).
+EXIT_PROBA_LONG  = 0.45   # te optimaliseren: sweep 0.30–0.55
+EXIT_PROBA_SHORT = 0.55   # symmetrisch voor shorts
+MAX_HOLD_HOURS   = 168    # absolute tijdsvangnet: 1 week (vervangt 24h timeout)
+
 # ── Macro gates (P1/P2 verbeteringen) ─────────────────────────────────────────
 # P1 — DVOL gate: BTC implied volatility te hoog → markt prijst crash in
 # btc_dvol is genormaliseerd op 0–1 (Deribit DVOL index / 100)

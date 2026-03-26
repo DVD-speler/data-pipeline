@@ -24,7 +24,7 @@ import requests
 
 import config
 import config_daily as cfg_daily
-from src.backtest import generate_live_signal
+from src.backtest import generate_live_signal, load_exit_proba
 from src.data_fetcher import load_ohlcv
 from src.stats import compute_direction_bias, compute_p1_heatmap
 
@@ -132,12 +132,27 @@ def check_position_exit(
     latest_high: float,
     latest_low: float,
     latest_ts,
+    current_proba: float = None,
+    exit_proba_long: float = None,
+    exit_proba_short: float = None,
 ) -> dict | None:
     """
-    Controleer of de open positie geraakt is door SL, TP of het tijdshorizon.
+    Controleer of de open positie gesloten moet worden.
+
+    Prioriteit:
+      1. SL geraakt  → harde stop, altijd
+      2. TP geraakt  → winstdoel bereikt
+      3. Model-exit  → proba zakt onder exit_proba_long (LONG) of stijgt boven
+                       exit_proba_short (SHORT) — model ziet kans niet meer
+      4. 168h vangnet → absolute maximale houdtijd (1 week)
 
     Returns exit-info dict als de positie gesloten wordt, anders None.
     """
+    if exit_proba_long is None:
+        exit_proba_long = config.EXIT_PROBA_LONG
+    if exit_proba_short is None:
+        exit_proba_short = config.EXIT_PROBA_SHORT
+
     sl_price = pos["sl_price"]
     tp_price = pos["tp_price"]
     direction = pos["direction"]
@@ -149,15 +164,23 @@ def check_position_exit(
             return {"exit_price": sl_price, "exit_reason": "SL ✗", "exit_time": str(latest_ts)}
         if latest_high >= tp_price:
             return {"exit_price": tp_price, "exit_reason": "TP ✓", "exit_time": str(latest_ts)}
+        if current_proba is not None and current_proba < exit_proba_long:
+            return {"exit_price": latest_close,
+                    "exit_reason": f"Model ↓ ({current_proba:.1%}<{exit_proba_long:.0%})",
+                    "exit_time": str(latest_ts)}
     else:  # SHORT
         if latest_high >= sl_price:
             return {"exit_price": sl_price, "exit_reason": "SL ✗", "exit_time": str(latest_ts)}
         if latest_low <= tp_price:
             return {"exit_price": tp_price, "exit_reason": "TP ✓", "exit_time": str(latest_ts)}
+        if current_proba is not None and current_proba > exit_proba_short:
+            return {"exit_price": latest_close,
+                    "exit_reason": f"Model ↑ ({current_proba:.1%}>{exit_proba_short:.0%})",
+                    "exit_time": str(latest_ts)}
 
-    # Horizon verlopen → sluit op huidige close
+    # 168h tijdsvangnet → sluit op huidige close
     if now >= horizon_end:
-        return {"exit_price": latest_close, "exit_reason": "24h ⏰", "exit_time": str(latest_ts)}
+        return {"exit_price": latest_close, "exit_reason": "168h ⏰", "exit_time": str(latest_ts)}
 
     return None
 
@@ -236,10 +259,19 @@ def run_live_alert(
     had_open_pos = state["open_position"] is not None   # bewaar vóór eventuele sluiting
     print(f"  Kapitaal : €{state['capital']:,.2f}")
 
+    # ── Laad geoptimaliseerde exit-drempelwaarden ─────────────────────────────
+    exit_proba_long, exit_proba_short = load_exit_proba(symbol=symbol)
+
     # ── Check open positie ────────────────────────────────────────────────────
     if state["open_position"] is not None:
         pos = state["open_position"]
-        exit_info = check_position_exit(pos, latest_close, latest_high, latest_low, latest_ts)
+        current_proba = signaal.get("proba_raw")
+        exit_info = check_position_exit(
+            pos, latest_close, latest_high, latest_low, latest_ts,
+            current_proba=current_proba,
+            exit_proba_long=exit_proba_long,
+            exit_proba_short=exit_proba_short,
+        )
 
         if exit_info:
             pnl_euro = _close_position(state, pos, exit_info)
@@ -297,7 +329,7 @@ def run_live_alert(
             sl_price = entry_price * (1 + sl_pct)
             tp_price = entry_price * (1 - tp_pct)
 
-        horizon_end = signal_ts + pd.Timedelta(hours=config.PREDICTION_HORIZON_H)
+        horizon_end = signal_ts + pd.Timedelta(hours=config.MAX_HOLD_HOURS)
 
         state["open_position"] = {
             "direction": direction,
@@ -345,7 +377,7 @@ def run_live_alert(
                 f"Al een **{pos['direction']}** positie open "
                 f"({hours_open}h geleden, entry ${pos['entry_price']:,.0f})\n"
                 f"📍 SL: ${pos['sl_price']:,.0f} | TP: ${pos['tp_price']:,.0f} | "
-                f"Sluit uiterlijk: {pd.Timestamp(pos['horizon_end']).strftime('%d-%m %H:%M')} UTC"
+                f"Vangnet: {pd.Timestamp(pos['horizon_end']).strftime('%d-%m %H:%M')} UTC (168h)"
             )
         elif "death cross" in sig_label.lower() or "EMA50" in sig_label:
             reden = (

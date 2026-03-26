@@ -356,6 +356,11 @@ def train_model(df: pd.DataFrame, symbol: str = config.SYMBOL) -> tuple:
             "model":           model_type,
         }, f)
 
+    # Optimaliseer exit-proba drempelwaarden op validatieset
+    from src.backtest import optimize_exit_proba
+    optimize_exit_proba(model, val, optimal_thr,
+                        threshold_short=optimal_short_thr, symbol=symbol)
+
     # Evalueer op testset
     probas = model.predict_proba(X_test)[:, 1]
     y_pred = (probas >= optimal_thr).astype(int)

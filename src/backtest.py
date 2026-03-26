@@ -368,23 +368,31 @@ def run_backtest_be_trail(
     use_short: bool = False,
     regime_filter: bool = True,
     horizon: int = None,
+    exit_proba_long: float = None,
+    exit_proba_short: float = None,
 ) -> pd.DataFrame:
     """
-    Backtest met trailing stop-loss naar breakeven (BE).
+    Backtest met trailing stop-loss naar breakeven (BE) en model-gestuurd sluitmodel.
 
     Logica per candle:
       - Wanneer close >= entry * (1 + be_trigger_pct) → SL verplaatst naar entry (BE)
       - Als allow_second_entry=True én alle open posities op BE staan → tweede trade
         toegestaan bij nieuw signaal (max 2 simultane posities)
-      - SL/TP/horizon: gedetecteerd op candle-close (geen intrabar high/low beschikbaar)
+      - SL/TP: gedetecteerd op candle-close (geen intrabar high/low beschikbaar)
+      - Model-exit: sluit LONG als proba < exit_proba_long, SHORT als proba > exit_proba_short
+      - Tijdsvangnet (horizon): laatste exitoptie na MAX_HOLD_HOURS
 
     Signalen worden identiek berekend als run_backtest() (inclusief regime/death-cross filters).
     Strategy_return wordt bijgehouden per exit-candle (niet entry-candle).
     """
     if threshold is None:
         threshold, _ = load_optimal_threshold()
+    if exit_proba_long is None:
+        exit_proba_long = config.EXIT_PROBA_LONG
+    if exit_proba_short is None:
+        exit_proba_short = config.EXIT_PROBA_SHORT
 
-    h = horizon if horizon is not None else config.PREDICTION_HORIZON_H
+    h = horizon if horizon is not None else config.MAX_HOLD_HOURS
 
     # Genereer signalen via run_backtest (alle regime-/death-cross filters ingebakken)
     base = run_backtest(
@@ -425,20 +433,25 @@ def run_backtest_be_trail(
             size      = pos["size"]
             exit_price = None
 
+            proba_i = probas[i]
             if direction == "LONG":
                 if close <= sl:
                     exit_price = sl           # SL geraakt
                 elif close >= tp:
                     exit_price = tp           # TP geraakt
+                elif proba_i < exit_proba_long:
+                    exit_price = close        # Model-exit: proba onder drempel
                 elif i >= pos["horizon_idx"]:
-                    exit_price = close        # horizon verlopen
+                    exit_price = close        # Tijdsvangnet (168h)
             else:  # SHORT
                 if close >= sl:
                     exit_price = sl
                 elif close <= tp:
                     exit_price = tp
+                elif proba_i > exit_proba_short:
+                    exit_price = close        # Model-exit: proba boven drempel
                 elif i >= pos["horizon_idx"]:
-                    exit_price = close
+                    exit_price = close        # Tijdsvangnet (168h)
 
             if exit_price is not None:
                 entry = pos["entry_price"]
@@ -512,6 +525,116 @@ def run_backtest_be_trail(
     }
 
     return results
+
+
+# ── Exit-proba optimalisatie ──────────────────────────────────────────────────
+
+def optimize_exit_proba(
+    model,
+    val_df: pd.DataFrame,
+    threshold: float,
+    threshold_short: float = 0.0,
+    candidates_long: list = None,
+    candidates_short: list = None,
+    symbol: str = config.SYMBOL,
+) -> tuple[float, float]:
+    """
+    Zoek de optimale EXIT_PROBA_LONG en EXIT_PROBA_SHORT via grid-sweep op val_df.
+
+    Evalueert elke combinatie met run_backtest_be_trail en selecteert de waarden
+    met de hoogste Sharpe ratio. Slaat resultaat op in {symbol}_exit_proba.json.
+
+    Parameters
+    ----------
+    model             : getraind model (predict_proba)
+    val_df            : validatieset (feature matrix met close/target)
+    threshold         : long entry drempel
+    threshold_short   : short entry drempel (0 = uitgeschakeld)
+    candidates_long   : sweep-waarden voor exit_proba_long (default: 0.30–0.55 step 0.025)
+    candidates_short  : sweep-waarden voor exit_proba_short (default: 0.45–0.70 step 0.025)
+    symbol            : voor opslaan exit_proba.json
+
+    Returns
+    -------
+    (best_exit_long, best_exit_short) als floats
+    """
+    import json
+
+    if candidates_long is None:
+        candidates_long = [round(x * 0.025 + 0.300, 3) for x in range(11)]  # 0.300–0.550
+    if candidates_short is None:
+        candidates_short = [round(x * 0.025 + 0.450, 3) for x in range(11)]  # 0.450–0.700
+
+    probas_val = model.predict_proba(val_df[config.FEATURE_COLS])[:, 1]
+
+    print("\nExit-proba optimalisatie (sweep op validatieset)...")
+    best_sharpe = -np.inf
+    best_long   = config.EXIT_PROBA_LONG
+    best_short  = config.EXIT_PROBA_SHORT
+
+    results_log = []
+    for el in candidates_long:
+        for es in candidates_short:
+            if es <= el:
+                continue  # exit_short moet boven exit_long liggen
+            try:
+                res = run_backtest_be_trail(
+                    val_df, probas_val,
+                    threshold=threshold,
+                    threshold_short=threshold_short,
+                    use_short=(threshold_short > 0),
+                    exit_proba_long=el,
+                    exit_proba_short=es,
+                )
+                metrics = compute_metrics(res)
+                sharpe  = metrics["sharpe_ratio"]
+                results_log.append({"exit_long": el, "exit_short": es, "sharpe": sharpe,
+                                     "n_trades": metrics["n_long"] + metrics["n_short"],
+                                     "total_return": metrics["total_return"]})
+                if sharpe > best_sharpe:
+                    best_sharpe = sharpe
+                    best_long   = el
+                    best_short  = es
+            except Exception:
+                pass
+
+    # Sorteer en toon top-5
+    results_log.sort(key=lambda x: x["sharpe"], reverse=True)
+    print(f"  {'exit_long':>10}  {'exit_short':>10}  {'sharpe':>8}  {'trades':>6}  {'return':>8}")
+    for row in results_log[:5]:
+        print(f"  {row['exit_long']:>10.3f}  {row['exit_short']:>10.3f}  "
+              f"{row['sharpe']:>+8.3f}  {row['n_trades']:>6}  {row['total_return']:>+8.1%}")
+    print(f"  → Beste: exit_long={best_long:.3f}  exit_short={best_short:.3f}  "
+          f"Sharpe={best_sharpe:+.3f}")
+
+    # Opslaan
+    out_path = config.symbol_path(symbol, "exit_proba.json")
+    with open(out_path, "w") as f:
+        json.dump({
+            "exit_proba_long":  best_long,
+            "exit_proba_short": best_short,
+            "sharpe":           round(best_sharpe, 4),
+        }, f, indent=2)
+    print(f"  Opgeslagen: {out_path.name}")
+
+    return best_long, best_short
+
+
+def load_exit_proba(symbol: str = config.SYMBOL) -> tuple[float, float]:
+    """
+    Laad geoptimaliseerde exit drempelwaarden uit {symbol}_exit_proba.json.
+    Valt terug op config defaults als het bestand niet bestaat.
+    """
+    import json
+    path = config.symbol_path(symbol, "exit_proba.json")
+    if path.exists():
+        try:
+            with open(path) as f:
+                data = json.load(f)
+            return float(data["exit_proba_long"]), float(data["exit_proba_short"])
+        except Exception:
+            pass
+    return config.EXIT_PROBA_LONG, config.EXIT_PROBA_SHORT
 
 
 # ── Walk-forward validatie ────────────────────────────────────────────────────
@@ -803,6 +926,7 @@ def generate_live_signal(df_ohlcv, p1p2, p1_heatmap, direction_bias,
         "tijdstip":            str(last_row.index[0]),
         "signaal":             signaal,
         "kans_stijging":       f"{proba:.1%}",
+        "proba_raw":           proba,
         "long_threshold":      f"{eff_threshold:.2f}",
         "long_threshold_base": f"{threshold:.2f}",
         "short_threshold":     f"{threshold_short:.2f}" if threshold_short > 0 else "uitgeschakeld",
