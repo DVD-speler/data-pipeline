@@ -2,6 +2,7 @@
   "tijdstip": "2026-03-24 02:00:00+00:00",
   "signaal": "SHORT",
   "kans_stijging": "33.4%",
+  "proba_raw": 0.33421915380928413,
   "long_threshold": "0.60",
   "long_threshold_base": "0.65",
   "short_threshold": "0.35",
