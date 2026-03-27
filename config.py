@@ -52,7 +52,10 @@ WALKFORWARD_STEP_DAYS  = 30
 # Minimale koersbeweging (%) om een uur als directional te labelen.
 # Rijen met |move| < drempel worden als "neutraal" uit training verwijderd.
 # Breakeven voor een round-trip: 2 × TRADE_FEE = 0.2%  → drempel iets hoger.
-TARGET_DEAD_ZONE_PCT = 0.003   # 0.3%
+TARGET_DEAD_ZONE_PCT  = 0.003   # 0.3% — symmetrische fallback (legacy)
+# B4: asymmetrische dead zone — kleine ups behouden (accumulatie), kleine downs filteren (ruis)
+TARGET_DEAD_ZONE_UP   = 0.002   # 0.2%: kleine opwaartse moves behouden (accumulatiefase)
+TARGET_DEAD_ZONE_DOWN = 0.004   # 0.4%: kleine neerwaartse moves als ruis verwijderen
 
 # ── Features (1h timeframe) ────────────────────────────────────────────────────
 FEATURE_COLS_1H = [
@@ -102,6 +105,7 @@ FEATURE_COLS_1H = [
     # Regime detectie (Fase 1)
     "adx",                      # ADX(14) trendsterkte 0-100 (>20 = trending markt)
     "vwap_distance",            # (close − dag-VWAP) / close: positie vs. gewogen gemiddelde
+    "poc_distance",             # (close − POC_168h) / close: positie vs. wekelijks volume-zwaartepunt
     # Volatiliteitsregime (opties-markt)
     "btc_dvol",                 # Deribit BTC implied volatility index (genormaliseerd 0–1)
     # P2 macro features

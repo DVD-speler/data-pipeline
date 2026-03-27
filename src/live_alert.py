@@ -136,24 +136,21 @@ def check_position_exit(
     latest_ts,
     current_proba: float = None,
     exit_proba_long: float = None,
-    exit_proba_short: float = None,
+    exit_proba_short: float = None,  # legacy, genegeerd
 ) -> dict | None:
     """
-    Controleer of de open positie gesloten moet worden.
+    Controleer of de open LONG-positie gesloten moet worden.
 
     Prioriteit:
       1. SL geraakt  → harde stop, altijd
       2. TP geraakt  → winstdoel bereikt
-      3. Model-exit  → proba zakt onder exit_proba_long (LONG) of stijgt boven
-                       exit_proba_short (SHORT) — model ziet kans niet meer
+      3. Model-exit  → proba zakt onder exit_proba_long — model ziet kans niet meer
       4. 168h vangnet → absolute maximale houdtijd (1 week)
 
     Returns exit-info dict als de positie gesloten wordt, anders None.
     """
     if exit_proba_long is None:
         exit_proba_long = config.EXIT_PROBA_LONG
-    if exit_proba_short is None:
-        exit_proba_short = config.EXIT_PROBA_SHORT
 
     sl_price = pos["sl_price"]
     tp_price = pos["tp_price"]
@@ -169,15 +166,6 @@ def check_position_exit(
         if current_proba is not None and current_proba < exit_proba_long:
             return {"exit_price": latest_close,
                     "exit_reason": f"Model ↓ ({current_proba:.1%}<{exit_proba_long:.0%})",
-                    "exit_time": str(latest_ts)}
-    else:  # SHORT
-        if latest_high >= sl_price:
-            return {"exit_price": sl_price, "exit_reason": "SL ✗", "exit_time": str(latest_ts)}
-        if latest_low <= tp_price:
-            return {"exit_price": tp_price, "exit_reason": "TP ✓", "exit_time": str(latest_ts)}
-        if current_proba is not None and current_proba > exit_proba_short:
-            return {"exit_price": latest_close,
-                    "exit_reason": f"Model ↑ ({current_proba:.1%}>{exit_proba_short:.0%})",
                     "exit_time": str(latest_ts)}
 
     # 168h tijdsvangnet → sluit op huidige close
@@ -326,7 +314,7 @@ def run_live_alert(
 
     # ── Nieuw signaal ─────────────────────────────────────────────────────────
     opened_new_position = False
-    if state["open_position"] is None and signaal["signaal"] in ("LONG", "SHORT"):
+    if state["open_position"] is None and signaal["signaal"] == "LONG":
         direction = signaal["signaal"]
         # Gebruik de actuele prijs/tijdstip van df.index[-1], NIET signaal["prijs"].
         # features.iloc[-1] ligt ~24 uur in het verleden (dropna verwijdert de laatste
@@ -348,12 +336,8 @@ def run_live_alert(
             print(f"  Structurele niveaus: SL={sl_pct_actual:.1%} afstand, TP={tp_pct_actual:.1%} afstand "
                   f"(R/R={tp_pct_actual/max(sl_pct_actual,0.001):.1f})")
         else:
-            if direction == "LONG":
-                sl_price = entry_price * (1 - sl_pct)
-                tp_price = entry_price * (1 + tp_pct)
-            else:
-                sl_price = entry_price * (1 + sl_pct)
-                tp_price = entry_price * (1 - tp_pct)
+            sl_price = entry_price * (1 - sl_pct)
+            tp_price = entry_price * (1 + tp_pct)
 
         horizon_end = signal_ts + pd.Timedelta(hours=config.MAX_HOLD_HOURS)
 
@@ -375,7 +359,7 @@ def run_live_alert(
 
         coin_name = symbol.replace("USDT", "")
         coin_amount = round(position_size / entry_price, 6)
-        icon = "🟢" if direction == "LONG" else "🔴"
+        icon = "🟢"
         regime_label = "boven EMA200" if signaal.get("regime_boven_ema200") else "onder EMA200"
         msg = (
             f"{icon} **{direction} SIGNAAL** — {symbol}\n"

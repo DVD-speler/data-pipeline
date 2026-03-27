@@ -31,28 +31,27 @@ def run_backtest(
     test_df: pd.DataFrame,
     probas: np.ndarray,
     threshold: float = None,
-    threshold_short: float = config.SIGNAL_THRESHOLD_SHORT,
     fee: float = config.TRADE_FEE,
     stop_loss: float = config.STOP_LOSS_PCT,
-    use_short: bool = False,
     use_position_sizing: bool = True,
     regime_filter: bool = True,
     horizon: int = None,
     probas_4h: np.ndarray = None,
     threshold_4h: float = None,
+    # Legacy kwargs — genegeerd, behouden voor achterwaartse compatibiliteit
+    threshold_short: float = 0.0,
+    use_short: bool = False,
 ) -> pd.DataFrame:
     """
-    Voer de backtest uit op de testset.
+    Voer de long-only backtest uit op de testset.
 
     Parameters
     ----------
     test_df              : feature matrix testdeel (bevat 'close', 'target' en features)
     probas               : model voorspelde kansen op stijging (klasse 1)
     threshold            : minimale kans voor long-signaal (None = laad optimale drempel)
-    threshold_short      : maximale kans voor short-signaal (0.0 = uitgeschakeld)
     fee                  : transactiekosten per kant
     stop_loss            : maximaal verlies per trade; 0 = geen stop-loss
-    use_short            : False = alleen long
     use_position_sizing  : True = positie schaalt met kanszekerheid
     regime_filter        : True = alleen long boven EMA200
     horizon              : voorspellingstijdshorizon in uur (None = config.PREDICTION_HORIZON_H)
@@ -83,12 +82,6 @@ def run_backtest(
         results["signal_long"] = (results["proba"] >= eff_thr).astype(int)
     else:
         results["signal_long"] = (results["proba"] >= threshold).astype(int)
-    results["signal_short"] = (
-        (results["proba"] <= threshold_short).astype(int)
-        if use_short and threshold_short > 0
-        else pd.Series(0, index=results.index)
-    )
-
     # ── Regime filter ─────────────────────────────────────────────────────────
     if regime_filter and "price_vs_ema200" in test_df.columns:
         above_ema200 = (test_df["price_vs_ema200"] > 1.0).reindex(results.index, fill_value=True)
@@ -151,22 +144,6 @@ def run_backtest(
             )
             results["signal_long"] = results["signal_long"] * jpy_ok.astype(int)
 
-        # Shorts: dubbele macro-gate
-        #   1. Onder EMA200 (prijs in downtrend)
-        #   2. return_30d < -3% (macro 30-daagse trend negatief)
-        #   3. return_7d  < -1% (recente week ook negatief — blokkeert recovery-bounces)
-        # Blokkeert shorts bij kortstondige crashes met snelle recovery (zoals aug 2025 Japan-crash)
-        if use_short and "return_30d" in test_df.columns and "return_7d" in test_df.columns:
-            macro_bear = (
-                (test_df["return_30d"] < -0.03) & (test_df["return_7d"] < -0.01)
-            ).reindex(results.index, fill_value=False)
-            results["signal_short"] = results["signal_short"] * (~above_ema200 & macro_bear).astype(int)
-        elif use_short and "return_30d" in test_df.columns:
-            macro_bear = (test_df["return_30d"] < -0.03).reindex(results.index, fill_value=False)
-            results["signal_short"] = results["signal_short"] * (~above_ema200 & macro_bear).astype(int)
-        else:
-            results["signal_short"] = results["signal_short"] * (~above_ema200).astype(int)
-
     # ── Multi-timeframe 4h-confirmatie gate ──────────────────────────────────
     # 4h-model proba moet boven threshold_4h liggen voor een 1h-entry.
     # probas_4h moet op de 1h-index geïnterpoleerd zijn (forward-fill van 4h candle).
@@ -176,28 +153,19 @@ def run_backtest(
             confirm_4h = (probas_4h >= thr4).astype(int)
             results["signal_long"] = results["signal_long"] * confirm_4h
 
-    results["signal"] = results["signal_long"] - results["signal_short"]
+    results["signal"] = results["signal_long"]
 
     # ── Basisrendement ────────────────────────────────────────────────────────
     raw_return = results["close"].shift(-h) / results["close"] - 1
 
     # ── Stop-loss ─────────────────────────────────────────────────────────────
-    if stop_loss > 0:
-        long_return  = raw_return.clip(lower=-stop_loss)
-        short_return = (-raw_return).clip(lower=-stop_loss)
-    else:
-        long_return  = raw_return
-        short_return = -raw_return
+    long_return = raw_return.clip(lower=-stop_loss) if stop_loss > 0 else raw_return
 
     # ── Position sizing ───────────────────────────────────────────────────────
     if use_position_sizing:
-        base_long  = ((results["proba"] - 0.5) * 2).clip(0, 1)
-        base_short = ((0.5 - results["proba"]) * 2).clip(0, 1)
+        base_long = ((results["proba"] - 0.5) * 2).clip(0, 1)
         # P1: Volatiliteit-geschaalde positiegrootte.
         # Hogere marktvolatiliteit → kleinere positie → minder verlies in crashes.
-        # Formule: size = base / (1 + VOL_SIZE_SCALE × volatility_24h)
-        # Bij vol=0.02 (rustig): schalingsfactor ~0.91 (klein effect)
-        # Bij vol=0.06 (crash):  schalingsfactor ~0.77 (23% kleinere positie)
         if "volatility_24h" in test_df.columns:
             vol = test_df["volatility_24h"].reindex(
                 results.index, fill_value=0.02
@@ -205,19 +173,15 @@ def run_backtest(
             vol_scale = (1.0 / (1.0 + config.VOL_SIZE_SCALE * vol)).clip(0.2, 1.0)
         else:
             vol_scale = 1.0
-        long_size  = (base_long  * vol_scale).clip(0, 1)
-        short_size = (base_short * vol_scale).clip(0, 1)
+        long_size = (base_long * vol_scale).clip(0, 1)
     else:
-        long_size  = results["signal_long"].astype(float)
-        short_size = results["signal_short"].astype(float)
+        long_size = results["signal_long"].astype(float)
 
     # ── Strategie rendement ───────────────────────────────────────────────────
     results["trade_return"]    = raw_return
     results["strategy_return"] = (
-        results["signal_long"]  * long_size  * long_return
-        - results["signal_long"]  * long_size  * 2 * fee
-        + results["signal_short"] * short_size * short_return
-        - results["signal_short"] * short_size * 2 * fee
+        results["signal_long"] * long_size * long_return
+        - results["signal_long"] * long_size * 2 * fee
     )
 
     # ── Benchmark ─────────────────────────────────────────────────────────────
@@ -298,8 +262,7 @@ def compute_metrics(results: pd.DataFrame, horizon: int = None) -> dict:
     drawdown = cum / cum.cummax() - 1
     max_dd   = float(drawdown.min())
 
-    n_long   = int(results["signal_long"].sum())  if "signal_long"  in results.columns else 0
-    n_short  = int(results["signal_short"].sum()) if "signal_short" in results.columns else 0
+    n_long   = int(results["signal_long"].sum()) if "signal_long" in results.columns else 0
     win_rate = float((active_returns > 0).mean()) if len(active_returns) > 0 else 0.0
 
     return {
@@ -309,9 +272,8 @@ def compute_metrics(results: pd.DataFrame, horizon: int = None) -> dict:
         "sharpe_ratio":      sharpe,
         "max_drawdown":      max_dd,
         "win_rate":          win_rate,
-        "n_trades":          n_long + n_short,
+        "n_trades":          n_long,
         "n_long":            n_long,
-        "n_short":           n_short,
         "signal_rate":       float(results["signal"].abs().mean()),
     }
 
@@ -378,30 +340,31 @@ def run_backtest_be_trail(
     test_df: pd.DataFrame,
     probas: np.ndarray,
     threshold: float = None,
-    threshold_short: float = config.SIGNAL_THRESHOLD_SHORT,
     fee: float = config.TRADE_FEE,
     stop_loss_pct: float = config.STOP_LOSS_PCT,
     tp_pct: float = 0.06,
     be_trigger_pct: float = 0.02,
     allow_second_entry: bool = True,
-    use_short: bool = False,
     regime_filter: bool = True,
     horizon: int = None,
     exit_proba_long: float = None,
-    exit_proba_short: float = None,
     use_structural_levels: bool = False,
     highs: np.ndarray = None,
     lows: np.ndarray = None,
+    # Legacy kwargs
+    threshold_short: float = 0.0,
+    use_short: bool = False,
+    exit_proba_short: float = None,
 ) -> pd.DataFrame:
     """
-    Backtest met trailing stop-loss naar breakeven (BE) en model-gestuurd sluitmodel.
+    Long-only backtest met trailing stop-loss naar breakeven (BE) en model-gestuurd sluitmodel.
 
     Logica per candle:
       - Wanneer close >= entry * (1 + be_trigger_pct) → SL verplaatst naar entry (BE)
       - Als allow_second_entry=True én alle open posities op BE staan → tweede trade
         toegestaan bij nieuw signaal (max 2 simultane posities)
       - SL/TP: gedetecteerd op candle-close (geen intrabar high/low beschikbaar)
-      - Model-exit: sluit LONG als proba < exit_proba_long, SHORT als proba > exit_proba_short
+      - Model-exit: sluit LONG als proba < exit_proba_long
       - Tijdsvangnet (horizon): laatste exitoptie na MAX_HOLD_HOURS
 
     Signalen worden identiek berekend als run_backtest() (inclusief regime/death-cross filters).
@@ -426,23 +389,19 @@ def run_backtest_be_trail(
     base = run_backtest(
         test_df, probas,
         threshold=threshold,
-        threshold_short=threshold_short,
         fee=fee,
         stop_loss=stop_loss_pct,
-        use_short=use_short,
         use_position_sizing=True,
         regime_filter=regime_filter,
         horizon=h,
     )
-    signals_long  = base["signal_long"].values.astype(int)
-    signals_short = base["signal_short"].values.astype(int)
+    signals_long = base["signal_long"].values.astype(int)
 
     closes = test_df["close"].values
     n      = len(closes)
 
     # Position sizing: identiek aan run_backtest
-    long_sizes  = np.clip((probas - 0.5) * 2, 0.0, 1.0)
-    short_sizes = np.clip((0.5 - probas) * 2, 0.0, 1.0)
+    long_sizes = np.clip((probas - 0.5) * 2, 0.0, 1.0)
 
     strategy_returns = np.zeros(n)
     trade_opened     = np.zeros(n, dtype=int)   # 1 = nieuw positie geopend op deze candle
@@ -471,13 +430,11 @@ def run_backtest_be_trail(
                     exit_price = close        # Model-exit: proba onder drempel
                 elif i >= pos["horizon_idx"]:
                     exit_price = close        # Tijdsvangnet (168h)
-            else:  # SHORT
+            else:  # SHORT (legacy — nooit actief bij long-only)
                 if close >= sl:
                     exit_price = sl
                 elif close <= tp:
                     exit_price = tp
-                elif proba_i > exit_proba_short:
-                    exit_price = close        # Model-exit: proba boven drempel
                 elif i >= pos["horizon_idx"]:
                     exit_price = close        # Tijdsvangnet (168h)
 
@@ -501,11 +458,9 @@ def run_backtest_be_trail(
         positions = remaining
 
         # ── 2. Nieuwe entry toestaan? ─────────────────────────────────────────
-        n_open  = len(positions)
-        all_be  = all(p["is_be"] for p in positions) if positions else True
-
-        can_long  = (n_open == 0) or (allow_second_entry and all_be and n_open < 2)
-        can_short = (n_open == 0)   # shorts: nooit tweede entry
+        n_open = len(positions)
+        all_be = all(p["is_be"] for p in positions) if positions else True
+        can_long = (n_open == 0) or (allow_second_entry and all_be and n_open < 2)
 
         if can_long and signals_long[i]:
             if swings is not None:
@@ -529,34 +484,11 @@ def run_backtest_be_trail(
             })
             trade_opened[i] += 1
 
-        if can_short and use_short and signals_short[i]:
-            if swings is not None:
-                from src.levels import get_recent_levels, compute_structural_sl_tp
-                supports, resistances = get_recent_levels(swings, i)
-                sl_p, tp_p = compute_structural_sl_tp(
-                    close, "SHORT", supports, resistances,
-                    fallback_sl_pct=stop_loss_pct, fallback_tp_pct=tp_pct,
-                )
-            else:
-                sl_p = close * (1 + stop_loss_pct)
-                tp_p = close * (1 - tp_pct)
-            positions.append({
-                "direction":   "SHORT",
-                "entry_price": close,
-                "sl_price":    sl_p,
-                "tp_price":    tp_p,
-                "is_be":       False,
-                "horizon_idx": i + h,
-                "size":        short_sizes[i],
-            })
-            trade_opened[i] += 1
-
     # ── Resultaten DataFrame ──────────────────────────────────────────────────
     results = test_df[["close", "target"]].copy()
     results["proba"]           = probas
     results["signal_long"]     = signals_long
-    results["signal_short"]    = signals_short
-    results["signal"]          = signals_long - signals_short
+    results["signal"]          = signals_long
     results["trade_return"]    = results["close"].shift(-h) / results["close"] - 1
     results["strategy_return"] = strategy_returns
     results["trade_opened"]    = trade_opened   # 1 = entry op deze candle
@@ -581,79 +513,69 @@ def optimize_exit_proba(
     model,
     val_df: pd.DataFrame,
     threshold: float,
-    threshold_short: float = 0.0,
     candidates_long: list = None,
-    candidates_short: list = None,
     symbol: str = config.SYMBOL,
+    # Legacy kwargs
+    threshold_short: float = 0.0,
+    candidates_short: list = None,
 ) -> tuple[float, float]:
     """
-    Zoek de optimale EXIT_PROBA_LONG en EXIT_PROBA_SHORT via grid-sweep op val_df.
+    Zoek de optimale EXIT_PROBA_LONG via grid-sweep op val_df.
 
-    Evalueert elke combinatie met run_backtest_be_trail en selecteert de waarden
+    Evalueert elke waarde met run_backtest_be_trail en selecteert de waarden
     met de hoogste Sharpe ratio. Slaat resultaat op in {symbol}_exit_proba.json.
 
     Parameters
     ----------
-    model             : getraind model (predict_proba)
-    val_df            : validatieset (feature matrix met close/target)
-    threshold         : long entry drempel
-    threshold_short   : short entry drempel (0 = uitgeschakeld)
-    candidates_long   : sweep-waarden voor exit_proba_long (default: 0.30–0.55 step 0.025)
-    candidates_short  : sweep-waarden voor exit_proba_short (default: 0.45–0.70 step 0.025)
-    symbol            : voor opslaan exit_proba.json
+    model           : getraind model (predict_proba)
+    val_df          : validatieset (feature matrix met close/target)
+    threshold       : long entry drempel
+    candidates_long : sweep-waarden voor exit_proba_long (default: 0.30–0.55 step 0.025)
+    symbol          : voor opslaan exit_proba.json
 
     Returns
     -------
-    (best_exit_long, best_exit_short) als floats
+    (best_exit_long, best_exit_short) als floats (exit_short = 1 - exit_long)
     """
     import json
 
     if candidates_long is None:
         candidates_long = [round(x * 0.025 + 0.300, 3) for x in range(11)]  # 0.300–0.550
-    if candidates_short is None:
-        candidates_short = [round(x * 0.025 + 0.450, 3) for x in range(11)]  # 0.450–0.700
 
     probas_val = model.predict_proba(val_df[config.FEATURE_COLS])[:, 1]
 
     print("\nExit-proba optimalisatie (sweep op validatieset)...")
     best_sharpe = -np.inf
     best_long   = config.EXIT_PROBA_LONG
-    best_short  = config.EXIT_PROBA_SHORT
 
     results_log = []
     for el in candidates_long:
-        for es in candidates_short:
-            if es <= el:
-                continue  # exit_short moet boven exit_long liggen
-            try:
-                res = run_backtest_be_trail(
-                    val_df, probas_val,
-                    threshold=threshold,
-                    threshold_short=threshold_short,
-                    use_short=(threshold_short > 0),
-                    exit_proba_long=el,
-                    exit_proba_short=es,
-                )
-                metrics = compute_metrics(res)
-                sharpe  = metrics["sharpe_ratio"]
-                results_log.append({"exit_long": el, "exit_short": es, "sharpe": sharpe,
-                                     "n_trades": metrics["n_long"] + metrics["n_short"],
-                                     "total_return": metrics["total_return"]})
-                if sharpe > best_sharpe:
-                    best_sharpe = sharpe
-                    best_long   = el
-                    best_short  = es
-            except Exception:
-                pass
+        try:
+            res = run_backtest_be_trail(
+                val_df, probas_val,
+                threshold=threshold,
+                exit_proba_long=el,
+            )
+            metrics = compute_metrics(res)
+            sharpe  = metrics["sharpe_ratio"]
+            results_log.append({"exit_long": el, "sharpe": sharpe,
+                                 "n_trades": metrics["n_trades"],
+                                 "total_return": metrics["total_return"]})
+            if sharpe > best_sharpe:
+                best_sharpe = sharpe
+                best_long   = el
+        except Exception:
+            pass
 
     # Sorteer en toon top-5
     results_log.sort(key=lambda x: x["sharpe"], reverse=True)
-    print(f"  {'exit_long':>10}  {'exit_short':>10}  {'sharpe':>8}  {'trades':>6}  {'return':>8}")
+    print(f"  {'exit_long':>10}  {'sharpe':>8}  {'trades':>6}  {'return':>8}")
     for row in results_log[:5]:
-        print(f"  {row['exit_long']:>10.3f}  {row['exit_short']:>10.3f}  "
+        print(f"  {row['exit_long']:>10.3f}  "
               f"{row['sharpe']:>+8.3f}  {row['n_trades']:>6}  {row['total_return']:>+8.1%}")
-    print(f"  → Beste: exit_long={best_long:.3f}  exit_short={best_short:.3f}  "
-          f"Sharpe={best_sharpe:+.3f}")
+    print(f"  → Beste: exit_long={best_long:.3f}  Sharpe={best_sharpe:+.3f}")
+
+    best_short = round(1.0 - best_long, 3)   # symmetrisch (niet actief, alleen voor compat)
 
     # Opslaan
     out_path = config.symbol_path(symbol, "exit_proba.json")

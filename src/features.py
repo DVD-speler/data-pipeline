@@ -58,6 +58,53 @@ def _build_heatmap_lookup(heatmap: pd.DataFrame, default: float = 0.0) -> dict:
     return result
 
 
+# ── Volume Profile / Point of Control ─────────────────────────────────────────
+
+def _compute_poc(high_arr: np.ndarray, low_arr: np.ndarray,
+                 close_arr: np.ndarray, vol_arr: np.ndarray,
+                 window: int = 168, n_bins: int = 30) -> np.ndarray:
+    """
+    Bereken de Point of Control (POC) via een rollend volume profiel.
+
+    De POC is het prijsniveau met het hoogste gecumuleerde volume in het
+    rolling venster. Volume per candle wordt proportioneel verdeeld over
+    de H-L range met numpy broadcasting (geen Python inner loops).
+
+    Geeft (close - POC) / close terug — negatief = close onder POC (weerstand).
+    """
+    n = len(close_arr)
+    poc_distance = np.full(n, np.nan)
+
+    for i in range(window - 1, n):
+        sl = slice(i - window + 1, i + 1)
+        h = high_arr[sl]
+        l = low_arr[sl]
+        v = vol_arr[sl]
+
+        price_lo = l.min()
+        price_hi = h.max()
+        if price_hi <= price_lo:
+            poc_distance[i] = 0.0
+            continue
+
+        edges = np.linspace(price_lo, price_hi, n_bins + 1)
+        # Broadcasting: overlap van elke candle (window,) met elke bin (n_bins,)
+        overlap = np.maximum(
+            0.0,
+            np.minimum(h[:, None], edges[1:][None, :])
+            - np.maximum(l[:, None], edges[:-1][None, :]),
+        )
+        candle_range = (h - l)[:, None] + 1e-10
+        weight = overlap / candle_range
+        vol_profile = (v[:, None] * weight).sum(axis=0)
+
+        bin_centers = (edges[:-1] + edges[1:]) / 2
+        poc_price = bin_centers[np.argmax(vol_profile)]
+        poc_distance[i] = (close_arr[i] - poc_price) / (close_arr[i] + 1e-10)
+
+    return poc_distance
+
+
 # ── Technische indicatoren ────────────────────────────────────────────────────
 
 def _add_ta_indicators(df: pd.DataFrame, suffix: str = "") -> pd.DataFrame:
@@ -300,6 +347,17 @@ def build_features(
     df.drop(columns=["_day", "_typical", "_tpv", "_cum_tpv", "_cum_vol"],
             inplace=True, errors="ignore")
 
+    # ── Volume Profile / Point of Control (B3) ────────────────────────────────
+    # POC = prijsniveau met het meeste volume in het afgelopen 168h venster.
+    # poc_distance = (close − POC) / close:
+    #   > 0 → close boven POC (POC als steun)
+    #   < 0 → close onder POC (POC als weerstand)
+    df["poc_distance"] = _compute_poc(
+        df["high"].values, df["low"].values,
+        df["close"].values, df["volume"].values,
+        window=168, n_bins=30,
+    )
+
     # ── ETH/BTC ratio (marktbreedte / dominantie indicator) ───────────────────
     # Voor BTC-model: ETH/BTC ratio — positief = ETH outperformt = altcoin season
     # Voor ETH-model: BTC/ETH ratio — BTC dominantie-indicator (omgekeerd perspectief)
@@ -358,21 +416,22 @@ def build_features(
             df[col] = np.nan
 
     # ── Target variabele ──────────────────────────────────────────────────────
-    # Dead zone: rijen waarbij de koersbeweging kleiner is dan TARGET_DEAD_ZONE_PCT
-    # worden als "neutraal" beschouwd en uit training verwijderd.
-    # Dit voorkomt dat de classifier op ruis leert: micro-bewegingen zijn
-    # onvoorspelbaar en liggen onder de break-even drempel (2 × TRADE_FEE = 0.2%).
+    # B4: Asymmetrische dead zone — aparte drempels voor ups en downs.
+    # Kleine opwaartse moves zijn informatief (accumulatie), kleine neerwaartse
+    # moves zijn vaker ruis. Symmetrische dead zone zou te veel goede long-
+    # voorbeelden weggooien.
     #
-    # target = 1  als future_close > close × (1 + drempel)
-    # target = 0  als future_close < close × (1 - drempel)
+    # target = 1  als future_close > close × (1 + dead_up)
+    # target = 0  als future_close < close × (1 - dead_down)
     # NaN (neutraal) → verwijderd uit feature matrix
-    h    = config.PREDICTION_HORIZON_H
-    dead = config.TARGET_DEAD_ZONE_PCT
+    h         = config.PREDICTION_HORIZON_H
+    dead_up   = getattr(config, "TARGET_DEAD_ZONE_UP",   config.TARGET_DEAD_ZONE_PCT)
+    dead_down = getattr(config, "TARGET_DEAD_ZONE_DOWN",  config.TARGET_DEAD_ZONE_PCT)
     df["future_close"] = df["close"].shift(-h)
     df["target"] = np.where(
-        df["future_close"] > df["close"] * (1 + dead), 1,
+        df["future_close"] > df["close"] * (1 + dead_up), 1,
         np.where(
-        df["future_close"] < df["close"] * (1 - dead), 0,
+        df["future_close"] < df["close"] * (1 - dead_down), 0,
         np.nan)
     )
 
