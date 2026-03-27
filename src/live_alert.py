@@ -312,7 +312,6 @@ def run_live_alert(
 
     # ── Laad high/low data voor structurele SL/TP ─────────────────────────────
     try:
-        from src.data_fetcher import load_ohlcv
         _ohlcv_raw = load_ohlcv(symbol=symbol, interval="1h")
         _ohlcv_raw = _ohlcv_raw[_ohlcv_raw.index <= latest_ts].tail(500)
         _highs = _ohlcv_raw["high"].values
@@ -383,7 +382,7 @@ def run_live_alert(
             f"⏰ {pd.Timestamp(latest_ts).strftime('%d-%m-%Y %H:%M')} UTC\n"
             f"💰 Entry: ${entry_price:,.0f} | SL: ${sl_price:,.0f} (−{abs(entry_price-sl_price)/entry_price*100:.1f}%) | "
             f"TP: ${tp_price:,.0f} (+{abs(tp_price-entry_price)/entry_price*100:.1f}%)\n"
-            f"📊 Proba: {signaal['kans_stijging']} | Regime: {regime_label}\n"
+            f"📊 Proba 1h: {signaal['kans_stijging']} | 4h: {signaal.get('proba_4h','n/a')} | Regime: {regime_label}\n"
             f"💼 Positie: ${position_size:,.0f} ({coin_amount:.6f} {coin_name}) | Risico: €{capital*risk_pct:.2f} ({risk_pct*100:.0f}% kapitaal)"
         )
         opened_new_position = True
