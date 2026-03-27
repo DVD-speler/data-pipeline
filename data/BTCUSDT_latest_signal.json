@@ -1,16 +1,16 @@
 {
-  "tijdstip": "2026-03-26 10:00:00+00:00",
-  "signaal": "WACHT (onder EMA200 \u2014 long geblokkeerd)",
+  "tijdstip": "2026-03-26 23:00:00+00:00",
+  "signaal": "WACHT",
   "kans_stijging": "50.4%",
   "proba_raw": 0.5043062200956939,
-  "long_threshold": "0.50",
+  "long_threshold": "0.58",
   "long_threshold_base": "0.65",
   "short_threshold": "uitgeschakeld",
   "regime_boven_ema200": false,
-  "market_regime": "ranging",
-  "death_cross": false,
+  "market_regime": "bear",
+  "death_cross": true,
   "proba_4h": "n/a",
   "confirm_4h": true,
   "horizon": "24 uur",
-  "prijs": 69563.9609375
+  "prijs": 68772.9375
 }
