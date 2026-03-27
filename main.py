@@ -12,7 +12,8 @@ Gebruik:
   python main.py --phase model             # model trainen (Random Forest)
   python main.py --phase model_compare     # modellen vergelijken (RF, XGBoost, LightGBM)
   python main.py --phase backtest          # backtest uitvoeren
-  python main.py --phase walkforward       # walk-forward validatie
+  python main.py --phase walkforward       # walk-forward validatie (rollend venster)
+  python main.py --phase walkforward --expanding  # walk-forward met expanding venster
   python main.py --phase horizon_scan      # horizons vergelijken (12h, 24h, 48h)
   python main.py --phase signal            # live signaal genereren (laatste uur)
   python main.py --phase simulation        # maand-simulaties met SL/TP, kapitaaloverzicht
@@ -209,9 +210,11 @@ def fase_backtest(model=None, test_df=None, probas=None, symbol: str = None):
     return results, metrics
 
 
-def fase_walkforward(model_name: str = "RandomForest", symbol: str = None, use_regime_models: bool = False):
+def fase_walkforward(model_name: str = "RandomForest", symbol: str = None,
+                     use_regime_models: bool = False, expanding: bool = False):
+    mode_str = "expanding" if expanding else "rolling"
     print("\n" + "=" * 60)
-    print(f"FASE 6b — Walk-Forward Validatie ({model_name}{'  +regime' if use_regime_models else ''})")
+    print(f"FASE 6b — Walk-Forward Validatie ({model_name}, {mode_str}{'  +regime' if use_regime_models else ''})")
     print("=" * 60)
     import pandas as pd
     import config
@@ -220,7 +223,8 @@ def fase_walkforward(model_name: str = "RandomForest", symbol: str = None, use_r
     sym = symbol or config.SYMBOL
     features = pd.read_parquet(config.symbol_path(sym, "features.parquet"))
     fold_df, all_results = run_walkforward(features, model_name=model_name, symbol=sym,
-                                           use_regime_models=use_regime_models)
+                                           use_regime_models=use_regime_models,
+                                           expanding=expanding)
 
     print(f"\nResultaten opgeslagen in: {config.DATA_DIR / 'stats'}/")
     return fold_df, all_results
@@ -333,6 +337,12 @@ def main():
         default=False,
         help="Gebruik regime-conditioned modellen in walk-forward (bull/ranging/bear)",
     )
+    parser.add_argument(
+        "--expanding",
+        action="store_true",
+        default=False,
+        help="Gebruik expanding window in walk-forward (standaard: rollend venster)",
+    )
     args = parser.parse_args()
 
     sym = args.symbol  # None = gebruik config.SYMBOL als default in elke fase
@@ -364,7 +374,8 @@ def main():
     elif args.phase == "backtest":
         fase_backtest(symbol=sym)
     elif args.phase == "walkforward":
-        fase_walkforward(model_name=args.wf_model, symbol=sym, use_regime_models=args.regime_models)
+        fase_walkforward(model_name=args.wf_model, symbol=sym,
+                         use_regime_models=args.regime_models, expanding=args.expanding)
     elif args.phase == "horizon_scan":
         fase_horizon_scan(symbol=sym)
     elif args.phase == "signal":
