@@ -115,6 +115,8 @@ FEATURE_COLS_1H = [
     # BTC Dominance (altcoin-cyclus indicator)
     "btc_dominance",            # BTC % van totale crypto market cap (~40-55%)
     "btc_dominance_7d_chg",     # 7-daagse verandering dominantie (stijgend = risk-off, alts zwak)
+    # Deribit opties-markt
+    "btc_put_call_ratio",       # Put/Call OI ratio (>1 = bearish hedge, >1.5 = extreme bear)
 ]
 # Regime-only columns: in de feature matrix voor backtest-filter, NIET als model feature.
 # adx_trend en market_regime geven expliciete richting → over-confidence in bullish val-periode
@@ -194,3 +196,7 @@ VIX_GATE = 25.0
 # P2 — USD/JPY gate: sterke yen-appreciatie signaleert carry trade unwind
 # Blokkeert longs als JPY de afgelopen 7 dagen > 3% sterker is geworden
 USDJPY_RETURN_7D_GATE = -0.03   # negatief = JPY wordt duurder (USD/JPY daalt)
+
+# C4 — Deribit Put/Call ratio gate
+# Extreme put-dominantie (P/C > 1.5) signaleert bearish positionering grote spelers
+PUT_CALL_RATIO_GATE = 1.5

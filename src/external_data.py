@@ -541,6 +541,54 @@ def fetch_btc_dominance() -> pd.DataFrame:
         return pd.DataFrame(columns=["btc_dominance", "btc_dominance_7d_chg"])
 
 
+def fetch_deribit_put_call_ratio() -> pd.DataFrame:
+    """
+    Haal BTC Put/Call ratio op via Deribit publieke API (geen key vereist).
+
+    Methode: tel open interest van alle BTC puts en calls op uit
+    /api/v2/public/get_book_summary_by_currency (valuta=BTC, kind=option).
+    P/C ratio = sum(put_open_interest) / sum(call_open_interest).
+
+    Hoge P/C ratio (> 1.5) → bearish positionering, blokkeert longs.
+    Cache: 6h (opties-boek ververst traag).
+    """
+    cache_path = EXTERNAL_DIR / "btc_put_call_ratio.parquet"
+    if _cache_valid(cache_path, max_age_h=6):
+        return pd.read_parquet(cache_path)
+
+    print("  Downloading Deribit BTC Put/Call ratio...")
+    try:
+        url = "https://www.deribit.com/api/v2/public/get_book_summary_by_currency"
+        params = {"currency": "BTC", "kind": "option"}
+        resp = requests.get(url, params=params, timeout=20)
+        resp.raise_for_status()
+
+        data = resp.json().get("result", [])
+        if not data:
+            raise ValueError("Lege response van Deribit options endpoint")
+
+        put_oi  = sum(d.get("open_interest", 0) for d in data if d.get("instrument_name", "").endswith("-P"))
+        call_oi = sum(d.get("open_interest", 0) for d in data if d.get("instrument_name", "").endswith("-C"))
+
+        ratio = put_oi / call_oi if call_oi > 0 else 1.0
+
+        now = pd.Timestamp.utcnow().floor("h")
+        # Creëer hourly serie van laatste 30 dagen met huidige waarde (forward-fill)
+        idx = pd.date_range(end=now, periods=30 * 24, freq="h", tz="UTC")
+        df  = pd.DataFrame({"btc_put_call_ratio": ratio}, index=idx)
+        df.to_parquet(cache_path)
+        print(f"  Deribit P/C ratio: {ratio:.3f}")
+        return df
+
+    except Exception as e:
+        print(f"  Waarschuwing: Deribit P/C ratio download mislukt ({e})")
+        if cache_path.exists():
+            return pd.read_parquet(cache_path)
+        now = pd.Timestamp.utcnow().floor("h")
+        idx = pd.date_range(end=now, periods=30 * 24, freq="h", tz="UTC")
+        return pd.DataFrame({"btc_put_call_ratio": 1.0}, index=idx)
+
+
 _DEFAULTS = {
     "fear_greed":        0.5,
     "spx_return_24h":    0.0,
@@ -553,16 +601,18 @@ _DEFAULTS = {
     "usdjpy_return_7d":     0.0,
     "btc_dominance":        50.0,   # historisch gemiddeld ~50%
     "btc_dominance_7d_chg": 0.0,
+    "btc_put_call_ratio":   1.0,    # neutraal: evenveel puts als calls
 }
 
 _SOURCES_GLOBAL = {
-    "fear_greed":    fetch_fear_greed,
-    "spx":           fetch_spx,
-    "eurusd":        fetch_eurusd,
-    "btc_dvol":      fetch_deribit_dvol,
-    "vix":           fetch_vix,
-    "usdjpy":        fetch_usdjpy,
-    "btc_dominance": fetch_btc_dominance,
+    "fear_greed":           fetch_fear_greed,
+    "spx":                  fetch_spx,
+    "eurusd":               fetch_eurusd,
+    "btc_dvol":             fetch_deribit_dvol,
+    "vix":                  fetch_vix,
+    "usdjpy":               fetch_usdjpy,
+    "btc_dominance":        fetch_btc_dominance,
+    "btc_put_call_ratio":   fetch_deribit_put_call_ratio,
 }
 
 

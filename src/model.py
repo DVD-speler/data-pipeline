@@ -243,17 +243,135 @@ def optuna_tune(
             print(f"    {k}: {v}")
 
     # Sla de Optuna-params op als CANDIDATE (niet als de actieve walkforward-params).
-    # lgb_best_params.json wordt NIET overschreven — die bevat de stabiele, gevalideerde params.
-    # lgb_optuna_params.json is voor analyse; handmatig promoten naar lgb_best_params.json
-    # als walkforward bevestigt dat ze beter zijn.
     import json
     saveable = {k: v for k, v in best.items() if k not in ("random_state", "verbose")}
     candidate_path = config.symbol_path(symbol, "lgb_optuna_params.json")
     with open(candidate_path, "w") as f:
         json.dump(saveable, f, indent=2)
-    print(f"  Optuna kandidaat-params: {candidate_path.name} (niet automatisch actief)")
+    print(f"  Optuna kandidaat-params: {candidate_path.name}")
 
     return best
+
+
+def _quick_wf_sharpe(df: pd.DataFrame, params: dict, n_folds: int = 3) -> float:
+    """
+    Mini walk-forward (n_folds) op df; geeft gemiddelde Sharpe over de folds.
+    Gebruikt voor auto-promotie vergelijking (C1).
+    """
+    try:
+        import lightgbm as lgb
+        from src.backtest import compute_metrics, run_backtest
+    except ImportError:
+        return 0.0
+
+    step_h  = config.WALKFORWARD_STEP_DAYS  * 24
+    train_h = config.WALKFORWARD_TRAIN_DAYS * 24
+    test_h  = config.WALKFORWARD_TEST_DAYS  * 24
+    val_h   = config.VALIDATION_SIZE_DAYS   * 24
+
+    n       = len(df)
+    # Start zó dat we precies n_folds folds krijgen aan het einde van de dataset
+    start   = n - test_h * n_folds - train_h
+    if start < 0:
+        return 0.0
+
+    sharpes = []
+    for _ in range(n_folds):
+        train_end   = start + train_h
+        train_start = max(0, train_end - train_h)
+        train_data  = df.iloc[train_start : train_end - val_h]
+        val_data    = df.iloc[train_end - val_h : train_end]
+        test_data   = df.iloc[train_end : train_end + test_h]
+
+        if len(train_data) < 300 or len(test_data) < 50:
+            start += step_h
+            continue
+
+        full_params = {**params, "random_state": 42, "verbose": -1}
+        m = lgb.LGBMClassifier(**full_params)
+        n_tr = len(train_data)
+        tw = np.linspace(0.5, 1.0, n_tr)
+        m.fit(train_data[config.FEATURE_COLS], train_data["target"], sample_weight=tw)
+
+        probas = m.predict_proba(test_data[config.FEATURE_COLS])[:, 1]
+        from src.model import optimize_threshold as _ot
+        thr = _ot(m, val_data)
+        res = run_backtest(test_data, probas, threshold=thr)
+        sharpes.append(compute_metrics(res)["sharpe_ratio"])
+        start += step_h
+
+    return float(np.mean(sharpes)) if sharpes else 0.0
+
+
+def auto_promote_optuna(df: pd.DataFrame, symbol: str = config.SYMBOL,
+                        min_improvement: float = 0.1) -> bool:
+    """
+    Vergelijk Optuna-kandidaat vs. huidige params via mini walk-forward (3 folds).
+    Promoveer kandidaat naar lgb_best_params.json als Sharpe ≥ huidig + min_improvement.
+    Logt de beslissing in data/stats/optuna_promotions.csv.
+
+    Geeft True terug als promotie heeft plaatsgevonden.
+    """
+    import json, csv
+    from datetime import datetime
+
+    candidate_path = config.symbol_path(symbol, "lgb_optuna_params.json")
+    stable_path    = config.symbol_path(symbol, "lgb_best_params.json")
+
+    if not candidate_path.exists():
+        print("  Geen kandidaat-params gevonden — auto-promotie overgeslagen.")
+        return False
+
+    with open(candidate_path) as f:
+        candidate_params = json.load(f)
+
+    if stable_path.exists():
+        with open(stable_path) as f:
+            current_params = json.load(f)
+    else:
+        current_params = {
+            "n_estimators": 400, "max_depth": 4, "learning_rate": 0.03,
+            "subsample": 0.7, "colsample_bytree": 0.6, "min_child_samples": 100,
+            "reg_alpha": 0.1, "reg_lambda": 1.5,
+        }
+
+    print("\nAuto-promotie: 3-fold vergelijking huidige vs. kandidaat params...")
+    current_sharpe   = _quick_wf_sharpe(df, current_params)
+    candidate_sharpe = _quick_wf_sharpe(df, candidate_params)
+
+    print(f"  Huidige params  Sharpe: {current_sharpe:+.4f}")
+    print(f"  Kandidaat params Sharpe: {candidate_sharpe:+.4f}")
+
+    promoted = candidate_sharpe >= current_sharpe + min_improvement
+    if promoted:
+        with open(stable_path, "w") as f:
+            json.dump(candidate_params, f, indent=2)
+        print(f"  Gepromoveerd naar lgb_best_params.json "
+              f"(+{candidate_sharpe - current_sharpe:.4f} Sharpe verbetering)")
+    else:
+        print(f"  Niet gepromoveerd (verbetering {candidate_sharpe - current_sharpe:+.4f} "
+              f"< drempel {min_improvement})")
+
+    # Log beslissing
+    log_path = config.DATA_DIR / "stats" / "optuna_promotions.csv"
+    write_header = not log_path.exists()
+    with open(log_path, "a", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=[
+            "timestamp", "symbol", "current_sharpe", "candidate_sharpe",
+            "improvement", "promoted"
+        ])
+        if write_header:
+            writer.writeheader()
+        writer.writerow({
+            "timestamp":        datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "symbol":           symbol,
+            "current_sharpe":   round(current_sharpe, 4),
+            "candidate_sharpe": round(candidate_sharpe, 4),
+            "improvement":      round(candidate_sharpe - current_sharpe, 4),
+            "promoted":         promoted,
+        })
+
+    return promoted
 
 
 # ── Training ──────────────────────────────────────────────────────────────────
@@ -311,8 +429,16 @@ def train_model(df: pd.DataFrame, symbol: str = config.SYMBOL) -> tuple:
             }
             print("\nGebruik standaard LightGBM-params (geen lgb_best_params.json gevonden)")
 
-        # Optuna als research-tool: vindt kandidaat-params (niet automatisch actief)
+        # Optuna: vindt kandidaat-params en probeert automatisch te promoveren (C1)
         optuna_tune(train, y_train, val, n_trials=50, symbol=symbol)
+        auto_promote_optuna(df, symbol=symbol, min_improvement=0.1)
+
+        # Herlaad params na eventuele promotie
+        if stable_path.exists():
+            with open(stable_path) as _f:
+                lgb_params = json.load(_f)
+            lgb_params["random_state"] = 42
+            lgb_params["verbose"]      = -1
 
         model = lgb.LGBMClassifier(**lgb_params)
         n = len(X_train)

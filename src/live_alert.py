@@ -282,8 +282,11 @@ def run_live_alert(
             )
             send_alert(msg)
         else:
+            hours_open = (pd.Timestamp(latest_ts) - pd.Timestamp(pos["open_time"])).total_seconds() / 3600
+            decay_factor = max(0.5, 1.0 - 0.02 * hours_open)
             print(f"\n  Positie open: {pos['direction']} ${pos['entry_price']:,.0f} "
-                  f"| SL ${pos['sl_price']:,.0f} | TP ${pos['tp_price']:,.0f}")
+                  f"| SL ${pos['sl_price']:,.0f} | TP ${pos['tp_price']:,.0f} "
+                  f"| {hours_open:.0f}h open | size {decay_factor:.0%}")
 
     # ── P2: Daily model regime gate ───────────────────────────────────────────
     # Wanneer het dagmodel BEARISH is (proba < 0.40), blokkeren we alle nieuwe longs.

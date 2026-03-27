@@ -144,6 +144,16 @@ def run_backtest(
             )
             results["signal_long"] = results["signal_long"] * jpy_ok.astype(int)
 
+        # ── C4: Put/Call ratio gate ────────────────────────────────────────────
+        # Extreme put-dominantie (Deribit P/C > 1.5) → bearish positionering.
+        if "btc_put_call_ratio" in test_df.columns:
+            pc_gate = getattr(config, "PUT_CALL_RATIO_GATE", 1.5)
+            low_pc = (
+                test_df["btc_put_call_ratio"].reindex(results.index, fill_value=1.0)
+                < pc_gate
+            )
+            results["signal_long"] = results["signal_long"] * low_pc.astype(int)
+
     # ── Multi-timeframe 4h-confirmatie gate ──────────────────────────────────
     # 4h-model proba moet boven threshold_4h liggen voor een 1h-entry.
     # probas_4h moet op de 1h-index geïnterpoleerd zijn (forward-fill van 4h candle).
@@ -414,10 +424,15 @@ def run_backtest_be_trail(
         # ── 1. Verwerk exits ──────────────────────────────────────────────────
         remaining = []
         for pos in positions:
-            direction = pos["direction"]
-            sl        = pos["sl_price"]
-            tp        = pos["tp_price"]
-            size      = pos["size"]
+            direction  = pos["direction"]
+            sl         = pos["sl_price"]
+            tp         = pos["tp_price"]
+            hours_open = i - pos["entry_idx"]
+            # C2: Signaalveroudering — positie-effectiviteit daalt lineair met tijd.
+            # effective_size = initial_size × max(0.5, 1 − 0.02 × hours_open)
+            # Na 25u: 50% van oorspronkelijke size (vloer).
+            decay_factor = max(0.5, 1.0 - 0.02 * hours_open)
+            size       = pos["size"] * decay_factor
             exit_price = None
 
             proba_i = probas[i]
@@ -480,6 +495,7 @@ def run_backtest_be_trail(
                 "tp_price":    tp_p,
                 "is_be":       False,
                 "horizon_idx": i + h,
+                "entry_idx":   i,
                 "size":        long_sizes[i],
             })
             trade_opened[i] += 1
