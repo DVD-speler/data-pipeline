@@ -236,3 +236,27 @@ PUT_CALL_RATIO_GATE = 1.5
 # Extreem positieve funding (longs betalen te veel) = contrair bearish signaal
 # Blokkeert nieuwe longs als funding_rate > FUNDING_EXTREME_GATE (per 8u)
 FUNDING_EXTREME_GATE = 0.0005   # +0.05% per 8u = overbought signaal
+
+# ── Kelly Criterion positiegrootte (T2-D) ─────────────────────────────────────
+# Half-Kelly als upper-bound voor positiegroottes in live trading.
+# kelly_half = min(full_Kelly × KELLY_FRACTION, KELLY_MAX_FRACTION)
+# kelly_half wordt per symbool berekend op validatieset en opgeslagen in {symbol}_kelly.json
+USE_KELLY_SIZING    = True   # schakel Kelly sizing in/uit
+KELLY_FRACTION      = 0.5    # half-Kelly fractie (0.5 = conservatief, minder ruin-risk)
+KELLY_MAX_FRACTION  = 0.20   # absolute maximale positie als fractie van kapitaal
+
+# ── Regime-afhankelijke SL/TP (T4-C) ─────────────────────────────────────────
+# Optimalere SL/TP per marktregime. Bull: meer ruimte voor de trend.
+# Bear: strakke stop om verliezen te beperken. Ranging: standaard.
+REGIME_SL_TP = {
+    "bull":    {"sl_pct": 0.025, "tp_pct": 0.08},   # bull-run: ruimte voor de trend
+    "ranging": {"sl_pct": 0.020, "tp_pct": 0.06},   # ranging: standaard (was tp=0.06)
+    "bear":    {"sl_pct": 0.015, "tp_pct": 0.04},   # bear: strakke stop, kleiner TP
+}
+
+# ── Multi-asset correlatie guard (T4-A) ───────────────────────────────────────
+# Wanneer BTC én ETH tegelijk open staan (gecorreleerd risico):
+#   24h-correlatie > BLOCK → blokkeer tweede positie (max 1 actief)
+#   24h-correlatie > HALVE → halveer positiegrootte tweede trade
+CORR_GUARD_THRESHOLD_BLOCK = 0.90   # correlatie > 90% → blokkeer
+CORR_GUARD_THRESHOLD_HALVE = 0.70   # correlatie > 70% → halveer

@@ -372,6 +372,83 @@ def auto_promote_optuna(df: pd.DataFrame, symbol: str = config.SYMBOL,
     return promoted
 
 
+# ── Kelly Criterion positiegrootte (T2-D) ─────────────────────────────────────
+
+def compute_kelly_fraction(win_rate: float, avg_win: float, avg_loss: float) -> float:
+    """
+    Bereken de Kelly-fractie: optimale positiegrootte als fractie van kapitaal.
+
+    f = (p × b − q) / b
+    Waarbij: p = win_rate, q = 1−p, b = avg_win / avg_loss (odds ratio)
+
+    Geeft 0.0 terug als er onvoldoende data is of als de verwachte waarde negatief is.
+    """
+    if avg_loss <= 0 or win_rate <= 0 or win_rate >= 1:
+        return 0.0
+    b = avg_win / avg_loss
+    q = 1.0 - win_rate
+    kelly = (win_rate * b - q) / b
+    return max(0.0, round(kelly, 4))
+
+
+def save_kelly_sizing(
+    model,
+    val_df: pd.DataFrame,
+    threshold: float,
+    symbol: str = config.SYMBOL,
+) -> dict:
+    """
+    Bereken Kelly-fractie op de validatieset en sla op als {symbol}_kelly.json.
+    Gebruik half-Kelly als veilige positie-upper-bound in live_alert.
+
+    Returns dict met kelly-statistieken, of leeg dict bij onvoldoende data.
+    """
+    import json as _json
+    from src.backtest import run_backtest
+
+    probas  = model.predict_proba(val_df[config.FEATURE_COLS])[:, 1]
+    results = run_backtest(val_df, probas, threshold=threshold, use_position_sizing=False)
+
+    active_returns = results["strategy_return"][results["signal"] != 0].dropna()
+    if len(active_returns) < 10:
+        print("  Kelly: onvoldoende trades op validatieset — standaard sizing gebruikt")
+        return {}
+
+    win_returns  = active_returns[active_returns > 0]
+    loss_returns = active_returns[active_returns < 0]
+
+    if len(win_returns) == 0 or len(loss_returns) == 0:
+        print("  Kelly: geen verlies- of winst-trades — standaard sizing gebruikt")
+        return {}
+
+    win_rate = float((active_returns > 0).mean())
+    avg_win  = float(win_returns.mean())
+    avg_loss = float(abs(loss_returns.mean()))
+
+    kelly_full = compute_kelly_fraction(win_rate, avg_win, avg_loss)
+    kelly_frac = getattr(config, "KELLY_FRACTION",     0.5)
+    kelly_max  = getattr(config, "KELLY_MAX_FRACTION", 0.20)
+    kelly_half = min(kelly_full * kelly_frac, kelly_max)
+
+    data = {
+        "win_rate":   round(win_rate, 4),
+        "avg_win":    round(avg_win,  4),
+        "avg_loss":   round(avg_loss, 4),
+        "kelly_full": round(kelly_full, 4),
+        "kelly_half": round(kelly_half, 4),
+        "n_trades":   int(len(active_returns)),
+    }
+
+    path = config.symbol_path(symbol, "kelly.json")
+    with open(path, "w") as f:
+        _json.dump(data, f, indent=2)
+
+    print(f"  Kelly: win_rate={win_rate:.1%}, avg_win={avg_win:.4f}, avg_loss={avg_loss:.4f}")
+    print(f"         full={kelly_full:.2%}, half={kelly_half:.2%}  (max {kelly_max:.0%} kapitaal)")
+    print(f"  Opgeslagen: {path.name}")
+    return data
+
+
 # ── Training ──────────────────────────────────────────────────────────────────
 
 def train_model(df: pd.DataFrame, symbol: str = config.SYMBOL) -> tuple:
@@ -483,6 +560,10 @@ def train_model(df: pd.DataFrame, symbol: str = config.SYMBOL) -> tuple:
     # Optimaliseer exit-proba drempelwaarden op validatieset
     from src.backtest import optimize_exit_proba
     optimize_exit_proba(model, val, optimal_thr, symbol=symbol)
+
+    # Kelly Criterion positiegrootte berekenen op validatieset (T2-D)
+    print("\nKelly Criterion positiegrootte berekenen op validatieset...")
+    save_kelly_sizing(model, val, optimal_thr, symbol=symbol)
 
     # ── Regime-specifieke entry thresholds ────────────────────────────────────
     # Per regime (bull/ranging/bear) een aparte drempel optimaliseren op de

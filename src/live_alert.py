@@ -72,6 +72,78 @@ def _load_daily_regime(symbol: str) -> dict:
     except Exception:
         return neutral
 
+# ── Kelly + Regime helpers ───────────────────────────────────────────────────────
+
+def _load_kelly(symbol: str) -> dict:
+    """Laad Kelly-fractie uit {symbol}_kelly.json. Geeft lege dict terug als niet gevonden."""
+    path = config.symbol_path(symbol, "kelly.json")
+    if path.exists():
+        try:
+            with open(path) as f:
+                return json.load(f)
+        except Exception:
+            pass
+    return {}
+
+
+def _regime_sl_tp(regime_label: str, sl_pct_default: float, tp_pct_default: float) -> tuple[float, float]:
+    """
+    Geef regime-afhankelijke SL/TP terug (T4-C).
+    Gebruikt REGIME_SL_TP uit config als die beschikbaar is, anders fallback op defaults.
+    """
+    table = getattr(config, "REGIME_SL_TP", {})
+    params = table.get(regime_label, {})
+    sl = params.get("sl_pct", sl_pct_default)
+    tp = params.get("tp_pct", tp_pct_default)
+    return float(sl), float(tp)
+
+
+def _check_corr_guard(symbol: str, df: pd.DataFrame) -> tuple[bool, float, str]:
+    """
+    Controleer of een open positie in een ander symbool het openen blokkeert (T4-A).
+
+    Returns (blocked: bool, correlation: float, other_symbol: str)
+    """
+    for other in config.SYMBOLS:
+        if other == symbol:
+            continue
+        other_path = config.symbol_path(other, "paper_trades.json")
+        if not other_path.exists():
+            continue
+        try:
+            with open(other_path) as f:
+                other_state = json.load(f)
+        except Exception:
+            continue
+        if other_state.get("open_position") is None:
+            continue
+
+        # Open positie in ander symbool — bereken 24h correlatie
+        try:
+            other_df = load_ohlcv(symbol=other)
+            combined = pd.concat([
+                df["close"].rename("a"),
+                other_df["close"].rename("b"),
+            ], axis=1).dropna()
+            if len(combined) < 24:
+                continue
+            ret_a = combined["a"].pct_change().tail(24)
+            ret_b = combined["b"].pct_change().tail(24)
+            corr  = float(ret_a.corr(ret_b))
+
+            block_thr = getattr(config, "CORR_GUARD_THRESHOLD_BLOCK", 0.90)
+            halve_thr = getattr(config, "CORR_GUARD_THRESHOLD_HALVE", 0.70)
+
+            if corr > block_thr:
+                return True, corr, other
+            if corr > halve_thr:
+                return False, corr, other   # gebeld; beller halveert positie
+        except Exception:
+            continue
+
+    return False, 0.0, ""
+
+
 # ── State management ────────────────────────────────────────────────────────────
 
 def load_paper_state(path) -> dict:
@@ -325,55 +397,96 @@ def run_live_alert(
         # als entry zouden gebruiken, is de prijs stale én is horizon_end ≈ nu, waardoor
         # de positie al bij de volgende run sluit (1 uur later).
         entry_price = latest_close
-        signal_ts = pd.Timestamp(latest_ts)
-        capital = state["capital"]
-        position_size = capital * risk_pct / sl_pct
+        signal_ts   = pd.Timestamp(latest_ts)
+        capital     = state["capital"]
 
-        if _use_structural:
-            sl_price, tp_price = compute_structural_sl_tp(
-                entry_price, direction, _supports, _resistances,
-                fallback_sl_pct=sl_pct, fallback_tp_pct=tp_pct,
+        # ── T4-A: Multi-asset correlatie guard ───────────────────────────────
+        _corr_blocked, _corr_val, _corr_other = _check_corr_guard(symbol, df)
+        if _corr_blocked:
+            print(
+                f"\n  ⛔ Correlatie guard: LONG geblokkeerd\n"
+                f"     {_corr_other} heeft open positie, 24h correlatie {_corr_val:.1%} "
+                f"> {getattr(config, 'CORR_GUARD_THRESHOLD_BLOCK', 0.90):.0%} limiet"
             )
-            sl_pct_actual = abs(entry_price - sl_price) / entry_price
-            tp_pct_actual = abs(tp_price - entry_price) / entry_price
-            print(f"  Structurele niveaus: SL={sl_pct_actual:.1%} afstand, TP={tp_pct_actual:.1%} afstand "
-                  f"(R/R={tp_pct_actual/max(sl_pct_actual,0.001):.1f})")
+            signaal["signaal"] = (
+                f"WACHT (correlatie guard — {_corr_other} open, corr {_corr_val:.1%})"
+            )
         else:
-            sl_price = entry_price * (1 - sl_pct)
-            tp_price = entry_price * (1 + tp_pct)
+            # ── T4-C: Regime-afhankelijke SL/TP ─────────────────────────────
+            regime_label = signaal.get("market_regime", "ranging")
+            sl_pct_eff, tp_pct_eff = _regime_sl_tp(regime_label, sl_pct, tp_pct)
+            if sl_pct_eff != sl_pct or tp_pct_eff != tp_pct:
+                print(f"  Regime '{regime_label}': SL={sl_pct_eff:.1%}, TP={tp_pct_eff:.1%} "
+                      f"(standaard SL={sl_pct:.1%}, TP={tp_pct:.1%})")
+            sl_pct = sl_pct_eff
+            tp_pct = tp_pct_eff
 
-        horizon_end = signal_ts + pd.Timedelta(hours=config.MAX_HOLD_HOURS)
+            position_size = capital * risk_pct / sl_pct
 
-        state["open_position"] = {
-            "direction": direction,
-            "entry_price": round(entry_price, 0),
-            "sl_price": round(sl_price, 0),
-            "tp_price": round(tp_price, 0),
-            "open_time": str(signal_ts),
-            "horizon_end": str(horizon_end),
-            "position_size": round(position_size, 2),
-            "risk_euro": round(capital * risk_pct, 2),
-            "proba": signaal["kans_stijging"],
-        }
+            # ── T2-D: Kelly Criterion positiegrootte cap ─────────────────────
+            if getattr(config, "USE_KELLY_SIZING", False):
+                kelly_data = _load_kelly(symbol)
+                kelly_half = kelly_data.get("kelly_half", 0.0)
+                if kelly_half > 0:
+                    kelly_max_size = capital * kelly_half
+                    if position_size > kelly_max_size:
+                        print(f"  Kelly cap: ${position_size:,.0f} → ${kelly_max_size:,.0f} "
+                              f"(half-Kelly {kelly_half:.1%} × kapitaal)")
+                        position_size = kelly_max_size
 
-        print(f"\n  ── NIEUW SIGNAAL ───────────────────────────────────────────────────")
-        print(f"  {direction} | Entry ${entry_price:,.0f} | SL ${sl_price:,.0f} | TP ${tp_price:,.0f}")
-        print(f"  Positie: ${position_size:,.0f} | Risico: €{capital*risk_pct:.2f}")
+            # Halveer positie als er een matig gecorreleerd symbool open staat
+            if _corr_val > getattr(config, "CORR_GUARD_THRESHOLD_HALVE", 0.70):
+                print(f"  Correlatie halvering: {_corr_other} open, corr {_corr_val:.1%} "
+                      f"→ positie gehalveerd (${position_size:,.0f} → ${position_size/2:,.0f})")
+                position_size /= 2
 
-        coin_name = symbol.replace("USDT", "")
-        coin_amount = round(position_size / entry_price, 6)
-        icon = "🟢"
-        regime_label = "boven EMA200" if signaal.get("regime_boven_ema200") else "onder EMA200"
-        msg = (
-            f"{icon} **{direction} SIGNAAL** — {symbol}\n"
-            f"⏰ {pd.Timestamp(latest_ts).strftime('%d-%m-%Y %H:%M')} UTC\n"
-            f"💰 Entry: ${entry_price:,.0f} | SL: ${sl_price:,.0f} (−{abs(entry_price-sl_price)/entry_price*100:.1f}%) | "
-            f"TP: ${tp_price:,.0f} (+{abs(tp_price-entry_price)/entry_price*100:.1f}%)\n"
-            f"📊 Proba 1h: {signaal['kans_stijging']} | 4h: {signaal.get('proba_4h','n/a')} | Regime: {regime_label}\n"
-            f"💼 Positie: ${position_size:,.0f} ({coin_amount:.6f} {coin_name}) | Risico: €{capital*risk_pct:.2f} ({risk_pct*100:.0f}% kapitaal)"
-        )
-        opened_new_position = True
-        send_discord_alert(msg)
+            if _use_structural:
+                sl_price, tp_price = compute_structural_sl_tp(
+                    entry_price, direction, _supports, _resistances,
+                    fallback_sl_pct=sl_pct, fallback_tp_pct=tp_pct,
+                )
+                sl_pct_actual = abs(entry_price - sl_price) / entry_price
+                tp_pct_actual = abs(tp_price - entry_price) / entry_price
+                print(f"  Structurele niveaus: SL={sl_pct_actual:.1%} afstand, TP={tp_pct_actual:.1%} afstand "
+                      f"(R/R={tp_pct_actual/max(sl_pct_actual,0.001):.1f})")
+            else:
+                sl_price = entry_price * (1 - sl_pct)
+                tp_price = entry_price * (1 + tp_pct)
+
+            horizon_end = signal_ts + pd.Timedelta(hours=config.MAX_HOLD_HOURS)
+
+            state["open_position"] = {
+                "direction": direction,
+                "entry_price": round(entry_price, 0),
+                "sl_price": round(sl_price, 0),
+                "tp_price": round(tp_price, 0),
+                "open_time": str(signal_ts),
+                "horizon_end": str(horizon_end),
+                "position_size": round(position_size, 2),
+                "risk_euro": round(capital * risk_pct, 2),
+                "proba": signaal["kans_stijging"],
+                "market_regime": regime_label,
+            }
+
+            print(f"\n  ── NIEUW SIGNAAL ───────────────────────────────────────────────────")
+            print(f"  {direction} | Entry ${entry_price:,.0f} | SL ${sl_price:,.0f} | TP ${tp_price:,.0f}")
+            print(f"  Positie: ${position_size:,.0f} | Risico: €{capital*risk_pct:.2f}")
+
+            coin_name = symbol.replace("USDT", "")
+            coin_amount = round(position_size / entry_price, 6)
+            icon = "🟢"
+            ema200_label = "boven EMA200" if signaal.get("regime_boven_ema200") else "onder EMA200"
+            msg = (
+                f"{icon} **{direction} SIGNAAL** — {symbol}\n"
+                f"⏰ {pd.Timestamp(latest_ts).strftime('%d-%m-%Y %H:%M')} UTC\n"
+                f"💰 Entry: ${entry_price:,.0f} | SL: ${sl_price:,.0f} (−{abs(entry_price-sl_price)/entry_price*100:.1f}%) | "
+                f"TP: ${tp_price:,.0f} (+{abs(tp_price-entry_price)/entry_price*100:.1f}%)\n"
+                f"📊 Proba 1h: {signaal['kans_stijging']} | 4h: {signaal.get('proba_4h','n/a')} | "
+                f"Regime: {regime_label} ({ema200_label})\n"
+                f"💼 Positie: ${position_size:,.0f} ({coin_amount:.6f} {coin_name}) | Risico: €{capital*risk_pct:.2f} ({risk_pct*100:.0f}% kapitaal)"
+            )
+            opened_new_position = True
+            send_discord_alert(msg)
 
     # ── WACHT bericht (geen nieuwe trade geopend deze run) ────────────────────
     if not opened_new_position:

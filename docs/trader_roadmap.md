@@ -198,7 +198,7 @@ Echter: geen historische liquidatie-data zonder betaald account.
 ---
 
 ### T2-B · Funding rate extremen als reversal-signaal
-**Status:** `[ ]`
+**Status:** `[x]` — geïmplementeerd 2026-03-27 · T2-B funding gate actief (funding > 0.05% blokkeert longs)
 
 **Waarom traders het gebruiken:**
 Een **extreem positieve** funding rate (+0.1%+ per 8u) betekent dat longs zo dominant
@@ -248,7 +248,7 @@ Dit is de **volume-equivalent voor futures** en mist vrijwel altijd in retail mo
 ---
 
 ### T2-D · Kelly Criterion positiegroottes
-**Status:** `[ ]`
+**Status:** `[x]` — geïmplementeerd 2026-03-27 · compute_kelly_fraction() + save_kelly_sizing() in model.py; half-Kelly cap in live_alert.py; USE_KELLY_SIZING=True
 
 **Waarom traders het gebruiken:**
 De Kelly-formule bepaalt de theoretisch optimale positiegrootte op basis van
@@ -272,7 +272,7 @@ Waarbij: p = win-rate, q = 1−p, b = odds (gem. winst / gem. verlies)
 ---
 
 ### T2-E · BTC Halving Cyclus feature
-**Status:** `[ ]`
+**Status:** `[x]` — geïmplementeerd 2026-03-27 · code aanwezig in features.py, tijdelijk uit FEATURE_COLS (overfitting test)
 
 **Waarom traders het gebruiken:**
 De BTC halving is de sterkste fundamentele cyclus in crypto. Historisch:
@@ -296,7 +296,7 @@ De BTC halving is de sterkste fundamentele cyclus in crypto. Historisch:
 ---
 
 ### T2-F · Correlation regime (BTC-ETH ontkoppeling)
-**Status:** `[ ]`
+**Status:** `[x]` — geïmplementeerd 2026-03-27 · code aanwezig in features.py, tijdelijk uit FEATURE_COLS (gecombineerde regressie)
 
 **Waarom traders het gebruiken:**
 Normaal bewegen BTC en ETH samen (correlatie > 0.85). Wanneer de correlatie
@@ -317,7 +317,7 @@ van altcoin-seizoen of BTC-dominantie shift.
 ---
 
 ### T2-G · Supertrend indicator
-**Status:** `[ ]`
+**Status:** `[x]` — geïmplementeerd 2026-03-27 · code aanwezig in features.py, tijdelijk uit FEATURE_COLS (corr -0.36 met proba)
 
 **Waarom traders het gebruiken:**
 Supertrend is een ATR-gebaseerde trendvolgend indicator die veel gebruikt wordt
@@ -366,7 +366,7 @@ Gratis, geen API-key, bewezen in academisch onderzoek.
 ---
 
 ### T3-B · Stablecoin dominantie (USDT.D)
-**Status:** `[ ]`
+**Status:** `[x]` — geïmplementeerd 2026-03-27 · fetch_usdt_dominance() in external_data.py, uit FEATURE_COLS (76% null)
 
 **Waarom traders het gebruiken:**
 USDT Dominance (%) = kapitaal dat in stablecoins zit, buiten de markt.
@@ -526,7 +526,7 @@ een hammer" een reversal-patroon is. Dit vangt dingen die tabulaire modellen mis
 ## Tier 4 — Portfolio-niveau verbeteringen
 
 ### T4-A · Correlatie-bewuste multi-asset uitvoering
-**Status:** `[ ]`
+**Status:** `[x]` — geïmplementeerd 2026-03-27 · _check_corr_guard() in live_alert.py; blokkeert bij 24h-corr > 90%, halveert bij > 70%
 
 **Waarom traders het gebruiken:**
 Wanneer BTC én ETH tegelijk een long-signaal geven, is dit gecorreleerd risico:
@@ -558,7 +558,7 @@ in de komende 24 uur." Professionele risicoafdelingen gebruiken dit als harde gr
 ---
 
 ### T4-C · Automatische parameter-aanpassing op marktregime
-**Status:** `[ ]`
+**Status:** `[x]` — geïmplementeerd 2026-03-27 · REGIME_SL_TP tabel in config.py; _regime_sl_tp() in live_alert.py
 
 **Waarom traders het gebruiken:**
 De optimale SL/TP varieert sterk met het volatiliteitsregime:
@@ -590,23 +590,23 @@ De optimale SL/TP varieert sterk met het volatiliteitsregime:
 | T1-E Partiële exits (TP1/TP2) | Hoog | Medium | ⭐⭐⭐ | ✅ |
 | T1-F RSI-divergentie | Medium | Medium | ⭐⭐ | ✅ laag belang |
 | T2-A Liquidatie heatmap | Hoog | Medium | ⭐⭐⭐ | `[ ]` |
-| T2-B Funding extremen gate | Medium | Laag | ⭐⭐⭐ | `[ ]` |
+| T2-B Funding extremen gate | Medium | Laag | ⭐⭐⭐ | ✅ |
 | T2-C OI trend | Medium | Medium | ⭐⭐ | `[ ]` |
-| T2-D Kelly Criterion sizing | Medium | Medium | ⭐⭐ | `[ ]` |
-| T2-E BTC Halving cyclus | Medium | Laag | ⭐⭐⭐ | `[ ]` |
-| T2-F BTC-ETH correlatie | Medium | Laag | ⭐⭐ | `[ ]` |
-| T2-G Supertrend | Medium | Laag | ⭐⭐ | `[ ]` |
+| T2-D Kelly Criterion sizing | Medium | Medium | ⭐⭐ | ✅ |
+| T2-E BTC Halving cyclus | Medium | Laag | ⭐⭐⭐ | ✅ (code, uit FEATURE_COLS) |
+| T2-F BTC-ETH correlatie | Medium | Laag | ⭐⭐ | ✅ (code, uit FEATURE_COLS) |
+| T2-G Supertrend | Medium | Laag | ⭐⭐ | ✅ (code, uit FEATURE_COLS) |
 | T3-A Google Trends | Medium | Medium | ⭐⭐ | `[ ]` |
-| T3-B USDT dominantie | Medium | Laag | ⭐⭐ | `[ ]` |
+| T3-B USDT dominantie | Medium | Laag | ⭐⭐ | ✅ (code, uit FEATURE_COLS) |
 | T3-C Opties 25d skew | Hoog | Hoog | ⭐⭐ | `[ ]` |
 | T3-D Max Pain | Medium | Hoog | ⭐ | `[ ]` |
 | T3-E Social media sentiment | Medium | Hoog | ⭐ | `[ ]` |
 | T3-F HMM regime detectie | Hoog | Hoog | ⭐⭐ | `[ ]` |
 | T3-G On-Chain (Glassnode) | Hoog | Hoog | ⭐ (betaald) | `[ ]` |
 | T3-H LSTM/Transformer | Hoog | Zeer hoog | ⭐⭐ | `[ ]` |
-| T4-A Multi-asset correlatie | Medium | Laag | ⭐⭐⭐ | `[ ]` |
+| T4-A Multi-asset correlatie | Medium | Laag | ⭐⭐⭐ | ✅ |
 | T4-B Value at Risk | Medium | Medium | ⭐⭐ | `[ ]` |
-| T4-C Regime-afhankelijke params | Hoog | Medium | ⭐⭐⭐ | `[ ]` |
+| T4-C Regime-afhankelijke params | Hoog | Medium | ⭐⭐⭐ | ✅ |
 
 ---
 
@@ -637,20 +637,28 @@ De optimale SL/TP varieert sterk met het volatiliteitsregime:
 
 **Resultaat Sprint 2:** BTC Sharpe +6.293 (T2-B gate + nieuwe Optuna params) vs baseline +5.944
 
-### Sprint 3 — Volgende prioriteit
-1. **T4-A** Multi-asset correlatie guard (position sizing bescherming)
-2. **T4-C** Regime-afhankelijke SL/TP
-3. **T2-D** Kelly Criterion sizing
-4. **T2-C** OI trend (via Coinglass)
-5. Sprint 2 features activeren na Optuna re-tuning met uitgebreide feature set
+### Sprint 3 ✅ VOLTOOID (2026-03-27)
+- ~~**T4-A** Multi-asset correlatie guard~~ ✅ _check_corr_guard() in live_alert.py — blokkeert bij 24h-corr > 90%, halveert bij > 70%
+- ~~**T4-C** Regime-afhankelijke SL/TP~~ ✅ REGIME_SL_TP tabel + _regime_sl_tp() — bull 2.5%/8%, ranging 2%/6%, bear 1.5%/4%
+- ~~**T2-D** Kelly Criterion sizing~~ ✅ compute_kelly_fraction() in model.py — half-Kelly cap in live_alert; gesaved per symbool als {symbol}_kelly.json
 
-### Sprint 3 (complex, transformatief)
-8. **T2-A** Liquidatie data (Coinglass API)
-9. **T2-D** Kelly Criterion sizing
-10. **T3-A** Google Trends sentiment
-11. **T3-C** Opties 25-delta skew
+**Sprint 3 bevindingen:**
+- Kelly, regime SL/TP, en correlatie guard zijn puur live-trading verbeteringen — geen backtest Sharpe impact
+- Kelly fraction wordt berekend op validatieset bij elke training en opgeslagen
+- Regime SL/TP geeft bull-run meer ruimte (TP +8%) en bear-markt strakkere stop (SL 1.5%)
 
-### Sprint 4 (geavanceerd)
-12. **T3-F** HMM regime detectie
-13. **T3-H** LSTM ensemble
-14. **T3-G** On-chain data (als API-key beschikbaar)
+**Volgende prioriteit Sprint 4:**
+1. **T2-A** Liquidatie data (Coinglass API) — sterkste ontbrekende feature
+2. **T3-C** Opties 25-delta skew (Deribit) — nauwkeuriger dan P/C ratio
+3. **T3-A** Google Trends sentiment
+4. Sprint 2 features re-activeren na Optuna heroptimalisatie
+
+### Sprint 4 (complex, transformatief)
+- **T2-A** Liquidatie heatmap (Coinglass API)
+- **T3-A** Google Trends sentiment
+- **T3-C** Opties 25-delta skew
+
+### Sprint 5 (geavanceerd)
+- **T3-F** HMM regime detectie
+- **T3-H** LSTM ensemble
+- **T3-G** On-chain data (als API-key beschikbaar)

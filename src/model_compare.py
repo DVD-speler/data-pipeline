@@ -206,14 +206,13 @@ def compare_models(df: pd.DataFrame, symbol: str = config.SYMBOL) -> pd.DataFram
             "win_rate":        round(metrics["win_rate"], 4),
             "n_trades":        metrics["n_trades"],
             "n_long":          metrics["n_long"],
-            "n_short":         metrics["n_short"],
         })
         roc_data[name] = (model, probas, color)
 
         print(
             f"  [{name}] ROC AUC: {auc:.4f}  |  Sharpe: {metrics['sharpe_ratio']:.4f}"
             f"  |  Return: {metrics['total_return']:+.1%}"
-            f"  |  L:{metrics['n_long']} S:{metrics['n_short']}"
+            f"  |  L:{metrics['n_long']}"
         )
 
     # ── AUC-gewogen ensemble ──────────────────────────────────────────────────
@@ -280,14 +279,13 @@ def compare_models(df: pd.DataFrame, symbol: str = config.SYMBOL) -> pd.DataFram
         "win_rate":        round(ens_metrics["win_rate"], 4),
         "n_trades":        ens_metrics["n_trades"],
         "n_long":          ens_metrics["n_long"],
-        "n_short":         ens_metrics["n_short"],
     })
     roc_data["Ensemble"] = (None, ens_test_probas, "mediumpurple")
 
     print(
         f"  [Ensemble] ROC AUC: {ens_auc:.4f}  |  Sharpe: {ens_metrics['sharpe_ratio']:.4f}"
         f"  |  Return: {ens_metrics['total_return']:+.1%}"
-        f"  |  L:{ens_metrics['n_long']} S:{ens_metrics['n_short']}"
+        f"  |  L:{ens_metrics['n_long']}"
     )
 
     comparison = (
