@@ -361,6 +361,38 @@ def train_model(df: pd.DataFrame, symbol: str = config.SYMBOL) -> tuple:
     optimize_exit_proba(model, val, optimal_thr,
                         threshold_short=optimal_short_thr, symbol=symbol)
 
+    # ── Regime-specifieke entry thresholds ────────────────────────────────────
+    # Per regime (bull/ranging/bear) een aparte drempel optimaliseren op de
+    # subset van de validatieset die overeenkomt met dat regime.
+    # Vervangt de handmatige REGIME_THRESHOLD_OFFSETS in config.
+    print("\nRegime-specifieke thresholds optimaliseren op validatieset...")
+    regime_thresholds = {}
+    regime_labels = {1: "bull", 0: "ranging", -1: "bear"}
+    if "market_regime" in val.columns:
+        for reg, lbl in regime_labels.items():
+            subset = val[val["market_regime"] == reg]
+            if len(subset) < 200:
+                print(f"  {lbl:<8}: onvoldoende data ({len(subset)} rijen) — gebruik globale drempel")
+                regime_thresholds[lbl] = optimal_thr
+                continue
+            reg_probas = model.predict_proba(subset[config.FEATURE_COLS])[:, 1]
+            reg_thr = _optimize_threshold_from_probas(
+                reg_probas, subset, thr_min=0.50, thr_max=0.90, min_trades=5
+            )
+            regime_thresholds[lbl] = reg_thr
+            offset = reg_thr - optimal_thr
+            print(f"  {lbl:<8}: {reg_thr:.2f}  (offset {offset:+.2f} vs globaal {optimal_thr:.2f})")
+    else:
+        for lbl in regime_labels.values():
+            regime_thresholds[lbl] = optimal_thr
+        print("  Geen market_regime kolom — globale drempel voor alle regimes")
+
+    import json as _json
+    reg_thr_path = config.symbol_path(symbol, "regime_thresholds.json")
+    with open(reg_thr_path, "w") as f:
+        _json.dump({**regime_thresholds, "global": optimal_thr}, f, indent=2)
+    print(f"  Opgeslagen: {reg_thr_path.name}")
+
     # Evalueer op testset
     probas = model.predict_proba(X_test)[:, 1]
     y_pred = (probas >= optimal_thr).astype(int)
@@ -411,6 +443,35 @@ def train_model(df: pd.DataFrame, symbol: str = config.SYMBOL) -> tuple:
     joblib.dump(model, model_path)
     print(f"\nModel opgeslagen: {model_path}  ({model_type})")
     print(f"Thresholds opgeslagen: {thr_path}")
+
+    # ── Probability calibratie (isotonic regression op validatieset) ──────────
+    # LightGBM-probabilities zijn slecht gekalibreerd: proba 0.70 betekent in
+    # de praktijk ~55-60%. Isotonic regression corrigeert dit zonder het model
+    # opnieuw te trainen. cv='prefit' = model is al getraind, val is calibratie-set.
+    print("\nProbability calibratie (isotonic regression op validatieset)...")
+    try:
+        from sklearn.calibration import CalibratedClassifierCV, calibration_curve
+        calibrated = CalibratedClassifierCV(model, method="isotonic", cv="prefit")
+        calibrated.fit(val[config.FEATURE_COLS], val["target"])
+
+        probas_raw_val = model.predict_proba(val[config.FEATURE_COLS])[:, 1]
+        probas_cal_val = calibrated.predict_proba(val[config.FEATURE_COLS])[:, 1]
+        frac_pos, mean_pred_raw = calibration_curve(val["target"], probas_raw_val, n_bins=10)
+        frac_pos, mean_pred_cal = calibration_curve(val["target"], probas_cal_val, n_bins=10)
+        mae_raw = float(np.mean(np.abs(frac_pos - mean_pred_raw)))
+        mae_cal = float(np.mean(np.abs(frac_pos - mean_pred_cal)))
+        print(f"  Calibratie MAE (ongekalibreerd): {mae_raw:.4f}")
+        print(f"  Calibratie MAE (gekalibreerd)  : {mae_cal:.4f}  "
+              f"({'beter' if mae_cal < mae_raw else 'geen verbetering'})")
+
+        cal_path = config.symbol_path(symbol, "model_calibrated.pkl")
+        joblib.dump(calibrated, cal_path)
+        print(f"  Gekalibreerd model opgeslagen: {cal_path.name}")
+
+        # Gebruik gekalibreerde probas voor verdere evaluatie op testset
+        probas = calibrated.predict_proba(X_test)[:, 1]
+    except Exception as e:
+        print(f"  Waarschuwing: calibratie mislukt ({e}) — ongekalibreerd model gebruikt")
 
     return model, test, probas
 
@@ -491,13 +552,43 @@ def load_regime_model(regime: int, symbol: str = config.SYMBOL):
 
 # ── Laden ─────────────────────────────────────────────────────────────────────
 
-def load_model(symbol: str = config.SYMBOL) -> RandomForestClassifier:
+def load_model(symbol: str = config.SYMBOL, calibrated: bool = True):
+    """
+    Laad het getrainde model. Geeft bij voorkeur het gekalibreerde model terug
+    (betere probability estimates). Valt terug op het ongekalibreerde model.
+
+    Parameters
+    ----------
+    calibrated : True = probeer gekalibreerde versie eerst (default)
+    """
+    if calibrated:
+        cal_path = config.symbol_path(symbol, "model_calibrated.pkl")
+        if cal_path.exists():
+            return joblib.load(cal_path)
     model_path = config.symbol_path(symbol, "model.pkl")
     if not model_path.exists():
         raise FileNotFoundError(
             f"Geen model gevonden op {model_path}. Voer eerst train_model() uit."
         )
     return joblib.load(model_path)
+
+
+def load_regime_thresholds(symbol: str = config.SYMBOL) -> dict:
+    """
+    Laad regime-specifieke entry drempelwaarden uit {symbol}_regime_thresholds.json.
+    Geeft een dict: {'bull': float, 'ranging': float, 'bear': float, 'global': float}
+    Valt terug op de globale threshold als het bestand niet bestaat.
+    """
+    import json
+    path = config.symbol_path(symbol, "regime_thresholds.json")
+    if path.exists():
+        try:
+            with open(path) as f:
+                return json.load(f)
+        except Exception:
+            pass
+    global_thr, _ = load_optimal_threshold(symbol=symbol)
+    return {"bull": global_thr, "ranging": global_thr, "bear": global_thr, "global": global_thr}
 
 
 def load_optimal_threshold(symbol: str = config.SYMBOL) -> tuple[float, float]:

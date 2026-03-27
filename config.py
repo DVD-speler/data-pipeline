@@ -108,6 +108,9 @@ FEATURE_COLS_1H = [
     "vix_level",                # CBOE VIX aandelenmarkt-angstmeter (ruwe waarde, ~20 gemiddeld)
     "usdjpy_return_24h",        # USD/JPY dagelijks rendement (negatief = yen sterker = risk-off)
     "usdjpy_return_7d",         # USD/JPY 7-daags rendement — carry trade unwind detector
+    # BTC Dominance (altcoin-cyclus indicator)
+    "btc_dominance",            # BTC % van totale crypto market cap (~40-55%)
+    "btc_dominance_7d_chg",     # 7-daagse verandering dominantie (stijgend = risk-off, alts zwak)
 ]
 # Regime-only columns: in de feature matrix voor backtest-filter, NIET als model feature.
 # adx_trend en market_regime geven expliciete richting → over-confidence in bullish val-periode
@@ -144,6 +147,12 @@ REGIME_THRESHOLD_OFFSETS = {1: -0.05, 0: 0.0, -1: 0.08}
 # ── Backtest ───────────────────────────────────────────────────────────────────
 TRADE_FEE     = 0.001
 STOP_LOSS_PCT = 0.02
+
+# ── Multi-timeframe signaalconfirmatie ────────────────────────────────────────
+# 4h-model proba moet boven deze drempel liggen voor een 1h-entry.
+# 0.0 = uitgeschakeld (geen 4h-confirmatie vereist).
+# Wordt apart geoptimaliseerd per symbool (zie {symbol}_4h_optimal_threshold.json).
+SIGNAL_THRESHOLD_4H = 0.52   # lager dan 1h drempel (4h is trager signaal)
 
 # ── Model-gestuurd sluitmodel ─────────────────────────────────────────────────
 # Sluit LONG als proba daalt onder EXIT_PROBA_LONG (model ziet kans niet meer).

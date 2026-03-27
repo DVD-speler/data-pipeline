@@ -491,6 +491,56 @@ def fetch_deribit_dvol() -> pd.DataFrame:
 # ── Gecombineerde loader ───────────────────────────────────────────────────────
 
 # Neutrale defaults per feature (worden gebruikt als data ontbreekt)
+def fetch_btc_dominance() -> pd.DataFrame:
+    """
+    Haal BTC Dominance op via CoinGecko public API (geen key vereist).
+    Retourneert dagelijks DataFrame met kolommen: btc_dominance, btc_dominance_7d_chg.
+    Cache: 24h (dagelijks signaal).
+    """
+    cache_path = EXTERNAL_DIR / "btc_dominance.parquet"
+    if _cache_valid(cache_path, max_age_h=24):
+        return pd.read_parquet(cache_path)
+
+    print("  Downloading BTC Dominance (CoinGecko)...")
+    try:
+        # market_chart voor 365 dagen dominantie (via /global/market_cap_chart)
+        url = "https://api.coingecko.com/api/v3/coins/bitcoin/market_chart"
+        params = {"vs_currency": "usd", "days": "365", "interval": "daily"}
+        resp = requests.get(url, params=params, timeout=15)
+        resp.raise_for_status()
+
+        # Haal ook totale market cap op voor dominantie-berekening
+        global_url = "https://api.coingecko.com/api/v3/global/market_cap_chart"
+        g_resp = requests.get(global_url, params={"days": "365"}, timeout=15)
+        g_resp.raise_for_status()
+
+        btc_caps = resp.json().get("market_caps", [])
+        total_caps = g_resp.json().get("market_cap_chart", {}).get("market_cap", [])
+
+        if not btc_caps or not total_caps:
+            raise ValueError("Lege response van CoinGecko")
+
+        df_btc   = pd.DataFrame(btc_caps,   columns=["ts", "btc_cap"])
+        df_total = pd.DataFrame(total_caps, columns=["ts", "total_cap"])
+        df = df_btc.merge(df_total, on="ts", how="inner")
+        df["datetime"]      = pd.to_datetime(df["ts"], unit="ms", utc=True)
+        df                  = df.set_index("datetime").drop(columns=["ts", "btc_cap", "total_cap"])
+        df["btc_dominance"] = (df_btc.set_index("ts")["btc_cap"] /
+                                df_total.set_index("ts")["total_cap"] * 100
+                               ).values
+        df["btc_dominance_7d_chg"] = df["btc_dominance"].diff(7)
+        df = df.dropna()
+        df.to_parquet(cache_path)
+        print(f"  BTC Dominance: {len(df)} datapunten geladen")
+        return df
+
+    except Exception as e:
+        print(f"  Waarschuwing: BTC Dominance download mislukt ({e})")
+        if cache_path.exists():
+            return pd.read_parquet(cache_path)
+        return pd.DataFrame(columns=["btc_dominance", "btc_dominance_7d_chg"])
+
+
 _DEFAULTS = {
     "fear_greed":        0.5,
     "spx_return_24h":    0.0,
@@ -499,17 +549,20 @@ _DEFAULTS = {
     "oi_change_24h":     0.0,
     "btc_dvol":          0.45,   # ~45% IV = neutrale volatiliteit
     "vix_level":         20.0,   # historisch gemiddelde VIX ~20
-    "usdjpy_return_24h": 0.0,
-    "usdjpy_return_7d":  0.0,
+    "usdjpy_return_24h":    0.0,
+    "usdjpy_return_7d":     0.0,
+    "btc_dominance":        50.0,   # historisch gemiddeld ~50%
+    "btc_dominance_7d_chg": 0.0,
 }
 
 _SOURCES_GLOBAL = {
-    "fear_greed": fetch_fear_greed,
-    "spx":        fetch_spx,
-    "eurusd":     fetch_eurusd,
-    "btc_dvol":   fetch_deribit_dvol,
-    "vix":        fetch_vix,
-    "usdjpy":     fetch_usdjpy,
+    "fear_greed":    fetch_fear_greed,
+    "spx":           fetch_spx,
+    "eurusd":        fetch_eurusd,
+    "btc_dvol":      fetch_deribit_dvol,
+    "vix":           fetch_vix,
+    "usdjpy":        fetch_usdjpy,
+    "btc_dominance": fetch_btc_dominance,
 }
 
 

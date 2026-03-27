@@ -38,6 +38,8 @@ def run_backtest(
     use_position_sizing: bool = True,
     regime_filter: bool = True,
     horizon: int = None,
+    probas_4h: np.ndarray = None,
+    threshold_4h: float = None,
 ) -> pd.DataFrame:
     """
     Voer de backtest uit op de testset.
@@ -64,12 +66,20 @@ def run_backtest(
     results["proba"] = probas
 
     # ── Regime-adaptieve drempel ──────────────────────────────────────────────
-    # In bull-regimes wordt de drempel verlaagd (meer kansen), in bear verhoogd
-    # (alleen longs met zeer hoge modelzekerheid). Offsets uit config.
+    # Voorkeur: data-driven regime_thresholds.json (per regime geoptimaliseerd).
+    # Fallback: vaste offsets uit config.REGIME_THRESHOLD_OFFSETS.
     if "market_regime" in test_df.columns:
         regime = test_df["market_regime"].reindex(results.index, fill_value=0).astype(int)
-        offsets = config.REGIME_THRESHOLD_OFFSETS
-        eff_thr = regime.map(lambda r: threshold + offsets.get(r, 0.0)).clip(0.50, 0.95)
+        _regime_map = {1: "bull", 0: "ranging", -1: "bear"}
+        try:
+            from src.model import load_regime_thresholds as _lrt
+            _rthr = _lrt()
+            eff_thr = regime.map(
+                lambda r: _rthr.get(_regime_map.get(r, "ranging"), threshold)
+            ).clip(0.50, 0.95)
+        except Exception:
+            offsets = config.REGIME_THRESHOLD_OFFSETS
+            eff_thr = regime.map(lambda r: threshold + offsets.get(r, 0.0)).clip(0.50, 0.95)
         results["signal_long"] = (results["proba"] >= eff_thr).astype(int)
     else:
         results["signal_long"] = (results["proba"] >= threshold).astype(int)
@@ -156,6 +166,15 @@ def run_backtest(
             results["signal_short"] = results["signal_short"] * (~above_ema200 & macro_bear).astype(int)
         else:
             results["signal_short"] = results["signal_short"] * (~above_ema200).astype(int)
+
+    # ── Multi-timeframe 4h-confirmatie gate ──────────────────────────────────
+    # 4h-model proba moet boven threshold_4h liggen voor een 1h-entry.
+    # probas_4h moet op de 1h-index geïnterpoleerd zijn (forward-fill van 4h candle).
+    if probas_4h is not None and len(probas_4h) == len(results):
+        thr4 = threshold_4h if threshold_4h is not None else config.SIGNAL_THRESHOLD_4H
+        if thr4 > 0:
+            confirm_4h = (probas_4h >= thr4).astype(int)
+            results["signal_long"] = results["signal_long"] * confirm_4h
 
     results["signal"] = results["signal_long"] - results["signal_short"]
 
@@ -673,10 +692,15 @@ def run_walkforward(
     model_name: str = "RandomForest",
     symbol: str = config.SYMBOL,
     use_regime_models: bool = False,
+    expanding: bool = False,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """
-    Walk-forward backtest: traint maandelijks opnieuw op een rollend venster.
-    Gebruikt per fold ook threshold-optimalisatie op een interne validatieset.
+    Walk-forward backtest: traint maandelijks opnieuw.
+
+    expanding=False (default) : rollend venster van WALKFORWARD_TRAIN_DAYS
+    expanding=True            : expanding venster — alle data vanaf t=0 t/m fold start
+                                Voordeel: model vergeet nooit zeldzame events (2022 bear).
+                                Minimale trainset: 180 dagen.
 
     use_regime_models: traint aparte bull/ranging/bear modellen per fold en
     routeert elke rij naar het passende model bij het voorspellen.
@@ -684,28 +708,35 @@ def run_walkforward(
     from src.model import optimize_threshold
     from src.model_compare import _get_models
 
-    train_h = config.WALKFORWARD_TRAIN_DAYS * 24
-    test_h  = config.WALKFORWARD_TEST_DAYS  * 24
-    step_h  = config.WALKFORWARD_STEP_DAYS  * 24
-    val_h   = config.VALIDATION_SIZE_DAYS   * 24
+    train_h    = config.WALKFORWARD_TRAIN_DAYS * 24
+    test_h     = config.WALKFORWARD_TEST_DAYS  * 24
+    step_h     = config.WALKFORWARD_STEP_DAYS  * 24
+    val_h      = config.VALIDATION_SIZE_DAYS   * 24
+    min_train_h = 180 * 24   # minimale trainset bij expanding window
 
     models_dict = _get_models(symbol=symbol)
     if model_name not in models_dict:
         raise ValueError(f"Model '{model_name}' niet gevonden. Beschikbaar: {list(models_dict.keys())}")
 
-    print(f"Walk-forward validatie  ({model_name})")
-    print(f"  Trainvenster : {config.WALKFORWARD_TRAIN_DAYS} dagen")
+    mode_str = "expanding" if expanding else f"rolling {config.WALKFORWARD_TRAIN_DAYS}d"
+    print(f"Walk-forward validatie  ({model_name}, {mode_str})")
+    print(f"  Trainvenster : {mode_str}")
     print(f"  Testvenster  : {config.WALKFORWARD_TEST_DAYS}  dagen")
 
     fold_metrics_list = []
     all_results_list  = []
     fold  = 0
-    start = 0
+    start = 0 if not expanding else train_h   # expanding: begin pas na minimale train
 
-    while start + train_h + test_h <= len(df):
-        # Reserveer de laatste val_h van het trainvenster als interne validatieset
-        train_end = start + train_h
-        train = df.iloc[start : train_end - val_h]
+    while start + test_h <= len(df):
+        # Expanding: train loopt altijd vanaf 0; rollend: vast venster van train_h
+        if expanding:
+            train_end = start
+        else:
+            train_end = start + train_h
+        train_start = 0 if expanding else max(0, train_end - train_h)
+
+        train = df.iloc[train_start : train_end - val_h]
         val   = df.iloc[train_end - val_h : train_end]
         test  = df.iloc[train_end : train_end + test_h]
 
@@ -906,13 +937,29 @@ def generate_live_signal(df_ohlcv, p1p2, p1_heatmap, direction_bias,
                          symbol: str = config.SYMBOL) -> dict:
     """
     Genereer een signaal voor het meest recente uur.
-    Gebruikt de geoptimaliseerde drempelwaarde en regime filter.
+    Gebruikt de geoptimaliseerde drempelwaarde, regime filter én 4h-confirmatie.
     """
     from src.features import build_features
 
     features  = build_features(df_ohlcv, p1p2, p1_heatmap, direction_bias, symbol=symbol)
     model     = load_model(symbol=symbol)
     threshold, threshold_short = load_optimal_threshold(symbol=symbol)
+
+    # ── 4h-model confirmatie ──────────────────────────────────────────────────
+    proba_4h = None
+    confirm_4h = True
+    try:
+        model_4h  = load_model(symbol=f"{symbol}_4h")
+        thr_4h, _ = load_optimal_threshold(symbol=f"{symbol}_4h")
+        feat_4h   = pd.read_parquet(config.symbol_path(f"{symbol}_4h", "features.parquet"))
+        feat_cols_4h = [c for c in feat_4h.columns
+                        if c not in ("target", "close", "future_close", "market_regime")]
+        last_4h   = feat_4h.iloc[[-1]]
+        proba_4h  = float(model_4h.predict_proba(last_4h[feat_cols_4h])[0, 1])
+        thr_used  = thr_4h if thr_4h > 0 else config.SIGNAL_THRESHOLD_4H
+        confirm_4h = proba_4h >= thr_used
+    except Exception:
+        pass  # geen 4h-model beschikbaar → gate uitgeschakeld
 
     last_row  = features.iloc[[-1]]
     proba     = float(model.predict_proba(last_row[config.FEATURE_COLS])[0, 1])
@@ -924,12 +971,20 @@ def generate_live_signal(df_ohlcv, p1p2, p1_heatmap, direction_bias,
         else True
     )
 
-    # Regime-adaptieve drempel: verhoog drempel in bear, verlaag in bull
+    # Regime-adaptieve drempel: data-driven per regime, fallback op config offsets
     market_regime = 0
     if "market_regime" in last_row.columns:
         market_regime = int(last_row["market_regime"].iloc[0])
-    regime_offset    = config.REGIME_THRESHOLD_OFFSETS.get(market_regime, 0.0)
-    eff_threshold    = float(np.clip(threshold + regime_offset, 0.50, 0.95))
+    _regime_name_map = {1: "bull", 0: "ranging", -1: "bear"}
+    try:
+        from src.model import load_regime_thresholds as _lrt
+        _rthr = _lrt(symbol=symbol)
+        eff_threshold = float(np.clip(
+            _rthr.get(_regime_name_map.get(market_regime, "ranging"), threshold), 0.50, 0.95
+        ))
+    except Exception:
+        regime_offset = config.REGIME_THRESHOLD_OFFSETS.get(market_regime, 0.0)
+        eff_threshold = float(np.clip(threshold + regime_offset, 0.50, 0.95))
 
     # Death cross: EMA50 < EMA200 → extra blokkade (bull trap voorkomen)
     death_cross = False
@@ -939,7 +994,7 @@ def generate_live_signal(df_ohlcv, p1p2, p1_heatmap, direction_bias,
             > float(last_row["price_vs_ema200"].iloc[0])
         )
 
-    if proba >= eff_threshold and regime_ok and not death_cross:
+    if proba >= eff_threshold and regime_ok and not death_cross and confirm_4h:
         signaal = "LONG"
     elif proba <= threshold_short and threshold_short > 0 and not regime_ok:
         signaal = "SHORT"
@@ -947,6 +1002,8 @@ def generate_live_signal(df_ohlcv, p1p2, p1_heatmap, direction_bias,
         signaal = "WACHT (death cross — EMA50 onder EMA200)"
     elif proba >= eff_threshold and not regime_ok:
         signaal = "WACHT (onder EMA200 — long geblokkeerd)"
+    elif proba >= eff_threshold and regime_ok and not confirm_4h:
+        signaal = f"WACHT (4h bevestiging ontbreekt — 4h proba {proba_4h:.1%})"
     else:
         signaal = "WACHT"
 
@@ -962,6 +1019,8 @@ def generate_live_signal(df_ohlcv, p1p2, p1_heatmap, direction_bias,
         "regime_boven_ema200": regime_ok,
         "market_regime":       regime_labels.get(market_regime, "onbekend"),
         "death_cross":         death_cross,
+        "proba_4h":            f"{proba_4h:.1%}" if proba_4h is not None else "n/a",
+        "confirm_4h":          confirm_4h,
         "horizon":             f"{config.PREDICTION_HORIZON_H} uur",
         "prijs":               float(last_row["close"].iloc[0]),
     }
