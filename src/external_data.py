@@ -498,7 +498,7 @@ def fetch_btc_dominance() -> pd.DataFrame:
     Cache: 24h (dagelijks signaal).
     """
     cache_path = EXTERNAL_DIR / "btc_dominance.parquet"
-    if _cache_valid(cache_path, max_age_h=24):
+    if cache_path.exists() and (time.time() - cache_path.stat().st_mtime) / 3600 < 24:
         return pd.read_parquet(cache_path)
 
     print("  Downloading BTC Dominance (CoinGecko)...")
@@ -553,7 +553,7 @@ def fetch_deribit_put_call_ratio() -> pd.DataFrame:
     Cache: 6h (opties-boek ververst traag).
     """
     cache_path = EXTERNAL_DIR / "btc_put_call_ratio.parquet"
-    if _cache_valid(cache_path, max_age_h=6):
+    if cache_path.exists() and (time.time() - cache_path.stat().st_mtime) / 3600 < 6:
         return pd.read_parquet(cache_path)
 
     print("  Downloading Deribit BTC Put/Call ratio...")

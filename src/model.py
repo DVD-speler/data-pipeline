@@ -32,6 +32,31 @@ from sklearn.metrics import (
 import config
 
 
+# ── Probability calibratie wrapper ────────────────────────────────────────────
+
+class CalibratedWrapper:
+    """
+    Lichtgewicht wrapper die een isotonic-regression calibrator toepast bovenop
+    een getraind model. Vervanger voor CalibratedClassifierCV(cv='prefit') dat
+    verwijderd is in sklearn 1.6+.
+
+    Serialiseerbaar via joblib (klasse op module-niveau).
+    """
+    def __init__(self, base_model, calibrator, feature_cols):
+        self._model        = base_model
+        self._calibrator   = calibrator
+        self._feature_cols = feature_cols
+
+    def predict_proba(self, X):
+        import numpy as _np
+        raw = self._model.predict_proba(X)[:, 1]
+        cal = self._calibrator.predict(raw)
+        return _np.column_stack([1 - cal, cal])
+
+    def __getattr__(self, name):
+        return getattr(self._model, name)
+
+
 # ── Train / validatie / test split ────────────────────────────────────────────
 
 def time_split(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
@@ -138,43 +163,9 @@ def optimize_threshold(
     return _optimize_threshold_from_probas(probas, val_df, thr_min, thr_max, min_trades)
 
 
-def optimize_short_threshold(
-    model,
-    val_df: pd.DataFrame,
-    thr_min: float = 0.30,
-    thr_max: float = 0.46,   # ≤0.45 = model genuinely bearish, not just uncertain
-    min_trades: int = 5,
-) -> float:
-    """
-    Zoek de kansbovengrens die Sharpe maximaliseert voor short-only signalen.
-    Een short wordt getriggerd wanneer proba ≤ threshold_short EN prijs < EMA200.
-
-    Returns 0.0 als geen drempelwaarde voldoende trades oplevert (val-periode is bullish).
-    """
-    from src.backtest import compute_metrics, run_backtest
-
-    probas = model.predict_proba(val_df[config.FEATURE_COLS])[:, 1]
-
-    best_sharpe = -np.inf
-    best_thr    = 0.0   # Standaard: geen shorts
-
-    # linspace vermijdt floating-point artefacten van np.arange met float-stap
-    n_steps = round((thr_max - thr_min) / 0.01)
-    for thr in np.linspace(thr_min, thr_max, n_steps, endpoint=False):
-        r = run_backtest(
-            val_df, probas,
-            threshold=0.99,             # Blokkeer alle longs
-            threshold_short=float(thr),
-            use_short=True,
-            use_position_sizing=False,
-            stop_loss=0.0,
-        )
-        m = compute_metrics(r)
-        if m["n_short"] >= min_trades and m["sharpe_ratio"] > best_sharpe:
-            best_sharpe = m["sharpe_ratio"]
-            best_thr    = float(thr)
-
-    return round(best_thr, 2)
+def optimize_short_threshold(*args, **kwargs) -> float:
+    """Verwijderd (B5: long-only codebase). Geeft altijd 0.0 terug."""
+    return 0.0
 
 
 # ── Optuna hyperparameter search ─────────────────────────────────────────────
@@ -484,8 +475,7 @@ def train_model(df: pd.DataFrame, symbol: str = config.SYMBOL) -> tuple:
 
     # Optimaliseer exit-proba drempelwaarden op validatieset
     from src.backtest import optimize_exit_proba
-    optimize_exit_proba(model, val, optimal_thr,
-                        threshold_short=optimal_short_thr, symbol=symbol)
+    optimize_exit_proba(model, val, optimal_thr, symbol=symbol)
 
     # ── Regime-specifieke entry thresholds ────────────────────────────────────
     # Per regime (bull/ranging/bear) een aparte drempel optimaliseren op de
@@ -552,7 +542,6 @@ def train_model(df: pd.DataFrame, symbol: str = config.SYMBOL) -> tuple:
 
     print(f"\n=== Backtest Samenvatting (test) ===")
     print(f"  Long trades    : {bt_metrics['n_long']}")
-    print(f"  Short trades   : {bt_metrics['n_short']}")
     print(f"  Win rate       : {bt_metrics['win_rate']:.1%}")
     print(f"  Totaal return  : {bt_metrics['total_return']:+.1%}  (B&H: {bt_metrics['buy_hold_return']:+.1%})")
     print(f"\n=== Significantiecheck (N=500 willekeurige signalen) ===")
@@ -571,21 +560,24 @@ def train_model(df: pd.DataFrame, symbol: str = config.SYMBOL) -> tuple:
     print(f"Thresholds opgeslagen: {thr_path}")
 
     # ── Probability calibratie (isotonic regression op validatieset) ──────────
-    # LightGBM-probabilities zijn slecht gekalibreerd: proba 0.70 betekent in
-    # de praktijk ~55-60%. Isotonic regression corrigeert dit zonder het model
-    # opnieuw te trainen. cv='prefit' = model is al getraind, val is calibratie-set.
+    # LightGBM-probabilities zijn slecht gekalibreerd. Isotonic regression
+    # corrigeert dit zonder het model opnieuw te trainen.
+    # Gebruik sklearn.isotonic.IsotonicRegression direct (cv='prefit' verwijderd in sklearn 1.6+).
     print("\nProbability calibratie (isotonic regression op validatieset)...")
     try:
-        from sklearn.calibration import CalibratedClassifierCV, calibration_curve
-        calibrated = CalibratedClassifierCV(model, method="isotonic", cv="prefit")
-        calibrated.fit(val[config.FEATURE_COLS], val["target"])
+        from sklearn.calibration import calibration_curve
+        from sklearn.isotonic import IsotonicRegression
 
         probas_raw_val = model.predict_proba(val[config.FEATURE_COLS])[:, 1]
+        ir = IsotonicRegression(out_of_bounds="clip")
+        ir.fit(probas_raw_val, val["target"].values)
+        calibrated = CalibratedWrapper(model, ir, config.FEATURE_COLS)
+
         probas_cal_val = calibrated.predict_proba(val[config.FEATURE_COLS])[:, 1]
         frac_pos, mean_pred_raw = calibration_curve(val["target"], probas_raw_val, n_bins=10)
-        frac_pos, mean_pred_cal = calibration_curve(val["target"], probas_cal_val, n_bins=10)
-        mae_raw = float(np.mean(np.abs(frac_pos - mean_pred_raw)))
-        mae_cal = float(np.mean(np.abs(frac_pos - mean_pred_cal)))
+        frac_pos_c, mean_pred_cal = calibration_curve(val["target"], probas_cal_val, n_bins=10)
+        mae_raw = float(np.mean(np.abs(frac_pos   - mean_pred_raw)))
+        mae_cal = float(np.mean(np.abs(frac_pos_c - mean_pred_cal)))
         print(f"  Calibratie MAE (ongekalibreerd): {mae_raw:.4f}")
         print(f"  Calibratie MAE (gekalibreerd)  : {mae_cal:.4f}  "
               f"({'beter' if mae_cal < mae_raw else 'geen verbetering'})")
