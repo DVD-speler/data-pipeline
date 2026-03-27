@@ -54,7 +54,14 @@ class CalibratedWrapper:
         return _np.column_stack([1 - cal, cal])
 
     def __getattr__(self, name):
-        return getattr(self._model, name)
+        # Gebruik object.__getattribute__ om recursie te voorkomen:
+        # self._model binnen __getattr__ zou opnieuw __getattr__ aanroepen
+        # als _model nog niet in __dict__ staat (bijv. tijdens pickle restore).
+        try:
+            model = object.__getattribute__(self, '_model')
+        except AttributeError:
+            raise AttributeError(f"'{type(self).__name__}' object has no attribute '{name}'")
+        return getattr(model, name)
 
 
 # ── Train / validatie / test split ────────────────────────────────────────────
