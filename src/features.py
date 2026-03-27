@@ -58,6 +58,135 @@ def _build_heatmap_lookup(heatmap: pd.DataFrame, default: float = 0.0) -> dict:
     return result
 
 
+# ── BTC Halving Cyclus (T2-E) ─────────────────────────────────────────────────
+
+# Bekende halving-datums (UTC)
+_HALVING_DATES = pd.to_datetime([
+    "2012-11-28", "2016-07-09", "2020-05-11", "2024-04-20",
+], utc=True)
+_NEXT_HALVING = pd.Timestamp("2028-03-01", tz="UTC")   # schatting
+
+
+def _add_halving_cycle(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    BTC Halving Cyclus features (T2-E) — puur op basis van bekende halvingdatums.
+
+    days_since_halving  : dagen sinds de laatste halving (continu stijgend per cyclus)
+    halving_cycle_phase : fractie door de ~4-jaar cyclus (0.0 = vlak na halving, 1.0 = volgende)
+    pre_halving_window  : 1 als binnen 90 dagen vóór de volgende halving (historisch bullish)
+    """
+    ts = df.index
+
+    # Vind voor elk tijdstip de meest recente halvingdatum
+    all_halvings = _HALVING_DATES.append(pd.DatetimeIndex([_NEXT_HALVING]))
+
+    def _lookup(t):
+        past = _HALVING_DATES[_HALVING_DATES <= t]
+        if len(past) == 0:
+            last_h = _HALVING_DATES[0]
+        else:
+            last_h = past[-1]
+        # Volgende halving
+        future = all_halvings[all_halvings > t]
+        next_h = future[0] if len(future) > 0 else _NEXT_HALVING
+        days_since = (t - last_h).days
+        cycle_len  = (next_h - last_h).days
+        phase      = days_since / cycle_len if cycle_len > 0 else 0.5
+        pre_window = 1 if (next_h - t).days <= 90 else 0
+        return days_since, phase, pre_window
+
+    results = [_lookup(t) for t in ts]
+    df["days_since_halving"]  = [r[0] for r in results]
+    df["halving_cycle_phase"] = [r[1] for r in results]
+    df["pre_halving_window"]  = [r[2] for r in results]
+    return df
+
+
+# ── Supertrend (T2-G) ─────────────────────────────────────────────────────────
+
+def _add_supertrend(df: pd.DataFrame,
+                    period: int = 14,
+                    multiplier: float = 3.0) -> pd.DataFrame:
+    """
+    Supertrend indicator (T2-G).
+
+    supertrend_signal   : +1 als close boven de Supertrend-lijn (uptrend),
+                          -1 als close eronder (downtrend)
+    supertrend_distance : (close - supertrend_lijn) / close — hoe ver boven/onder
+    """
+    high  = df["high"]
+    low   = df["low"]
+    close = df["close"]
+
+    # True Range
+    hl   = high - low
+    hpc  = (high - close.shift(1)).abs()
+    lpc  = (low  - close.shift(1)).abs()
+    tr   = pd.concat([hl, hpc, lpc], axis=1).max(axis=1)
+    atr  = tr.ewm(span=period, adjust=False).mean()
+
+    hl2  = (high + low) / 2
+    upper_band = hl2 + multiplier * atr
+    lower_band = hl2 - multiplier * atr
+
+    supertrend = pd.Series(np.nan, index=df.index)
+    direction  = pd.Series(1, index=df.index)   # +1 = uptrend
+
+    for i in range(1, len(df)):
+        prev_upper = upper_band.iloc[i - 1]
+        prev_lower = lower_band.iloc[i - 1]
+        cur_upper  = upper_band.iloc[i]
+        cur_lower  = lower_band.iloc[i]
+
+        # Bands mogen alleen krimpen, nooit groeien voorbij vorige waarde
+        upper_band.iloc[i] = min(cur_upper, prev_upper) if close.iloc[i - 1] <= prev_upper else cur_upper
+        lower_band.iloc[i] = max(cur_lower, prev_lower) if close.iloc[i - 1] >= prev_lower else cur_lower
+
+        prev_dir = direction.iloc[i - 1]
+        if prev_dir == 1 and close.iloc[i] < lower_band.iloc[i]:
+            direction.iloc[i] = -1
+        elif prev_dir == -1 and close.iloc[i] > upper_band.iloc[i]:
+            direction.iloc[i] = 1
+        else:
+            direction.iloc[i] = prev_dir
+
+        supertrend.iloc[i] = lower_band.iloc[i] if direction.iloc[i] == 1 else upper_band.iloc[i]
+
+    df["supertrend_signal"]   = direction.astype(float)
+    df["supertrend_distance"] = (close - supertrend) / (close + 1e-10)
+    return df
+
+
+# ── BTC-ETH Rolling Correlatie (T2-F) ─────────────────────────────────────────
+
+def _add_btc_eth_correlation(df: pd.DataFrame,
+                              symbol: str = "BTCUSDT") -> pd.DataFrame:
+    """
+    Rolling BTC-ETH prijs-return correlatie (T2-F).
+
+    btc_eth_corr_24h      : 24h Pearson correlatie van 1h-returns
+    btc_eth_corr_7d       : 168h correlatie (wekelijks)
+    correlation_breakdown : 1 als 24h-correlatie < 0.5 (ontkoppeling — altcoin-seizoen of crisis)
+    """
+    try:
+        other_sym = "ETHUSDT" if symbol == "BTCUSDT" else "BTCUSDT"
+        df_other  = load_ohlcv(symbol=other_sym, interval="1h")
+        other_ret = df_other["close"].pct_change().reindex(df.index)
+        own_ret   = df["close"].pct_change()
+
+        corr_24h = own_ret.rolling(24).corr(other_ret)
+        corr_7d  = own_ret.rolling(168).corr(other_ret)
+
+        df["btc_eth_corr_24h"]      = corr_24h
+        df["btc_eth_corr_7d"]       = corr_7d
+        df["correlation_breakdown"] = (corr_24h < 0.5).astype(float)
+    except Exception:
+        df["btc_eth_corr_24h"]      = 0.85
+        df["btc_eth_corr_7d"]       = 0.85
+        df["correlation_breakdown"] = 0.0
+    return df
+
+
 # ── Ichimoku Cloud ────────────────────────────────────────────────────────────
 
 def _add_ichimoku(df: pd.DataFrame) -> pd.DataFrame:
@@ -478,6 +607,15 @@ def build_features(
     )
     df.drop(columns=["_day", "_typical", "_tpv", "_cum_tpv", "_cum_vol"],
             inplace=True, errors="ignore")
+
+    # ── BTC Halving Cyclus (T2-E) ─────────────────────────────────────────────
+    df = _add_halving_cycle(df)
+
+    # ── Supertrend (T2-G) ─────────────────────────────────────────────────────
+    df = _add_supertrend(df)
+
+    # ── BTC-ETH Correlatie (T2-F) ─────────────────────────────────────────────
+    df = _add_btc_eth_correlation(df, symbol=symbol)
 
     # ── Ichimoku Cloud (T1-A) ─────────────────────────────────────────────────
     df = _add_ichimoku(df)

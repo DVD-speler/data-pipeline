@@ -154,6 +154,17 @@ def run_backtest(
             )
             results["signal_long"] = results["signal_long"] * low_pc.astype(int)
 
+        # ── T2-B: Funding extreme gate ─────────────────────────────────────────
+        # Extreem positieve funding rate → markt is te bullish (contrair signaal).
+        # funding_rate > FUNDING_EXTREME_GATE (+0.05% per 8u) blokkeert nieuwe longs.
+        if "funding_rate" in test_df.columns:
+            funding_gate = getattr(config, "FUNDING_EXTREME_GATE", 0.0005)
+            not_extreme_funding = (
+                test_df["funding_rate"].reindex(results.index, fill_value=0.0)
+                <= funding_gate
+            )
+            results["signal_long"] = results["signal_long"] * not_extreme_funding.astype(int)
+
     # ── Multi-timeframe 4h-confirmatie gate ──────────────────────────────────
     # 4h-model proba moet boven threshold_4h liggen voor een 1h-entry.
     # probas_4h moet op de 1h-index geïnterpoleerd zijn (forward-fill van 4h candle).

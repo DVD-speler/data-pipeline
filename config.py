@@ -137,6 +137,18 @@ FEATURE_COLS_1H = [
     "rsi_bull_divergence",      # 1 = price lower low + RSI higher low (bullish reversal signaal)
     "rsi_bear_divergence",      # 1 = price higher high + RSI lower high (bearish top signaal)
 ]
+# Sprint 2 features berekend (code aanwezig), maar tijdelijk uitgesloten na evaluatie:
+#   "days_since_halving"     — corr -0.28 met proba in test, leidt tot extra trades/lagere WR
+#   "supertrend_distance"    — corr -0.36 met proba, vergelijkbaar met bestaande adx/ema
+#   "btc_eth_corr_7d"        — waardevol op val, maar gecombineerd met halving/supertrend: regressie
+#   "halving_cycle_phase"    — redundant met days_since_halving
+#   "pre_halving_window"     — te schaars (1×/4yr)
+#   "supertrend_signal"      — importance ≈ 0
+#   "btc_eth_corr_24h"       — gecorreleerd met corr_7d
+#   "correlation_breakdown"  — importance = 0
+#   "usdt_dominance"         — 76% null (slechts 1 jaar CoinGecko history)
+#   "usdt_dominance_7d_chg"  — idem
+# Toe te voegen zodra Optuna opnieuw geoptimaliseerd is voor deze feature set
 # Regime-only columns: in de feature matrix voor backtest-filter, NIET als model feature.
 # adx_trend en market_regime geven expliciete richting → over-confidence in bullish val-periode
 #   → threshold zakt naar 0.50 → model overfits op val-regime.
@@ -219,3 +231,8 @@ USDJPY_RETURN_7D_GATE = -0.03   # negatief = JPY wordt duurder (USD/JPY daalt)
 # C4 — Deribit Put/Call ratio gate
 # Extreme put-dominantie (P/C > 1.5) signaleert bearish positionering grote spelers
 PUT_CALL_RATIO_GATE = 1.5
+
+# T2-B — Funding extreme gate
+# Extreem positieve funding (longs betalen te veel) = contrair bearish signaal
+# Blokkeert nieuwe longs als funding_rate > FUNDING_EXTREME_GATE (per 8u)
+FUNDING_EXTREME_GATE = 0.0005   # +0.05% per 8u = overbought signaal

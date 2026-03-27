@@ -492,6 +492,53 @@ def fetch_deribit_dvol() -> pd.DataFrame:
 # ── Gecombineerde loader ───────────────────────────────────────────────────────
 
 # Neutrale defaults per feature (worden gebruikt als data ontbreekt)
+def fetch_usdt_dominance() -> pd.DataFrame:
+    """
+    USDT Dominantie via CoinGecko public API (T3-B).
+    Retourneert dagelijks DataFrame: usdt_dominance, usdt_dominance_7d_chg.
+
+    usdt_dominance stijgt → kapitaalvlucht uit crypto (bearish).
+    usdt_dominance daalt → droog poeder stroomt terug (bullish).
+    Cache: 24h.
+    """
+    cache_path = EXTERNAL_DIR / "usdt_dominance.parquet"
+    if cache_path.exists() and (time.time() - cache_path.stat().st_mtime) / 3600 < 24:
+        return pd.read_parquet(cache_path)
+
+    print("  Downloading USDT Dominance (CoinGecko)...")
+    try:
+        url    = "https://api.coingecko.com/api/v3/coins/tether/market_chart"
+        params = {"vs_currency": "usd", "days": "365", "interval": "daily"}
+        resp   = requests.get(url, params=params, timeout=15)
+        resp.raise_for_status()
+        mcaps = resp.json().get("market_caps", [])
+        if not mcaps:
+            raise ValueError("Lege response CoinGecko USDT market_cap")
+
+        # Totale crypto market cap via /global
+        g_resp = requests.get("https://api.coingecko.com/api/v3/global", timeout=15)
+        g_resp.raise_for_status()
+        total_mcap = g_resp.json().get("data", {}).get("total_market_cap", {}).get("usd", None)
+        if total_mcap is None:
+            raise ValueError("Geen totale market cap in /global response")
+
+        df_usdt = pd.DataFrame(mcaps, columns=["ts", "usdt_mcap"])
+        df_usdt["datetime"]        = pd.to_datetime(df_usdt["ts"], unit="ms", utc=True)
+        df_usdt                    = df_usdt.set_index("datetime")
+        df_usdt["usdt_dominance"]  = df_usdt["usdt_mcap"] / total_mcap * 100
+        df_usdt["usdt_dominance_7d_chg"] = df_usdt["usdt_dominance"].diff(7)
+        df_usdt = df_usdt[["usdt_dominance", "usdt_dominance_7d_chg"]].dropna()
+        df_usdt.to_parquet(cache_path)
+        print(f"  USDT Dominance: {df_usdt['usdt_dominance'].iloc[-1]:.1f}%")
+        return df_usdt
+
+    except Exception as e:
+        print(f"  Waarschuwing: USDT Dominance download mislukt ({e})")
+        if cache_path.exists():
+            return pd.read_parquet(cache_path)
+        return pd.DataFrame(columns=["usdt_dominance", "usdt_dominance_7d_chg"])
+
+
 def fetch_dxy() -> pd.DataFrame:
     """
     US Dollar Index (DXY) via yfinance 'DX-Y.NYB'.
@@ -635,6 +682,8 @@ _DEFAULTS = {
     "dxy_return_24h":       0.0,
     "dxy_return_7d":        0.0,
     "dxy_above_200ma":      0.5,    # onbekend regime → neutraal
+    "usdt_dominance":       6.0,    # historisch gemiddelde USDT dominantie ~6%
+    "usdt_dominance_7d_chg": 0.0,
 }
 
 _SOURCES_GLOBAL = {
@@ -647,6 +696,7 @@ _SOURCES_GLOBAL = {
     "btc_dominance":        fetch_btc_dominance,
     "btc_put_call_ratio":   fetch_deribit_put_call_ratio,
     "dxy":                  fetch_dxy,
+    "usdt_dominance":       fetch_usdt_dominance,
 }
 
 

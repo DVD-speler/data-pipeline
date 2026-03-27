@@ -12,10 +12,12 @@
 | Technische indicatoren | RSI, MACD, BB, EMA (20/50/200), ADX, ATR, VWAP, Stoch RSI |
 | Volume | Volume ratio, spike, momentum, Volume Profile (POC) |
 | Multi-timeframe | 1h model + 4h gate + dagelijks regime gate |
-| Macro | VIX, USD/JPY, EUR/USD, SPX, Fear & Greed, BTC Dominance |
+| Macro | VIX, USD/JPY, EUR/USD, SPX, Fear & Greed, BTC Dominance, **DXY** |
 | Opties-markt | DVOL (implied vol), Put/Call ratio |
 | Funding | Funding rate + momentum |
-| SL/TP | Structureel (swing levels) + ATR-fallback, breakeven trail |
+| Candlestick | **Ichimoku Cloud, body/wick ratios, hammer, engulfing, gap_up** |
+| RSI | **RSI divergentie (bull + bear)** |
+| SL/TP | Structureel (swing levels) + **ATR trailing stop**, breakeven trail, **TP1/TP2 partieel** |
 | Risicobeheer | Circuit breaker, volatility-scaled sizing, signal decay, regime gates |
 | Exit | Proba-exit, 168h timeout, model-driven |
 
@@ -24,7 +26,7 @@
 ## Tier 1 — Hoge impact, laag complex (snel te implementeren)
 
 ### T1-A · Ichimoku Cloud features
-**Status:** `[ ]`
+**Status:** `[x]` — geïmplementeerd 2026-03-27
 
 **Waarom traders het gebruiken:**
 Ichimoku geeft in één oogopslag trend, momentum, support/resistance én tijdsfilter.
@@ -47,7 +49,7 @@ Professionele traders kijken of prijs **boven de wolk** staat (bullish), de wolk
 ---
 
 ### T1-B · Candlestick patroon encoding
-**Status:** `[ ]`
+**Status:** `[x]` — geïmplementeerd 2026-03-27 · LightGBM belang ≈ 0 (patronen worden door andere features afgedekt)
 
 **Waarom traders het gebruiken:**
 Hammer, Doji, Engulfing en Pin Bar zijn de meest betrouwbare reversal-signalen
@@ -70,7 +72,7 @@ die elke professionele trader herkent. Ze vangt micro-structuur op die RSI/MACD 
 ---
 
 ### T1-C · DXY (Dollar Index) als macro feature
-**Status:** `[ ]`
+**Status:** `[x]` — geïmplementeerd 2026-03-27 · **#1 feature voor BTC én ETH** (importance 0.070 / 0.099)
 
 **Waarom traders het gebruiken:**
 De Dollar Index (DXY) is de sterkste macro-correlatie voor crypto. DXY stijgt →
@@ -96,7 +98,7 @@ omdat het een breder beeld geeft van dollarkracht vs. 6 valuta's.
 ---
 
 ### T1-D · ATR-gebaseerde trailing stop (dynamisch)
-**Status:** `[ ]`
+**Status:** `[x]` — geïmplementeerd 2026-03-27 · 2×ATR in run_backtest() + run_backtest_be_trail()
 
 **Waarom traders het gebruiken:**
 De huidige trailing stop gaat alleen naar breakeven (entry prijs). Professionele traders
@@ -120,7 +122,7 @@ Voorbeeld: ATR(14) = €800 → trailing stop = close − 2 × €800.
 ---
 
 ### T1-E · Partiële exits (TP1 / TP2 systeem)
-**Status:** `[ ]`
+**Status:** `[x]` — geïmplementeerd 2026-03-27 · TP1=+3% (50%), TP2=+8% in run_backtest_be_trail()
 
 **Waarom traders het gebruiken:**
 Een vaste 6% TP laat winst op tafel liggen in sterke trends, of sluit te laat in zwakke.
@@ -142,7 +144,7 @@ met een hogere TP2 (bijv. +8%), beschermd door een trailing stop.
 ---
 
 ### T1-F · RSI-divergentie als feature
-**Status:** `[ ]`
+**Status:** `[x]` — geïmplementeerd 2026-03-27 · belang laag (~0.001), model gebruikt het nauwelijks
 
 **Waarom traders het gebruiken:**
 RSI-divergentie (prijs maakt nieuw dieptepunt, RSI niet) is een van de sterkste
@@ -579,59 +581,76 @@ De optimale SL/TP varieert sterk met het volatiliteitsregime:
 
 ## Prioriteitenmatrix
 
-| Taak | Impact | Moeilijkheid | Prioriteit |
-|---|---|---|---|
-| T1-A Ichimoku Cloud | Hoog | Laag | ⭐⭐⭐ |
-| T1-B Candlestick patronen | Medium | Laag | ⭐⭐⭐ |
-| T1-C DXY Dollar Index | Hoog | Laag | ⭐⭐⭐ |
-| T1-D ATR trailing stop | Hoog | Medium | ⭐⭐⭐ |
-| T1-E Partiële exits (TP1/TP2) | Hoog | Medium | ⭐⭐⭐ |
-| T1-F RSI-divergentie | Medium | Medium | ⭐⭐ |
-| T2-A Liquidatie heatmap | Hoog | Medium | ⭐⭐⭐ |
-| T2-B Funding extremen gate | Medium | Laag | ⭐⭐⭐ |
-| T2-C OI trend | Medium | Medium | ⭐⭐ |
-| T2-D Kelly Criterion sizing | Medium | Medium | ⭐⭐ |
-| T2-E BTC Halving cyclus | Medium | Laag | ⭐⭐⭐ |
-| T2-F BTC-ETH correlatie | Medium | Laag | ⭐⭐ |
-| T2-G Supertrend | Medium | Laag | ⭐⭐ |
-| T3-A Google Trends | Medium | Medium | ⭐⭐ |
-| T3-B USDT dominantie | Medium | Laag | ⭐⭐ |
-| T3-C Opties 25d skew | Hoog | Hoog | ⭐⭐ |
-| T3-D Max Pain | Medium | Hoog | ⭐ |
-| T3-E Social media sentiment | Medium | Hoog | ⭐ |
-| T3-F HMM regime detectie | Hoog | Hoog | ⭐⭐ |
-| T3-G On-Chain (Glassnode) | Hoog | Hoog | ⭐ (betaald) |
-| T3-H LSTM/Transformer | Hoog | Zeer hoog | ⭐⭐ |
-| T4-A Multi-asset correlatie | Medium | Laag | ⭐⭐⭐ |
-| T4-B Value at Risk | Medium | Medium | ⭐⭐ |
-| T4-C Regime-afhankelijke params | Hoog | Medium | ⭐⭐⭐ |
+| Taak | Impact | Moeilijkheid | Prioriteit | Status |
+|---|---|---|---|---|
+| T1-A Ichimoku Cloud | Hoog | Laag | ⭐⭐⭐ | ✅ |
+| T1-B Candlestick patronen | Medium | Laag | ⭐⭐⭐ | ✅ |
+| T1-C DXY Dollar Index | Hoog | Laag | ⭐⭐⭐ | ✅ #1 feature |
+| T1-D ATR trailing stop | Hoog | Medium | ⭐⭐⭐ | ✅ |
+| T1-E Partiële exits (TP1/TP2) | Hoog | Medium | ⭐⭐⭐ | ✅ |
+| T1-F RSI-divergentie | Medium | Medium | ⭐⭐ | ✅ laag belang |
+| T2-A Liquidatie heatmap | Hoog | Medium | ⭐⭐⭐ | `[ ]` |
+| T2-B Funding extremen gate | Medium | Laag | ⭐⭐⭐ | `[ ]` |
+| T2-C OI trend | Medium | Medium | ⭐⭐ | `[ ]` |
+| T2-D Kelly Criterion sizing | Medium | Medium | ⭐⭐ | `[ ]` |
+| T2-E BTC Halving cyclus | Medium | Laag | ⭐⭐⭐ | `[ ]` |
+| T2-F BTC-ETH correlatie | Medium | Laag | ⭐⭐ | `[ ]` |
+| T2-G Supertrend | Medium | Laag | ⭐⭐ | `[ ]` |
+| T3-A Google Trends | Medium | Medium | ⭐⭐ | `[ ]` |
+| T3-B USDT dominantie | Medium | Laag | ⭐⭐ | `[ ]` |
+| T3-C Opties 25d skew | Hoog | Hoog | ⭐⭐ | `[ ]` |
+| T3-D Max Pain | Medium | Hoog | ⭐ | `[ ]` |
+| T3-E Social media sentiment | Medium | Hoog | ⭐ | `[ ]` |
+| T3-F HMM regime detectie | Hoog | Hoog | ⭐⭐ | `[ ]` |
+| T3-G On-Chain (Glassnode) | Hoog | Hoog | ⭐ (betaald) | `[ ]` |
+| T3-H LSTM/Transformer | Hoog | Zeer hoog | ⭐⭐ | `[ ]` |
+| T4-A Multi-asset correlatie | Medium | Laag | ⭐⭐⭐ | `[ ]` |
+| T4-B Value at Risk | Medium | Medium | ⭐⭐ | `[ ]` |
+| T4-C Regime-afhankelijke params | Hoog | Medium | ⭐⭐⭐ | `[ ]` |
 
 ---
 
 ## Aanbevolen volgorde van uitvoering
 
-### Sprint 1 (snel, hoog rendement)
-1. **T1-C** DXY feature (yfinance, zelfde patroon als JPY)
-2. **T2-E** BTC Halving cyclus feature (geen externe data)
-3. **T2-B** Funding extreme gate (uitbreiding bestaande funding feature)
-4. **T1-B** Candlestick patronen (pure OHLCV, vectorized)
-5. **T3-B** USDT dominantie (uitbreiding bestaande CoinGecko call)
+### Sprint 1 ✅ VOLTOOID (2026-03-27)
+- ~~**T1-C** DXY — #1 feature voor BTC & ETH (Sharpe BTC +4.5%)~~
+- ~~**T1-A** Ichimoku Cloud — cloud_thickness top-3 feature~~
+- ~~**T1-B** Candlestick patronen — geïmplementeerd, belang laag~~
+- ~~**T1-D** ATR trailing stop — dynamische stop in beide backtest-varianten~~
+- ~~**T1-E** Partiële exits TP1/TP2 — TP1=+3%, TP2=+8% in run_backtest_be_trail~~
+- ~~**T1-F** RSI divergentie — geïmplementeerd, belang laag~~
 
-### Sprint 2 (medium, grote impact)
-6. **T1-A** Ichimoku Cloud
-7. **T2-G** Supertrend
-8. **T2-F** BTC-ETH correlatie
-9. **T4-A** Multi-asset correlatie guard
-10. **T4-C** Regime-afhankelijke SL/TP
+**Resultaat Sprint 1:** BTC Sharpe +5.944 → +6.214 (+4.5%) | ETH val Sharpe +14.39
+
+### Sprint 2 — Code geïmplementeerd, features geëvalueerd (2026-03-27)
+- ~~**T2-B** Funding extreme gate~~ ✅ actief in backtest (funding > 0.05% blokkeert longs)
+- ~~**T2-E** BTC Halving cyclus~~ ✅ code aanwezig, **tijdelijk uit FEATURE_COLS** (overfitting test: corr -0.28 met proba, verhoogde trades, lagere WR)
+- ~~**T2-G** Supertrend~~ ✅ code aanwezig, **tijdelijk uit FEATURE_COLS** (corr -0.36 met proba; gecaptured door adx+ema)
+- ~~**T2-F** BTC-ETH 7d correlatie~~ ✅ code aanwezig, **tijdelijk uit FEATURE_COLS** (gecombineerd met halving/supertrend: regressie; alleen toevoegen na Optuna re-run)
+- ~~**T3-B** USDT dominantie~~ ✅ code aanwezig, **tijdelijk uit FEATURE_COLS** (76% null in training — slechts 1 jaar CoinGecko history)
+
+**Sprint 2 bevindingen:**
+- Sprint 2 features combinatie leidt tot 302 trades (vs 255), win rate daalt van 59% → 50% → Sharpe van 6.21 → 2.87
+- Oorzaak: regime-threshold optimizer zet bull/ranging op 0.50 (te agressief met nieuwe features)
+- T2-B funding gate heeft GEEN negatief effect (< 0.6% van candles geblokkeerd)
+- **Volgende stap**: Optuna heroptimaliseren voor uitgebreide feature set voordat Sprint 2 features actief worden
+
+**Resultaat Sprint 2:** BTC Sharpe +6.293 (T2-B gate + nieuwe Optuna params) vs baseline +5.944
+
+### Sprint 3 — Volgende prioriteit
+1. **T4-A** Multi-asset correlatie guard (position sizing bescherming)
+2. **T4-C** Regime-afhankelijke SL/TP
+3. **T2-D** Kelly Criterion sizing
+4. **T2-C** OI trend (via Coinglass)
+5. Sprint 2 features activeren na Optuna re-tuning met uitgebreide feature set
 
 ### Sprint 3 (complex, transformatief)
-11. **T1-D** ATR trailing stop
-12. **T1-E** Partiële exits (TP1/TP2)
-13. **T2-A** Liquidatie data
-14. **T3-A** Google Trends sentiment
-15. **T3-C** Opties 25-delta skew
+8. **T2-A** Liquidatie data (Coinglass API)
+9. **T2-D** Kelly Criterion sizing
+10. **T3-A** Google Trends sentiment
+11. **T3-C** Opties 25-delta skew
 
 ### Sprint 4 (geavanceerd)
-16. **T3-F** HMM regime detectie
-17. **T3-H** LSTM ensemble
-18. **T3-G** On-chain data (als API-key beschikbaar)
+12. **T3-F** HMM regime detectie
+13. **T3-H** LSTM ensemble
+14. **T3-G** On-chain data (als API-key beschikbaar)
