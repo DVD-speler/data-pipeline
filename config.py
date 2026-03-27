@@ -117,6 +117,25 @@ FEATURE_COLS_1H = [
     "btc_dominance_7d_chg",     # 7-daagse verandering dominantie (stijgend = risk-off, alts zwak)
     # Deribit opties-markt
     "btc_put_call_ratio",       # Put/Call OI ratio (>1 = bearish hedge, >1.5 = extreme bear)
+    # Ichimoku Cloud (T1-A)
+    "cloud_position",           # +1 boven wolk, 0 in wolk, -1 onder wolk
+    "cloud_thickness",          # (senkou_a − senkou_b) / close — dikke wolk = sterke trend
+    "tk_cross",                 # +1 Tenkan boven Kijun (bull), -1 eronder (bear)
+    "chikou_position",          # chikou span vs. prijs 26 perioden terug (+1/0/-1)
+    # Candlestick microstructure (T1-B)
+    "candle_body_pct",          # (close−open) / (high−low) — positief = bullish candle
+    "upper_wick_pct",           # upper wick / range — hoge waarde = verkoop druk
+    "lower_wick_pct",           # lower wick / range — hoge waarde = koop druk
+    "is_hammer",                # 1 = hammer-patroon (bullish reversal)
+    "is_engulfing",             # 1 = bullish engulfing patroon
+    "gap_up",                   # 1 = opent boven vorige high (momentum gap)
+    # DXY Dollar Index (T1-C)
+    "dxy_return_24h",           # dagelijks DXY rendement (negatief = dollar zwakker = bullish crypto)
+    "dxy_return_7d",            # 7-daags DXY rendement (macro dollar trend)
+    "dxy_above_200ma",          # 1 = DXY boven 200-daags EMA (sterke dollar regime)
+    # RSI Divergentie (T1-F)
+    "rsi_bull_divergence",      # 1 = price lower low + RSI higher low (bullish reversal signaal)
+    "rsi_bear_divergence",      # 1 = price higher high + RSI lower high (bearish top signaal)
 ]
 # Regime-only columns: in de feature matrix voor backtest-filter, NIET als model feature.
 # adx_trend en market_regime geven expliciete richting → over-confidence in bullish val-periode

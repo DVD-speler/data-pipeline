@@ -43,6 +43,7 @@ _CACHE_MAX_AGE_H = {
     "btc_dvol":       1,
     "spx_daily":     24,
     "eurusd_daily":  24,
+    "dxy":           24,
 }
 _CACHE_AGE_DEFAULT = 6   # fallback voor funding_rate, open_interest, etc.
 
@@ -491,6 +492,35 @@ def fetch_deribit_dvol() -> pd.DataFrame:
 # ── Gecombineerde loader ───────────────────────────────────────────────────────
 
 # Neutrale defaults per feature (worden gebruikt als data ontbreekt)
+def fetch_dxy() -> pd.DataFrame:
+    """
+    US Dollar Index (DXY) via yfinance 'DX-Y.NYB'.
+    Dagelijks, forward-filled naar uurlijks.
+
+    dxy_return_24h  : dagelijks rendement (negatief = dollar zwakker = bullish crypto)
+    dxy_return_7d   : 7-daags rendement (carry/macro trend)
+    dxy_above_200ma : 1 als DXY boven 200-daags EMA (sterke dollar regime)
+    """
+    name = "dxy"
+    if not _cache_is_fresh(name):
+        print("  Downloading DXY (US Dollar Index)...")
+        try:
+            df = _download_yfinance_daily("DX-Y.NYB", years=10)
+            df.columns = ["dxy_close"]
+            df["dxy_return_24h"]  = df["dxy_close"].pct_change(1)
+            df["dxy_return_7d"]   = df["dxy_close"].pct_change(7)
+            ema_200 = df["dxy_close"].ewm(span=200, adjust=False).mean()
+            df["dxy_above_200ma"] = (df["dxy_close"] > ema_200).astype(float)
+            df = df[["dxy_return_24h", "dxy_return_7d", "dxy_above_200ma"]]
+            _save_cache(name, df)
+            return df
+        except Exception as e:
+            print(f"  Waarschuwing: DXY download mislukt ({e})")
+    if _cache_path(name).exists():
+        return _load_cache(name)
+    return pd.DataFrame(columns=["dxy_return_24h", "dxy_return_7d", "dxy_above_200ma"])
+
+
 def fetch_btc_dominance() -> pd.DataFrame:
     """
     Haal BTC Dominance op via CoinGecko public API (geen key vereist).
@@ -602,6 +632,9 @@ _DEFAULTS = {
     "btc_dominance":        50.0,   # historisch gemiddeld ~50%
     "btc_dominance_7d_chg": 0.0,
     "btc_put_call_ratio":   1.0,    # neutraal: evenveel puts als calls
+    "dxy_return_24h":       0.0,
+    "dxy_return_7d":        0.0,
+    "dxy_above_200ma":      0.5,    # onbekend regime → neutraal
 }
 
 _SOURCES_GLOBAL = {
@@ -613,6 +646,7 @@ _SOURCES_GLOBAL = {
     "usdjpy":               fetch_usdjpy,
     "btc_dominance":        fetch_btc_dominance,
     "btc_put_call_ratio":   fetch_deribit_put_call_ratio,
+    "dxy":                  fetch_dxy,
 }
 
 

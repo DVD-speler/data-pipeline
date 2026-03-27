@@ -168,8 +168,18 @@ def run_backtest(
     # ── Basisrendement ────────────────────────────────────────────────────────
     raw_return = results["close"].shift(-h) / results["close"] - 1
 
-    # ── Stop-loss ─────────────────────────────────────────────────────────────
-    long_return = raw_return.clip(lower=-stop_loss) if stop_loss > 0 else raw_return
+    # ── Stop-loss (T1-D: dynamisch ATR-gebaseerd) ─────────────────────────────
+    # Als atr_pct beschikbaar is: gebruik 2×ATR als dynamische stop (T1-D).
+    # Dit geeft ruimere stops in hoge-vol periodes (voorkomt whipsaw) en
+    # nauwere stops in rustige markten (betere risico/beloning verhouding).
+    # Clip: minimum 0.5% (niet te eng), maximum 10% (niet te wijd).
+    if "atr_pct" in test_df.columns and stop_loss > 0:
+        atr_stop = (2.0 * test_df["atr_pct"].reindex(results.index)).clip(lower=0.005, upper=0.10)
+        long_return = raw_return.clip(lower=-atr_stop)
+    elif stop_loss > 0:
+        long_return = raw_return.clip(lower=-stop_loss)
+    else:
+        long_return = raw_return
 
     # ── Position sizing ───────────────────────────────────────────────────────
     if use_position_sizing:
@@ -361,6 +371,12 @@ def run_backtest_be_trail(
     use_structural_levels: bool = False,
     highs: np.ndarray = None,
     lows: np.ndarray = None,
+    use_atr_stop: bool = True,
+    atr_multiplier: float = 2.0,
+    use_partial_exits: bool = True,
+    tp1_pct: float = 0.03,
+    tp2_pct: float = 0.08,
+    tp1_fraction: float = 0.50,
     # Legacy kwargs
     threshold_short: float = 0.0,
     use_short: bool = False,
@@ -369,7 +385,16 @@ def run_backtest_be_trail(
     """
     Long-only backtest met trailing stop-loss naar breakeven (BE) en model-gestuurd sluitmodel.
 
-    Logica per candle:
+    T1-D ATR trailing stop (use_atr_stop=True):
+      - Initiële SL = entry × (1 − atr_multiplier × atr_pct_at_entry)
+      - Wordt bij iedere candle omhoog bijgesteld als close − atr_sl > huidige SL
+        (trailing: SL volgt de prijs omhoog, nooit omlaag)
+    T1-E Partial exits (use_partial_exits=True):
+      - TP1 (tp1_pct=3%): sluit tp1_fraction (50%) van positie; rest houdt door naar TP2
+      - Na TP1: SL verplaatst naar entry (breakeven)
+      - TP2 (tp2_pct=8%): sluit de resterende helft
+
+    Overige logica per candle:
       - Wanneer close >= entry * (1 + be_trigger_pct) → SL verplaatst naar entry (BE)
       - Als allow_second_entry=True én alle open posities op BE staan → tweede trade
         toegestaan bij nieuw signaal (max 2 simultane posities)
@@ -407,8 +432,9 @@ def run_backtest_be_trail(
     )
     signals_long = base["signal_long"].values.astype(int)
 
-    closes = test_df["close"].values
-    n      = len(closes)
+    closes    = test_df["close"].values
+    atr_vals  = test_df["atr_pct"].values if "atr_pct" in test_df.columns else None
+    n         = len(closes)
 
     # Position sizing: identiek aan run_backtest
     long_sizes = np.clip((probas - 0.5) * 2, 0.0, 1.0)
@@ -429,18 +455,36 @@ def run_backtest_be_trail(
             tp         = pos["tp_price"]
             hours_open = i - pos["entry_idx"]
             # C2: Signaalveroudering — positie-effectiviteit daalt lineair met tijd.
-            # effective_size = initial_size × max(0.5, 1 − 0.02 × hours_open)
-            # Na 25u: 50% van oorspronkelijke size (vloer).
             decay_factor = max(0.5, 1.0 - 0.02 * hours_open)
             size       = pos["size"] * decay_factor
             exit_price = None
 
             proba_i = probas[i]
             if direction == "LONG":
+                # ── T1-D: Update ATR trailing stop ────────────────────────────
+                if use_atr_stop and atr_vals is not None:
+                    atr_trail_sl = close - atr_multiplier * atr_vals[i] * close
+                    if atr_trail_sl > pos["sl_price"]:
+                        pos["sl_price"] = atr_trail_sl
+                        sl = pos["sl_price"]
+
                 if close <= sl:
                     exit_price = sl           # SL geraakt
+                elif use_partial_exits and not pos.get("tp1_hit", False) and close >= pos["tp1_price"]:
+                    # ── T1-E: TP1 geraakt → sluit tp1_fraction, zet SL naar BE ──
+                    tp1_size = pos["size"] * tp1_fraction
+                    tp1_ret  = (pos["tp1_price"] - pos["entry_price"]) / pos["entry_price"]
+                    strategy_returns[i] += tp1_size * tp1_ret - tp1_size * 2 * fee
+                    # Verkleun positie en zet SL naar entry (BE)
+                    pos["size"]     = pos["size"] * (1 - tp1_fraction)
+                    pos["tp1_hit"]  = True
+                    pos["sl_price"] = pos["entry_price"]   # SL → BE na TP1
+                    pos["is_be"]    = True
+                    be_triggered[i] = 1
+                    remaining.append(pos)
+                    continue
                 elif close >= tp:
-                    exit_price = tp           # TP geraakt
+                    exit_price = tp           # TP2 (of enkel TP als partial exits uit) geraakt
                 elif proba_i < exit_proba_long:
                     exit_price = close        # Model-exit: proba onder drempel
                 elif i >= pos["horizon_idx"]:
@@ -478,21 +522,30 @@ def run_backtest_be_trail(
         can_long = (n_open == 0) or (allow_second_entry and all_be and n_open < 2)
 
         if can_long and signals_long[i]:
+            # T1-D: Dynamische stop op basis van ATR; fallback naar vaste stop
+            if use_atr_stop and atr_vals is not None:
+                atr_sl_pct = float(np.clip(atr_multiplier * atr_vals[i], 0.005, 0.10))
+            else:
+                atr_sl_pct = stop_loss_pct
+
             if swings is not None:
                 from src.levels import get_recent_levels, compute_structural_sl_tp
                 supports, resistances = get_recent_levels(swings, i)
                 sl_p, tp_p = compute_structural_sl_tp(
                     close, "LONG", supports, resistances,
-                    fallback_sl_pct=stop_loss_pct, fallback_tp_pct=tp_pct,
+                    fallback_sl_pct=atr_sl_pct, fallback_tp_pct=tp_pct,
                 )
             else:
-                sl_p = close * (1 - stop_loss_pct)
-                tp_p = close * (1 + tp_pct)
+                sl_p = close * (1 - atr_sl_pct)
+                tp_p = close * (1 + (tp2_pct if use_partial_exits else tp_pct))
+
             positions.append({
                 "direction":   "LONG",
                 "entry_price": close,
                 "sl_price":    sl_p,
                 "tp_price":    tp_p,
+                "tp1_price":   close * (1 + tp1_pct) if use_partial_exits else tp_p,
+                "tp1_hit":     False,
                 "is_be":       False,
                 "horizon_idx": i + h,
                 "entry_idx":   i,
@@ -757,7 +810,7 @@ def run_walkforward(
             f"  thr={opt_thr:.2f}{short_str}"
             f"  Sharpe: {metrics['sharpe_ratio']:+.3f}"
             f"  Return: {metrics['total_return']:+.1%}"
-            f"  L:{metrics['n_long']} S:{metrics['n_short']}"
+            f"  L:{metrics['n_long']}"
         )
 
         start += step_h
@@ -808,7 +861,6 @@ def plot_results(results: pd.DataFrame, metrics: dict, title_suffix: str = "") -
         f"Max Drawdown   : {metrics['max_drawdown']:.1%}",
         f"Win Rate       : {metrics['win_rate']:.1%}",
         f"Long Trades    : {metrics['n_long']}",
-        f"Short Trades   : {metrics['n_short']}",
         f"Signal Rate    : {metrics['signal_rate']:.1%}",
     ]
     ax.text(

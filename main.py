@@ -188,12 +188,10 @@ def fase_backtest(model=None, test_df=None, probas=None, symbol: str = None):
         _, test_df = time_split(features)
         probas = model.predict_proba(test_df[config.FEATURE_COLS])[:, 1]
 
-    long_thr, short_thr = load_optimal_threshold(symbol=sym)
+    long_thr, _ = load_optimal_threshold(symbol=sym)
     results = run_backtest(
         test_df, probas,
         threshold=long_thr,
-        threshold_short=short_thr,
-        use_short=(short_thr > 0),
         use_position_sizing=True,
         regime_filter=True,
     )

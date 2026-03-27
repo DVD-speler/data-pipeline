@@ -58,6 +58,138 @@ def _build_heatmap_lookup(heatmap: pd.DataFrame, default: float = 0.0) -> dict:
     return result
 
 
+# ── Ichimoku Cloud ────────────────────────────────────────────────────────────
+
+def _add_ichimoku(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Voeg Ichimoku Cloud features toe (T1-A).
+    Standaard parameters: Tenkan=9, Kijun=26, Senkou B=52, displacement=26.
+
+    cloud_position  : +1 close boven wolk, 0 in wolk, -1 onder wolk
+    cloud_thickness : (senkou_a - senkou_b) / close — dikke wolk = sterke trend
+    tk_cross        : +1 Tenkan boven Kijun, -1 eronder
+    chikou_position : chikou span vs. koers 26 perioden terug (+1/0/-1)
+    """
+    high  = df["high"]
+    low   = df["low"]
+    close = df["close"]
+
+    tenkan  = (high.rolling(9).max()  + low.rolling(9).min())  / 2
+    kijun   = (high.rolling(26).max() + low.rolling(26).min()) / 2
+    senkou_a = ((tenkan + kijun) / 2).shift(26)
+    senkou_b = ((high.rolling(52).max() + low.rolling(52).min()) / 2).shift(26)
+    chikou  = close.shift(-26)   # 26 perioden terug geplaatst (lagging span)
+
+    cloud_top    = senkou_a.combine(senkou_b, max)
+    cloud_bottom = senkou_a.combine(senkou_b, min)
+
+    df["cloud_position"] = np.where(
+        close > cloud_top,    1,
+        np.where(close < cloud_bottom, -1, 0)
+    ).astype(float)
+    df["cloud_thickness"] = (senkou_a - senkou_b) / (close + 1e-10)
+    df["tk_cross"] = np.where(tenkan > kijun, 1, -1).astype(float)
+
+    # chikou vs close 26 perioden terug (shift +26 = kijk terug in de tijd)
+    close_26ago = close.shift(26)
+    df["chikou_position"] = np.where(
+        close > close_26ago, 1,
+        np.where(close < close_26ago, -1, 0)
+    ).astype(float)
+
+    return df
+
+
+# ── Candlestick microstructure (T1-B) ─────────────────────────────────────────
+
+def _add_candle_patterns(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Voeg candlestick microstructure features toe (T1-B).
+
+    candle_body_pct  : (close−open) / (high−low)  —  −1…+1, positief = bullish
+    upper_wick_pct   : upper wick / range           —  0…1
+    lower_wick_pct   : lower wick / range           —  0…1
+    is_hammer        : 1 als kleine body + lange lower wick (bullish reversal)
+    is_engulfing     : 1 als bullish engulfing (sluit boven vorige open, opent onder vorige close)
+    gap_up           : 1 als huidige open > vorige high (bullish gap)
+    """
+    open_  = df["open"]
+    high   = df["high"]
+    low    = df["low"]
+    close  = df["close"]
+
+    body      = close - open_
+    body_size = body.abs()
+    rng       = (high - low).clip(lower=1e-10)
+
+    df["candle_body_pct"] = body / rng
+    upper_body = pd.concat([open_, close], axis=1).max(axis=1)
+    lower_body = pd.concat([open_, close], axis=1).min(axis=1)
+    df["upper_wick_pct"] = (high - upper_body) / rng
+    df["lower_wick_pct"] = (lower_body - low)  / rng
+
+    lower_wick = lower_body - low
+    upper_wick = high - upper_body
+    df["is_hammer"] = (
+        (lower_wick >= 2 * body_size) &
+        (upper_wick <= body_size * 0.5) &
+        (body_size   <= rng * 0.35)
+    ).astype(float)
+
+    prev_body = body.shift(1)
+    df["is_engulfing"] = (
+        (prev_body < 0) &
+        (body > 0) &
+        (close > open_.shift(1)) &
+        (open_  < close.shift(1))
+    ).astype(float)
+
+    df["gap_up"] = (open_ > high.shift(1)).astype(float)
+    return df
+
+
+# ── RSI Divergentie (T1-F) ────────────────────────────────────────────────────
+
+def _add_rsi_divergence(df: pd.DataFrame, window: int = 14) -> pd.DataFrame:
+    """
+    Detecteer RSI-divergentie (T1-F) op basis van `rsi_14` kolom.
+
+    rsi_bull_divergence : 1 als price maakt lower low maar RSI maakt higher low
+                          (bullish reversal signaal)
+    rsi_bear_divergence : 1 als price maakt higher high maar RSI maakt lower high
+                          (bearish top signaal)
+    """
+    if "rsi_14" not in df.columns:
+        df["rsi_bull_divergence"] = 0.0
+        df["rsi_bear_divergence"] = 0.0
+        return df
+
+    close = df["close"]
+    rsi   = df["rsi_14"]
+
+    price_low_now   = close.rolling(window).min()
+    price_low_prev  = price_low_now.shift(window)
+    rsi_low_now     = rsi.rolling(window).min()
+    rsi_low_prev    = rsi_low_now.shift(window)
+
+    price_high_now  = close.rolling(window).max()
+    price_high_prev = price_high_now.shift(window)
+    rsi_high_now    = rsi.rolling(window).max()
+    rsi_high_prev   = rsi_high_now.shift(window)
+
+    df["rsi_bull_divergence"] = (
+        (price_low_now  < price_low_prev) &
+        (rsi_low_now    > rsi_low_prev)
+    ).astype(float)
+
+    df["rsi_bear_divergence"] = (
+        (price_high_now  > price_high_prev) &
+        (rsi_high_now    < rsi_high_prev)
+    ).astype(float)
+
+    return df
+
+
 # ── Volume Profile / Point of Control ─────────────────────────────────────────
 
 def _compute_poc(high_arr: np.ndarray, low_arr: np.ndarray,
@@ -346,6 +478,16 @@ def build_features(
     )
     df.drop(columns=["_day", "_typical", "_tpv", "_cum_tpv", "_cum_vol"],
             inplace=True, errors="ignore")
+
+    # ── Ichimoku Cloud (T1-A) ─────────────────────────────────────────────────
+    df = _add_ichimoku(df)
+
+    # ── Candlestick microstructure (T1-B) ─────────────────────────────────────
+    df = _add_candle_patterns(df)
+
+    # ── RSI Divergentie (T1-F) ────────────────────────────────────────────────
+    # Moet na _add_ta_indicators worden aangeroepen (rsi_14 vereist).
+    df = _add_rsi_divergence(df)
 
     # ── Volume Profile / Point of Control (B3) ────────────────────────────────
     # POC = prijsniveau met het meeste volume in het afgelopen 168h venster.
