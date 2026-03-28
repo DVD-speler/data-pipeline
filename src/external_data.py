@@ -46,6 +46,9 @@ _CACHE_MAX_AGE_H = {
     "dxy":           24,
     "google_trends": 24,   # wekelijks data → 24h cache volstaat
     "btc_skew_25d":   1,   # live opties → elk uur verversen
+    "BTCUSDT_bybit_oi": 4, # 4h OI data → elk uur verversen
+    "ETHUSDT_bybit_oi": 4,
+    "blockchain_info":  24, # dagelijkse on-chain → 24h cache
 }
 _CACHE_AGE_DEFAULT = 6   # fallback voor funding_rate, open_interest, etc.
 
@@ -491,6 +494,122 @@ def fetch_deribit_dvol() -> pd.DataFrame:
     return pd.DataFrame(columns=["btc_dvol"])
 
 
+# ── 7. Bybit Open Interest (S7-A) ─────────────────────────────────────────────
+
+BYBIT_BASE = "https://api.bybit.com/v5/market"
+
+
+def fetch_bybit_oi(symbol: str = "BTCUSDT") -> pd.DataFrame:
+    """
+    Bybit Open Interest (4-uurlijks). Gratis, geen API key nodig.
+    History vanaf 2020-10-05 voor BTCUSDT en ETHUSDT.
+    Endpoint: /v5/market/open-interest
+
+    Features:
+      oi_btc       — raw OI in coin (BTC of ETH)
+      oi_return_24h — 24h procentuele verandering (6 × 4h periodes)
+    """
+    name = f"{symbol}_bybit_oi"
+    if _cache_is_fresh(name):
+        return _load_cache(name)
+
+    print(f"  Downloading Bybit OI voor {symbol}...")
+    url = f"{BYBIT_BASE}/open-interest"
+    all_records: list = []
+    end_time = int(time.time() * 1000)
+    max_pages = 500
+
+    for _ in range(max_pages):
+        try:
+            r = requests.get(url, params=dict(
+                category="linear",
+                symbol=symbol,
+                intervalTime="4h",
+                limit=200,
+                endTime=end_time,
+            ), timeout=15)
+            r.raise_for_status()
+            lst = r.json().get("result", {}).get("list", [])
+            if not lst:
+                break
+            all_records.extend(lst)
+            end_time = min(int(x["timestamp"]) for x in lst) - 1
+        except Exception as e:
+            print(f"    Bybit OI fout: {e}")
+            break
+
+    if not all_records:
+        return pd.DataFrame(columns=["oi_btc", "oi_return_24h"])
+
+    df = pd.DataFrame(all_records)
+    df.index = pd.to_datetime(df["timestamp"].astype(int), unit="ms", utc=True)
+    df["oi_btc"] = df["openInterest"].astype(float)
+    df = df[["oi_btc"]].sort_index()
+    df = df[~df.index.duplicated()]
+    df["oi_return_24h"] = df["oi_btc"].pct_change(6)   # 6 × 4h = 24h
+    df = df.dropna(subset=["oi_return_24h"])
+
+    _save_cache(name, df)
+    print(f"    {len(df)} records: {df.index[0].date()} → {df.index[-1].date()}")
+    return df
+
+
+# ── 8. Blockchain.info on-chain metrics (S7-B) ────────────────────────────────
+
+BLOCKCHAIN_INFO_BASE = "https://api.blockchain.info/charts"
+
+
+def fetch_blockchain_info() -> pd.DataFrame:
+    """
+    Blockchain.info on-chain metrics (dagelijks, gratis, geen key).
+    Features:
+      active_addresses_7d_chg — wekelijkse verandering unieke adressen (netwerk activiteit)
+      hash_rate_7d_chg        — wekelijkse verandering hash rate (miner vertrouwen)
+    Cache: 24h.
+    """
+    name = "blockchain_info"
+    if _cache_is_fresh(name):
+        return _load_cache(name)
+
+    print("  Downloading Blockchain.info on-chain metrics...")
+    metrics = {
+        "active_addresses": "n-unique-addresses",
+        "hash_rate":        "hash-rate",
+    }
+    frames = []
+    for col_name, chart_name in metrics.items():
+        try:
+            r = requests.get(
+                f"{BLOCKCHAIN_INFO_BASE}/{chart_name}",
+                params={"timespan": "5year", "format": "json", "sampled": "true"},
+                timeout=20,
+            )
+            r.raise_for_status()
+            vals = r.json().get("values", [])
+            tmp = pd.DataFrame(vals, columns=["x", "y"])
+            tmp.index = pd.to_datetime(tmp["x"], unit="s", utc=True)
+            tmp[col_name] = tmp["y"].astype(float)
+            frames.append(tmp[[col_name]])
+            time.sleep(0.3)
+        except Exception as e:
+            print(f"    Blockchain.info {chart_name} fout: {e}")
+
+    if not frames:
+        return pd.DataFrame(columns=["active_addresses_7d_chg", "hash_rate_7d_chg"])
+
+    df = frames[0]
+    for f in frames[1:]:
+        df = df.join(f, how="outer")
+    df = df.sort_index()
+    df["active_addresses_7d_chg"] = df["active_addresses"].pct_change(7)
+    df["hash_rate_7d_chg"]        = df["hash_rate"].pct_change(7)
+    df = df[["active_addresses_7d_chg", "hash_rate_7d_chg"]].dropna()
+
+    _save_cache(name, df)
+    print(f"    {len(df)} records: {df.index[0].date()} → {df.index[-1].date()}")
+    return df
+
+
 # ── Gecombineerde loader ───────────────────────────────────────────────────────
 
 # Neutrale defaults per feature (worden gebruikt als data ontbreekt)
@@ -890,6 +1009,15 @@ _DEFAULTS = {
     "trends_momentum_4w":    0.0,
     "trends_spike":          0,
     "btc_skew_25d":          0.0,   # neutraal: puts en calls gelijk geprijsd
+    # S7-A: Bybit OI
+    "oi_btc":               0.0,
+    "oi_return_24h":        0.0,
+    "oi_price_divergence":  0,
+    # S7-B: Blockchain.info on-chain
+    "active_addresses_7d_chg": 0.0,
+    "hash_rate_7d_chg":        0.0,
+    # S7-C: Fear & Greed 7-daags momentum (berekend in features.py)
+    "fear_greed_7d_chg":    0.0,
 }
 
 _SOURCES_GLOBAL = {
@@ -905,6 +1033,8 @@ _SOURCES_GLOBAL = {
     "usdt_dominance":       fetch_usdt_dominance,
     "google_trends":        lambda: fetch_google_trends(),
     "btc_skew_25d":         fetch_deribit_skew_live,
+    # S7-B: blockchain on-chain (globaal, niet symbool-specifiek)
+    "blockchain_info":      fetch_blockchain_info,
 }
 
 
@@ -928,6 +1058,7 @@ def load_all_external(index: pd.DatetimeIndex, symbol: str = "BTCUSDT") -> pd.Da
     sources = dict(_SOURCES_GLOBAL)
     sources["funding_rate"]  = lambda: fetch_funding_rate(symbol=symbol)
     sources["open_interest"] = lambda: fetch_open_interest(symbol=symbol)
+    sources["bybit_oi"]      = lambda: fetch_bybit_oi(symbol=symbol)
 
     base = pd.DataFrame(index=index)
 
@@ -1001,6 +1132,8 @@ def download_all_external(force: bool = True) -> None:
         fetch_funding_rate(symbol=sym)
         print(f"\n[{sym} open_interest]")
         fetch_open_interest(symbol=sym)
+        print(f"\n[{sym} bybit_oi]")
+        fetch_bybit_oi(symbol=sym)
 
     print(f"\nKlaar. Gecached in: {EXTERNAL_DIR}/")
 

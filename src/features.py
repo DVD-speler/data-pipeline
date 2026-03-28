@@ -760,10 +760,26 @@ def build_features(
     if "funding_rate" in df.columns:
         df["funding_momentum"] = df["funding_rate"].diff(72)  # 72h = 3 days
 
-    # Fear & Greed momentum: 7-daagse verandering in sentiment index
-    # Positief = sentiment verbetert (kopen), negatief = sentiment verslechtert (verkopen)
+    # Fear & Greed momentum: 7-daagse verandering in sentiment index (S7-C)
+    # Positief = sentiment verbetert, negatief = sentiment verslechtert
+    # Gebruik 168h diff (7 dagen × 24h) want daily data is forward-filled naar uurlijks
     if "fear_greed" in df.columns:
-        df["fear_greed_momentum"] = df["fear_greed"].diff(7)
+        df["fear_greed_7d_chg"] = df["fear_greed"].diff(168)  # 168h = 7 dagen
+
+    # S7-A: OI price divergence — vergelijk OI richting met prijs richting
+    # +1 = OI en prijs stijgen samen (bullish confirmation: nieuwe longs stromen in)
+    # -1 = OI stijgt, prijs daalt (bearish: nieuwe shorts domineren)
+    #  0 = OI daalt (minder conviction) of neutraal
+    if "oi_return_24h" in df.columns:
+        price_return_24h = df["close"].pct_change(24)
+        oi_up    = df["oi_return_24h"] > 0.005   # >0.5% OI stijging
+        oi_down  = df["oi_return_24h"] < -0.005  # >0.5% OI daling
+        px_up    = price_return_24h > 0.002
+        px_down  = price_return_24h < -0.002
+        df["oi_price_divergence"] = np.where(
+            oi_up  & px_up,   1,
+            np.where(oi_up  & px_down, -1, 0)
+        ).astype(np.int8)
 
     # ── 4h features (hogere timeframe context) ────────────────────────────────
     if df_4h is None:

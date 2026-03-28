@@ -138,6 +138,12 @@ FEATURE_COLS_1H = [
     "google_trends_btc",        # genormaliseerd BTC zoekvolume (0–100); hoog = retail FOMO
     "trends_momentum_4w",       # 4-weekse verandering zoekvolume; stijgend = FOMO opbouw
     "trends_spike",             # 1 als zoekvolume > 90e percentiel (extreme FOMO)
+    # Sprint 7 — nieuwe signalen
+    "oi_return_24h",            # S7-A: Bybit OI 24h % verandering (stijgend = grotere positie)
+    "oi_price_divergence",      # S7-A: +1 OI+prijs stijgen (bullish), -1 OI stijgt+prijs daalt (bearish)
+    "active_addresses_7d_chg",  # S7-B: blockchain.info wekelijkse verandering unieke adressen
+    "hash_rate_7d_chg",         # S7-B: wekelijkse verandering BTC hash rate (miner vertrouwen)
+    "fear_greed_7d_chg",        # S7-C: Fear & Greed 7-daags momentum (168h diff)
 ]
 # Uitgesloten features (code aanwezig, niet in FEATURE_COLS):
 #   btc_skew_25d         — LIVE-ONLY gate (geen historische Deribit data)
