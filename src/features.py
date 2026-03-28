@@ -58,6 +58,91 @@ def _build_heatmap_lookup(heatmap: pd.DataFrame, default: float = 0.0) -> dict:
     return result
 
 
+# ── HMM Regime Detection (T3-F) ─────────────────────────────────────────────
+
+def _add_hmm_regime(df: pd.DataFrame, n_states: int = 3) -> pd.DataFrame:
+    """
+    3-state Gaussian Hidden Markov Model regime detectie op dagelijkse returns.
+
+    Aanpak (look-ahead preventie):
+      1. Resample close naar dagelijks, bereken dagelijkse returns
+      2. Fit HMM op eerste 80% van de data (training portie — geen val/test leakage)
+      3. Decode training- en resterende data APART met Viterbi
+         (scheidt sequenties zodat Viterbi niet via toekomstige obs vooruitkijkt)
+      4. Label staten: hoogste gemiddeld rendement = bull, laagste = bear
+      5. Rolling 7-daags gemiddelde als zachte classificatie (0–1 kans)
+      6. Forward-fill naar uurlijkse index
+
+    Features:
+      hmm_bull_prob   : P(bull state) — 7-daags voortschrijdend gemiddelde
+      hmm_bear_prob   : P(bear state) — 7-daags voortschrijdend gemiddelde
+    """
+    try:
+        from hmmlearn.hmm import GaussianHMM
+    except ImportError:
+        df["hmm_bull_prob"] = 1 / n_states
+        df["hmm_bear_prob"] = 1 / n_states
+        return df
+
+    # Dagelijkse close en returns
+    daily_close = df["close"].resample("1D").last().dropna()
+    daily_ret   = daily_close.pct_change().dropna()
+
+    if len(daily_ret) < 90:
+        df["hmm_bull_prob"] = 1 / n_states
+        df["hmm_bear_prob"] = 1 / n_states
+        return df
+
+    X = daily_ret.values.reshape(-1, 1)
+
+    # Fit op eerste 80% van de data (look-ahead preventie)
+    train_end = max(90, int(len(X) * 0.80))
+    X_train   = X[:train_end]
+
+    try:
+        hmm = GaussianHMM(
+            n_components=n_states,
+            covariance_type="diag",
+            n_iter=200,
+            random_state=42,
+        )
+        hmm.fit(X_train)
+    except Exception:
+        df["hmm_bull_prob"] = 1 / n_states
+        df["hmm_bear_prob"] = 1 / n_states
+        return df
+
+    # Sorteer staten op gemiddeld rendement: hoogste = bull, laagste = bear
+    means       = hmm.means_.flatten()
+    state_order = np.argsort(means)[::-1]
+    bull_state  = int(state_order[0])
+    bear_state  = int(state_order[-1])
+
+    # Decode training- en rest-data APART om intra-sequentie look-ahead te voorkomen
+    states_train = hmm.predict(X[:train_end])
+    states_rest  = hmm.predict(X[train_end:]) if train_end < len(X) else np.array([], dtype=int)
+    states       = np.concatenate([states_train, states_rest])
+
+    # Zachte classificatie: rolling 7-daags gemiddelde over binaire state indicators
+    bull_series = pd.Series((states == bull_state).astype(float), index=daily_ret.index)
+    bear_series = pd.Series((states == bear_state).astype(float), index=daily_ret.index)
+    bull_smooth = bull_series.rolling(7, min_periods=1).mean()
+    bear_smooth = bear_series.rolling(7, min_periods=1).mean()
+
+    daily_hmm = pd.DataFrame({
+        "hmm_bull_prob": bull_smooth,
+        "hmm_bear_prob": bear_smooth,
+    })
+
+    # Forward-fill naar uurlijkse index
+    daily_hmm.index = pd.to_datetime(daily_hmm.index, utc=True)
+    joined = df[[]].join(daily_hmm, how="left")
+    df["hmm_bull_prob"] = joined["hmm_bull_prob"].ffill().fillna(1 / n_states)
+    df["hmm_bear_prob"] = joined["hmm_bear_prob"].ffill().fillna(1 / n_states)
+
+    return df
+
+
 # ── BTC Halving Cyclus (T2-E) ─────────────────────────────────────────────────
 
 # Bekende halving-datums (UTC)
@@ -607,6 +692,9 @@ def build_features(
     )
     df.drop(columns=["_day", "_typical", "_tpv", "_cum_tpv", "_cum_vol"],
             inplace=True, errors="ignore")
+
+    # ── HMM Regime Detection (T3-F) ───────────────────────────────────────────
+    df = _add_hmm_regime(df)
 
     # ── BTC Halving Cyclus (T2-E) ─────────────────────────────────────────────
     df = _add_halving_cycle(df)

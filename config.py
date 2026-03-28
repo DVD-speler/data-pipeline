@@ -140,6 +140,11 @@ FEATURE_COLS_1H = [
     "google_trends_btc",        # genormaliseerd BTC zoekvolume (0–100); hoog = retail FOMO
     "trends_momentum_4w",       # 4-weekse verandering zoekvolume; stijgend = FOMO opbouw
     "trends_spike",             # 1 als zoekvolume > 90e percentiel (extreme FOMO = contrair bearish)
+    # Sprint 5 features getest, maar uitgesloten na evaluatie:
+    #   "hmm_bull_prob"          — HMM alone: Sharpe 10.05 vs 12.99 baseline (regressie)
+    #   "hmm_bear_prob"          — idem; HMM en bestaand market_regime zijn redundant
+    #   "btc_eth_corr_7d"        — Sprint 5 test zonder HMM: 7.76 (regressie)
+    #   "correlation_breakdown"  — idem; gecombineerd met corr_7d geen meerwaarde
 ]
 # Sprint 2 features berekend (code aanwezig), maar tijdelijk uitgesloten na evaluatie:
 #   "days_since_halving"     — corr -0.28 met proba in test, leidt tot extra trades/lagere WR

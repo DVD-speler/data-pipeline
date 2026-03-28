@@ -1,8 +1,8 @@
 {
-  "win_rate": 0.012,
-  "avg_win": 0.0002,
-  "avg_loss": 0.0164,
-  "kelly_full": 0.0,
-  "kelly_half": 0.0,
-  "n_trades": 83
+  "win_rate": 0.4789,
+  "avg_win": 0.0414,
+  "avg_loss": 0.0159,
+  "kelly_full": 0.2784,
+  "kelly_half": 0.1392,
+  "n_trades": 71
 }
