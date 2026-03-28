@@ -1,9 +1,9 @@
 {
   "signaal": "SHORT",
   "richting": "BEARISH",
-  "kans_stijging": 0.24199392254726992,
-  "prijs": 1992.129150390625,
-  "tijdstip": "2026-03-27 20:00:00+00:00",
+  "kans_stijging": 0.1436564212078062,
+  "prijs": 1988.0418701171875,
+  "tijdstip": "2026-03-28 04:00:00+00:00",
   "market_regime": -1.0,
   "regime_label": "bear (ADX-)",
   "death_cross": true,
