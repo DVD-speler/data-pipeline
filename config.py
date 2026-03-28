@@ -58,25 +58,38 @@ TARGET_DEAD_ZONE_UP   = 0.002   # 0.2%: kleine opwaartse moves behouden (accumul
 TARGET_DEAD_ZONE_DOWN = 0.004   # 0.4%: kleine neerwaartse moves als ruis verwijderen
 
 # ── Features (1h timeframe) ────────────────────────────────────────────────────
+# Sprint 6 cleanup (2026-03-28): 66 → 47 features na permutation importance analyse
+# Verwijderd: 19 features met nul of negatieve permutation importance (BTC + ETH beide)
+#
+# Top-5 features (permutation importance BTC / ETH):
+#   google_trends_btc   +0.047 / +0.016    eurusd_return_24h  +0.040 / +0.019
+#   dxy_return_24h      +0.030 / +0.020    trends_momentum_4w +0.024 / +0.022
+#   spx_return_24h      +0.016 / +0.026
+#
+# Verwijderde features (nul of negatief in beide symbolen):
+#   btc_put_call_ratio   0.000 / 0.000    btc_dominance        0.000 / 0.000
+#   btc_dominance_7d_chg 0.000 / 0.000    is_hammer            0.000 / 0.000
+#   is_engulfing         0.000 / 0.000    gap_up               0.000 / 0.000
+#   ema_ratio_50        -0.00034/-0.00045  chikou_position     -0.00012/-0.00017
+#   volume_ratio        -0.00010/-0.00008  return_4h           -0.00007/-0.00025
+#   dxy_above_200ma     -0.00059/-0.00008  session             ~0.000 / 0.000
+#   return_12h          +0.00001/-0.00051  return_6h           +0.00008/-0.00008
+#   price_position      -0.00127/+0.00026  lower_wick_pct      ~0.000 / 0.000
+#   upper_wick_pct       0.000 / 0.000    candle_body_pct      0.000 / 0.000
+#   volume_spike_48h    +0.00037/-0.00029  (conflicterend, netto neutraal)
+
 FEATURE_COLS_1H = [
     # Tijdsfeatures
     "hour",
     "day_of_week",
     "hour_of_week",             # gecombineerde dag×uur code (0–167)
-    "session",
     # P1/P2 statistieken
     "p1_probability",           # kans P1 op dit uur (train-only heatmap)
-    # Prijs & volume (rolling)
+    # Prijs & volume
     "volatility_24h",
     "prev_day_return",
-    "volume_ratio",             # volume t.o.v. 24h gemiddelde
-    "volume_spike_48h",         # volume t.o.v. 48h gemiddelde (spike detectie)
-    "price_position",
-    # Multi-horizon momentum
+    # Momentum
     "return_2h",
-    "return_4h",
-    "return_6h",
-    "return_12h",
     # Volatiliteitsregime
     "vol_regime",               # recente 4h-vol / 24h-vol (>1=expanding, <1=squeeze)
     # Trendkwaliteit
@@ -88,7 +101,6 @@ FEATURE_COLS_1H = [
     "macd_signal",
     "bb_pct",
     "ema_ratio_20",
-    "ema_ratio_50",
     "price_vs_ema200",          # marktregime — close / EMA(200)
     "atr_pct",                  # genormaliseerde volatiliteit — ATR(14) / close
     # Cross-asset & externe features
@@ -98,67 +110,42 @@ FEATURE_COLS_1H = [
     "eth_btc_ratio",            # ETH/BTC 24h rendement (altcoin season indicator)
     "funding_rate",             # BTC perp funding rate (sentiment: positief=longs domineren)
     "funding_momentum",         # 3-daagse verandering funding rate (sentiment shift)
-    # Macro-momentum (bearmarktdetectie)
+    # Macro-momentum
     "return_7d",                # 7-daags BTC rendement (weektrend)
     "return_30d",               # 30-daags BTC rendement (maandtrend)
-    "ath_7d_distance",          # Afstand van 7-daags ATH (negatief = in correctie)
-    # Regime detectie (Fase 1)
+    "ath_7d_distance",          # afstand van 7-daags ATH (negatief = in correctie)
+    # Regime detectie
     "adx",                      # ADX(14) trendsterkte 0-100 (>20 = trending markt)
-    "vwap_distance",            # (close − dag-VWAP) / close: positie vs. gewogen gemiddelde
-    "poc_distance",             # (close − POC_168h) / close: positie vs. wekelijks volume-zwaartepunt
-    # Volatiliteitsregime (opties-markt)
+    "vwap_distance",            # (close − dag-VWAP) / close
+    "poc_distance",             # (close − POC_168h) / close — wekelijks volume-zwaartepunt
+    # Opties-markt (volatiliteit)
     "btc_dvol",                 # Deribit BTC implied volatility index (genormaliseerd 0–1)
-    # P2 macro features
-    "vix_level",                # CBOE VIX aandelenmarkt-angstmeter (ruwe waarde, ~20 gemiddeld)
-    "usdjpy_return_24h",        # USD/JPY dagelijks rendement (negatief = yen sterker = risk-off)
-    "usdjpy_return_7d",         # USD/JPY 7-daags rendement — carry trade unwind detector
-    # BTC Dominance (altcoin-cyclus indicator)
-    "btc_dominance",            # BTC % van totale crypto market cap (~40-55%)
-    "btc_dominance_7d_chg",     # 7-daagse verandering dominantie (stijgend = risk-off, alts zwak)
-    # Deribit opties-markt
-    "btc_put_call_ratio",       # Put/Call OI ratio (>1 = bearish hedge, >1.5 = extreme bear)
-    # Ichimoku Cloud (T1-A)
+    # Macro (VIX / valuta)
+    "vix_level",                # CBOE VIX aandelenmarkt-angstmeter
+    "usdjpy_return_24h",        # USD/JPY dagelijks rendement (risk-off indicator)
+    "usdjpy_return_7d",         # USD/JPY 7-daags rendement — carry trade unwind
+    # Ichimoku Cloud
     "cloud_position",           # +1 boven wolk, 0 in wolk, -1 onder wolk
     "cloud_thickness",          # (senkou_a − senkou_b) / close — dikke wolk = sterke trend
     "tk_cross",                 # +1 Tenkan boven Kijun (bull), -1 eronder (bear)
-    "chikou_position",          # chikou span vs. prijs 26 perioden terug (+1/0/-1)
-    # Candlestick microstructure (T1-B)
-    "candle_body_pct",          # (close−open) / (high−low) — positief = bullish candle
-    "upper_wick_pct",           # upper wick / range — hoge waarde = verkoop druk
-    "lower_wick_pct",           # lower wick / range — hoge waarde = koop druk
-    "is_hammer",                # 1 = hammer-patroon (bullish reversal)
-    "is_engulfing",             # 1 = bullish engulfing patroon
-    "gap_up",                   # 1 = opent boven vorige high (momentum gap)
-    # DXY Dollar Index (T1-C)
-    "dxy_return_24h",           # dagelijks DXY rendement (negatief = dollar zwakker = bullish crypto)
+    # DXY Dollar Index
+    "dxy_return_24h",           # dagelijks DXY rendement (negatief = bullish crypto)
     "dxy_return_7d",            # 7-daags DXY rendement (macro dollar trend)
-    "dxy_above_200ma",          # 1 = DXY boven 200-daags EMA (sterke dollar regime)
-    # RSI Divergentie (T1-F)
-    "rsi_bull_divergence",      # 1 = price lower low + RSI higher low (bullish reversal signaal)
-    "rsi_bear_divergence",      # 1 = price higher high + RSI lower high (bearish top signaal)
-    # Google Trends sentiment (T3-A)
+    # RSI Divergentie
+    "rsi_bull_divergence",      # price lower low + RSI higher low (bullish reversal)
+    "rsi_bear_divergence",      # price higher high + RSI lower high (bearish top)
+    # Google Trends sentiment
     "google_trends_btc",        # genormaliseerd BTC zoekvolume (0–100); hoog = retail FOMO
     "trends_momentum_4w",       # 4-weekse verandering zoekvolume; stijgend = FOMO opbouw
-    "trends_spike",             # 1 als zoekvolume > 90e percentiel (extreme FOMO = contrair bearish)
-    # Sprint 5 features getest, maar uitgesloten na evaluatie:
-    #   "hmm_bull_prob"          — HMM alone: Sharpe 10.05 vs 12.99 baseline (regressie)
-    #   "hmm_bear_prob"          — idem; HMM en bestaand market_regime zijn redundant
-    #   "btc_eth_corr_7d"        — Sprint 5 test zonder HMM: 7.76 (regressie)
-    #   "correlation_breakdown"  — idem; gecombineerd met corr_7d geen meerwaarde
+    "trends_spike",             # 1 als zoekvolume > 90e percentiel (extreme FOMO)
 ]
-# Sprint 2 features berekend (code aanwezig), maar tijdelijk uitgesloten na evaluatie:
-#   "days_since_halving"     — corr -0.28 met proba in test, leidt tot extra trades/lagere WR
-#   "supertrend_distance"    — corr -0.36 met proba, vergelijkbaar met bestaande adx/ema
-#   "btc_eth_corr_7d"        — waardevol op val, maar gecombineerd met halving/supertrend: regressie
-#   "halving_cycle_phase"    — redundant met days_since_halving
-#   "pre_halving_window"     — te schaars (1×/4yr)
-#   "supertrend_signal"      — importance ≈ 0
-#   "btc_eth_corr_24h"       — gecorreleerd met corr_7d
-#   "correlation_breakdown"  — importance = 0
-#   "usdt_dominance"         — 76% null (slechts 1 jaar CoinGecko history)
-#   "usdt_dominance_7d_chg"  — idem
-#   "btc_skew_25d"           — LIVE-ONLY gate (geen historische Deribit data), niet trainbaar
-# Toe te voegen zodra Optuna opnieuw geoptimaliseerd is voor deze feature set
+# Uitgesloten features (code aanwezig, niet in FEATURE_COLS):
+#   btc_skew_25d         — LIVE-ONLY gate (geen historische Deribit data)
+#   hmm_bull/bear_prob   — Sprint 5: regressie (HMM redundant met ADX market_regime)
+#   btc_eth_corr_7d      — Sprint 5: regressie (-5 Sharpe vs baseline)
+#   days_since_halving   — Sprint 2: corr -0.28, leidt tot extra trades/lagere WR
+#   supertrend_distance  — Sprint 2: corr -0.36, gecaptured door adx+ema
+#   usdt_dominance       — slechts 25% datadekking (CoinGecko ~1 jaar history)
 # Regime-only columns: in de feature matrix voor backtest-filter, NIET als model feature.
 # adx_trend en market_regime geven expliciete richting → over-confidence in bullish val-periode
 #   → threshold zakt naar 0.50 → model overfits op val-regime.

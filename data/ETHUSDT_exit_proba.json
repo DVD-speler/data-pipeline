@@ -1,5 +1,5 @@
 {
-  "exit_proba_long": 0.3,
-  "exit_proba_short": 0.7,
-  "sharpe": 2.145
+  "exit_proba_long": 0.375,
+  "exit_proba_short": 0.625,
+  "sharpe": 1.849
 }
