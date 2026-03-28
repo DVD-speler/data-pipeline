@@ -136,6 +136,10 @@ FEATURE_COLS_1H = [
     # RSI Divergentie (T1-F)
     "rsi_bull_divergence",      # 1 = price lower low + RSI higher low (bullish reversal signaal)
     "rsi_bear_divergence",      # 1 = price higher high + RSI lower high (bearish top signaal)
+    # Google Trends sentiment (T3-A)
+    "google_trends_btc",        # genormaliseerd BTC zoekvolume (0–100); hoog = retail FOMO
+    "trends_momentum_4w",       # 4-weekse verandering zoekvolume; stijgend = FOMO opbouw
+    "trends_spike",             # 1 als zoekvolume > 90e percentiel (extreme FOMO = contrair bearish)
 ]
 # Sprint 2 features berekend (code aanwezig), maar tijdelijk uitgesloten na evaluatie:
 #   "days_since_halving"     — corr -0.28 met proba in test, leidt tot extra trades/lagere WR
@@ -148,6 +152,7 @@ FEATURE_COLS_1H = [
 #   "correlation_breakdown"  — importance = 0
 #   "usdt_dominance"         — 76% null (slechts 1 jaar CoinGecko history)
 #   "usdt_dominance_7d_chg"  — idem
+#   "btc_skew_25d"           — LIVE-ONLY gate (geen historische Deribit data), niet trainbaar
 # Toe te voegen zodra Optuna opnieuw geoptimaliseerd is voor deze feature set
 # Regime-only columns: in de feature matrix voor backtest-filter, NIET als model feature.
 # adx_trend en market_regime geven expliciete richting → over-confidence in bullish val-periode
@@ -236,6 +241,11 @@ PUT_CALL_RATIO_GATE = 1.5
 # Extreem positieve funding (longs betalen te veel) = contrair bearish signaal
 # Blokkeert nieuwe longs als funding_rate > FUNDING_EXTREME_GATE (per 8u)
 FUNDING_EXTREME_GATE = 0.0005   # +0.05% per 8u = overbought signaal
+
+# T3-C — Deribit 25-delta skew gate (LIVE-ONLY — geen historische data)
+# Negatieve skew = calls duurder → bullish; positieve skew = puts duurder → bearish
+# Blokkeert longs als put-IV > call-IV met meer dan SKEW_BEARISH_GATE (in % punten)
+SKEW_BEARISH_GATE = 5.0   # blokkeert longs als 25D put-IV > 25D call-IV + 5%
 
 # ── Kelly Criterion positiegrootte (T2-D) ─────────────────────────────────────
 # Half-Kelly als upper-bound voor positiegroottes in live trading.

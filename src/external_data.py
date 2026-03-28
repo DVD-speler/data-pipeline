@@ -44,6 +44,8 @@ _CACHE_MAX_AGE_H = {
     "spx_daily":     24,
     "eurusd_daily":  24,
     "dxy":           24,
+    "google_trends": 24,   # wekelijks data → 24h cache volstaat
+    "btc_skew_25d":   1,   # live opties → elk uur verversen
 }
 _CACHE_AGE_DEFAULT = 6   # fallback voor funding_rate, open_interest, etc.
 
@@ -666,6 +668,206 @@ def fetch_deribit_put_call_ratio() -> pd.DataFrame:
         return pd.DataFrame({"btc_put_call_ratio": 1.0}, index=idx)
 
 
+# ── T3-A: Google Trends sentiment (Google Trends zoekvolume als FOMO-proxy) ────
+
+def fetch_google_trends(keyword: str = "bitcoin") -> pd.DataFrame:
+    """
+    Laad wekelijkse Google Trends data voor het opgegeven keyword (standaard: 'bitcoin').
+
+    Hoog zoekvolume = retail FOMO, historisch gecorreleerd met toppen.
+    5 jaar weekdata → forward-filled naar uurlijks bij join.
+
+    Features:
+      google_trends_btc    : genormaliseerd zoekvolume (0–100)
+      trends_momentum_4w   : 4-weekse verandering (stijgend = FOMO opbouw)
+      trends_spike         : 1 als waarde > 90e percentiel (extreme FOMO)
+
+    Cache: 24h (data is wekelijks, dagelijkse refresh voldoende).
+    Vereist: pip install pytrends
+    """
+    if _cache_is_fresh("google_trends"):
+        return _load_cache("google_trends")
+
+    print("  Downloading Google Trends (bitcoin search volume)...")
+    try:
+        # Compatibiliteits-patch: urllib3 2.x hernoemde method_whitelist → allowed_methods.
+        # pytrends 4.9.x gebruikt nog method_whitelist → Retry.__init__() faalt zonder patch.
+        import urllib3.util.retry as _retry_mod
+        _orig_retry_init = _retry_mod.Retry.__init__
+        def _patched_retry_init(self, *args, method_whitelist=None, allowed_methods=None, **kw):
+            if method_whitelist is not None and allowed_methods is None:
+                allowed_methods = method_whitelist
+            return _orig_retry_init(self, *args, allowed_methods=allowed_methods, **kw)
+        _retry_mod.Retry.__init__ = _patched_retry_init
+
+        from pytrends.request import TrendReq
+        pytrends = TrendReq(hl="en-US", tz=360, timeout=(10, 30), retries=2, backoff_factor=0.5)
+        pytrends.build_payload([keyword], cat=0, timeframe="today 5-y", geo="", gprop="")
+        raw = pytrends.interest_over_time()
+
+        if raw.empty:
+            raise ValueError("Lege response van Google Trends")
+
+        raw = raw.drop(columns=["isPartial"], errors="ignore")
+        raw.index = pd.to_datetime(raw.index, utc=True)
+
+        df = pd.DataFrame(index=raw.index)
+        df["google_trends_btc"] = raw[keyword].astype(float)
+
+        # Momentum: fractie verandering over 4 weken
+        df["trends_momentum_4w"] = df["google_trends_btc"].pct_change(4).fillna(0.0).clip(-1, 2)
+
+        # Spike: 1 als huidige waarde boven 90e percentiel ligt
+        p90 = float(df["google_trends_btc"].quantile(0.90))
+        df["trends_spike"] = (df["google_trends_btc"] > p90).astype(int)
+
+        _save_cache("google_trends", df)
+        oldest = df.index[0].strftime("%Y-%m-%d")
+        print(f"  Google Trends: {len(df)} weken geladen ({oldest} → nu), p90={p90:.0f}")
+        return df
+
+    except ImportError:
+        print("  Waarschuwing: pytrends niet geïnstalleerd — Google Trends overgeslagen")
+        return pd.DataFrame(columns=["google_trends_btc", "trends_momentum_4w", "trends_spike"])
+    except Exception as e:
+        print(f"  Waarschuwing: Google Trends download mislukt ({e})")
+        if _cache_path("google_trends").exists():
+            return _load_cache("google_trends")
+        return pd.DataFrame(columns=["google_trends_btc", "trends_momentum_4w", "trends_spike"])
+
+
+# ── T3-C: Deribit 25-delta skew (LIVE-ONLY gate) ─────────────────────────────
+
+def _bs_delta(S: float, K: float, T: float, sigma: float, option_type: str) -> float:
+    """Black-Scholes delta (r=0 vereenvoudiging voor crypto)."""
+    import math
+    if sigma <= 0 or T <= 0 or S <= 0 or K <= 0:
+        return float("nan")
+    d1 = (math.log(S / K) + 0.5 * sigma**2 * T) / (sigma * math.sqrt(T))
+    # erf-based norm.cdf — geen scipy nodig
+    cdf_d1 = 0.5 * (1.0 + math.erf(d1 / math.sqrt(2)))
+    if option_type == "call":
+        return cdf_d1
+    return cdf_d1 - 1.0   # put delta = N(d1) - 1
+
+
+def fetch_deribit_skew_live() -> pd.DataFrame:
+    """
+    Bereken de huidige BTC 25-delta skew via Deribit publieke API (T3-C).
+
+    Methode:
+      1. Haal BTC spot + options summary op (mark_iv per optie)
+      2. Selecteer expiry het dichtst bij 30 dagen
+      3. Zoek call met delta ≈ +0.25 en put met delta ≈ −0.25
+      4. Skew = IV(25D put) − IV(25D call)
+         > 0 = puts duurder → markt verwacht crash (bearish)
+         < 0 = calls duurder → markt verwacht stijging (bullish)
+
+    Dit is een LIVE-ONLY feature (geen historische Deribit data beschikbaar).
+    Wordt als gate gebruikt in generate_live_signal() maar NIET in FEATURE_COLS.
+
+    Cache: 1h
+    """
+    if _cache_is_fresh("btc_skew_25d"):
+        return _load_cache("btc_skew_25d")
+
+    print("  Computing Deribit BTC 25-delta skew...")
+    try:
+        import math
+        now_ms  = pd.Timestamp.utcnow().timestamp() * 1000
+
+        # Spot price
+        r_idx = requests.get(
+            "https://www.deribit.com/api/v2/public/get_index_price?index_name=btc_usd",
+            timeout=10,
+        )
+        spot = float(r_idx.json()["result"]["index_price"])
+
+        # Options chain (book summary — bevat mark_iv en open_interest)
+        r_books = requests.get(
+            "https://www.deribit.com/api/v2/public/get_book_summary_by_currency"
+            "?currency=BTC&kind=option",
+            timeout=15,
+        )
+        summaries = r_books.json().get("result", [])
+        if not summaries:
+            raise ValueError("Geen opties data van Deribit")
+
+        # Instrumenten ophalen voor expiry timestamps
+        r_inst = requests.get(
+            "https://www.deribit.com/api/v2/public/get_instruments"
+            "?currency=BTC&kind=option&expired=false",
+            timeout=15,
+        )
+        instruments = {i["instrument_name"]: i for i in r_inst.json().get("result", [])}
+
+        # Selecteer expiry het dichtst bij 30 dagen
+        def _days(ts_ms):
+            return (ts_ms - now_ms) / (86400 * 1000)
+
+        expiries = sorted(set(
+            i["expiration_timestamp"] for i in instruments.values()
+            if 15 <= _days(i["expiration_timestamp"]) <= 45
+        ))
+        if not expiries:
+            raise ValueError("Geen geschikte expiry gevonden (15–45 dagen)")
+        target_exp = min(expiries, key=lambda e: abs(_days(e) - 30))
+        T_years = _days(target_exp) / 365.0
+
+        # Bereken delta voor elke optie bij die expiry
+        calls, puts = [], []
+        for s in summaries:
+            name = s.get("instrument_name", "")
+            inst = instruments.get(name)
+            if inst is None or inst["expiration_timestamp"] != target_exp:
+                continue
+            iv = s.get("mark_iv")
+            if not iv or iv <= 0:
+                continue
+            strike = inst["strike"]
+            opt_type = inst["option_type"]   # "call" or "put"
+            sigma = float(iv) / 100.0         # Deribit geeft IV in procenten
+
+            delta = _bs_delta(spot, strike, T_years, sigma, opt_type)
+            if math.isnan(delta):
+                continue
+
+            entry = {"strike": strike, "iv": float(iv), "delta": delta}
+            if opt_type == "call":
+                calls.append(entry)
+            else:
+                puts.append(entry)
+
+        if not calls or not puts:
+            raise ValueError("Onvoldoende calls of puts voor skew-berekening")
+
+        # Vind de call en put het dichtst bij respectievelijk +0.25 en −0.25 delta
+        call_25d = min(calls, key=lambda x: abs(x["delta"] - 0.25))
+        put_25d  = min(puts,  key=lambda x: abs(x["delta"] + 0.25))
+
+        skew = float(put_25d["iv"] - call_25d["iv"])
+
+        now_ts = pd.Timestamp.utcnow().floor("h")
+        df = pd.DataFrame({"btc_skew_25d": [skew]}, index=[now_ts])
+        df.index.name = "datetime"
+        df.index = df.index.tz_localize("UTC") if df.index.tzinfo is None else df.index
+
+        _save_cache("btc_skew_25d", df)
+        exp_str = pd.Timestamp(target_exp, unit="ms", tz="UTC").strftime("%d-%b")
+        print(
+            f"  Deribit 25D skew: {skew:+.1f}% (put IV {put_25d['iv']:.1f}% − call IV "
+            f"{call_25d['iv']:.1f}%, expiry {exp_str})"
+        )
+        return df
+
+    except Exception as e:
+        print(f"  Waarschuwing: Deribit skew berekening mislukt ({e})")
+        if _cache_path("btc_skew_25d").exists():
+            return _load_cache("btc_skew_25d")
+        now_ts = pd.Timestamp.utcnow().floor("h").tz_localize("UTC")
+        return pd.DataFrame({"btc_skew_25d": [0.0]}, index=[now_ts])
+
+
 _DEFAULTS = {
     "fear_greed":        0.5,
     "spx_return_24h":    0.0,
@@ -684,6 +886,10 @@ _DEFAULTS = {
     "dxy_above_200ma":      0.5,    # onbekend regime → neutraal
     "usdt_dominance":       6.0,    # historisch gemiddelde USDT dominantie ~6%
     "usdt_dominance_7d_chg": 0.0,
+    "google_trends_btc":    40.0,   # historisch gemiddeld zoekvolume ~40/100
+    "trends_momentum_4w":    0.0,
+    "trends_spike":          0,
+    "btc_skew_25d":          0.0,   # neutraal: puts en calls gelijk geprijsd
 }
 
 _SOURCES_GLOBAL = {
@@ -697,6 +903,8 @@ _SOURCES_GLOBAL = {
     "btc_put_call_ratio":   fetch_deribit_put_call_ratio,
     "dxy":                  fetch_dxy,
     "usdt_dominance":       fetch_usdt_dominance,
+    "google_trends":        lambda: fetch_google_trends(),
+    "btc_skew_25d":         fetch_deribit_skew_live,
 }
 
 

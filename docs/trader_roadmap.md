@@ -341,7 +341,7 @@ en vangst trendchanges eerder dan EMA-crossovers.
 ## Tier 3 — Hoge impact, hoog complex
 
 ### T3-A · Google Trends als sentiment proxy
-**Status:** `[ ]`
+**Status:** `[x]` — geïmplementeerd 2026-03-28 · fetch_google_trends() via pytrends + urllib3 patch; 3 features; BTC Sharpe +12.99 (was +11.44, **+13.6%**)
 
 **Waarom traders het gebruiken:**
 Google Trends voor "bitcoin" correleert sterk met retail-FOMO toppen.
@@ -389,7 +389,7 @@ Dit is complementair aan BTC Dominance.
 ---
 
 ### T3-C · Opties: 25-delta skew (bearish/bullish positioning)
-**Status:** `[ ]`
+**Status:** `[x]` — geïmplementeerd 2026-03-28 · LIVE-ONLY gate via Deribit API; 25D skew nu +8.8% (puts >5% duurder = bearish); blokkeert longs via SKEW_BEARISH_GATE=5.0
 
 **Waarom traders het gebruiken:**
 De 25-delta skew meet het verschil in implied volatility tussen puts (bearish bescherming)
@@ -596,9 +596,9 @@ De optimale SL/TP varieert sterk met het volatiliteitsregime:
 | T2-E BTC Halving cyclus | Medium | Laag | ⭐⭐⭐ | ✅ (code, uit FEATURE_COLS) |
 | T2-F BTC-ETH correlatie | Medium | Laag | ⭐⭐ | ✅ (code, uit FEATURE_COLS) |
 | T2-G Supertrend | Medium | Laag | ⭐⭐ | ✅ (code, uit FEATURE_COLS) |
-| T3-A Google Trends | Medium | Medium | ⭐⭐ | `[ ]` |
+| T3-A Google Trends | Medium | Medium | ⭐⭐ | ✅ +13.6% Sharpe |
 | T3-B USDT dominantie | Medium | Laag | ⭐⭐ | ✅ (code, uit FEATURE_COLS) |
-| T3-C Opties 25d skew | Hoog | Hoog | ⭐⭐ | `[ ]` |
+| T3-C Opties 25d skew | Hoog | Hoog | ⭐⭐ | ✅ (LIVE gate) |
 | T3-D Max Pain | Medium | Hoog | ⭐ | `[ ]` |
 | T3-E Social media sentiment | Medium | Hoog | ⭐ | `[ ]` |
 | T3-F HMM regime detectie | Hoog | Hoog | ⭐⭐ | `[ ]` |
@@ -647,18 +647,26 @@ De optimale SL/TP varieert sterk met het volatiliteitsregime:
 - Kelly fraction wordt berekend op validatieset bij elke training en opgeslagen
 - Regime SL/TP geeft bull-run meer ruimte (TP +8%) en bear-markt strakkere stop (SL 1.5%)
 
-**Volgende prioriteit Sprint 4:**
-1. **T2-A** Liquidatie data (Coinglass API) — sterkste ontbrekende feature
-2. **T3-C** Opties 25-delta skew (Deribit) — nauwkeuriger dan P/C ratio
-3. **T3-A** Google Trends sentiment
-4. Sprint 2 features re-activeren na Optuna heroptimalisatie
+### Sprint 4 ✅ VOLTOOID (2026-03-28)
+- ~~**T3-A** Google Trends~~ ✅ fetch_google_trends() via pytrends (urllib3-patch), 261 weken 5yr, 3 features
+  BTC Sharpe +12.99 (was +11.44, **+13.6%**)
+- ~~**T3-C** Deribit 25-delta skew~~ ✅ LIVE-ONLY gate; fetch_deribit_skew_live() berekent 25D put-IV − call-IV
+  Huidig: +8.8% (puts 8.8pp duurder → longs geblokkeerd door SKEW_BEARISH_GATE=5.0)
+- **T2-A** Liquidaties overgeslagen — Binance slechts 500 candles (~20d) history; Coinglass vereist API key
 
-### Sprint 4 (complex, transformatief)
-- **T2-A** Liquidatie heatmap (Coinglass API)
-- **T3-A** Google Trends sentiment
-- **T3-C** Opties 25-delta skew
+**Sprint 4 bevindingen:**
+- Google Trends zeer waardevol: zoekvolume correlreert inverse met goede entries (hoge FOMO = top)
+  Model leert: hoog zoekvolume → voorspelde return lager → minder entries bij retail-euforie
+- 25-delta skew als live gate: huidige markt (28-03-2026) heeft skew +8.8% → bearish positionering
+- T2-A liquidaties blijft prioriteit voor Sprint 5 als Coinglass gratis tier uitgebreider wordt
 
-### Sprint 5 (geavanceerd)
-- **T3-F** HMM regime detectie
-- **T3-H** LSTM ensemble
-- **T3-G** On-chain data (als API-key beschikbaar)
+**Resultaat Sprint 4:** BTC Sharpe +12.99 (vs baseline +5.944, sprint 4 record)
+
+### Sprint 5 (volgende prioriteit)
+1. **T3-F** HMM regime detectie (statistische verbetering van marktregime)
+2. **T2-A** Liquidatie data (als Coinglass of CryptoQuant gratis history beschikbaar wordt)
+3. Sprint 2 features re-activeren (halving, supertrend, btc-eth corr) na Optuna re-tuning
+
+### Sprint 6 (geavanceerd, transformatief)
+- **T3-H** LSTM/Transformer ensemble
+- **T3-G** On-chain data (Glassnode, betaald)

@@ -995,10 +995,25 @@ def generate_live_signal(df_ohlcv, p1p2, p1_heatmap, direction_bias,
             > float(last_row["price_vs_ema200"].iloc[0])
         )
 
-    if proba >= eff_threshold and regime_ok and not death_cross and confirm_4h:
+    # ── T3-C: Deribit 25-delta skew gate (live-only) ─────────────────────────
+    skew_25d    = 0.0
+    skew_blocked = False
+    try:
+        from src.external_data import fetch_deribit_skew_live
+        skew_df  = fetch_deribit_skew_live()
+        if not skew_df.empty and "btc_skew_25d" in skew_df.columns:
+            skew_25d = float(skew_df["btc_skew_25d"].iloc[-1])
+            skew_gate = getattr(config, "SKEW_BEARISH_GATE", 5.0)
+            skew_blocked = skew_25d > skew_gate
+    except Exception:
+        pass  # skew gate uitgeschakeld als Deribit onbereikbaar
+
+    if proba >= eff_threshold and regime_ok and not death_cross and confirm_4h and not skew_blocked:
         signaal = "LONG"
     elif proba <= threshold_short and threshold_short > 0 and not regime_ok:
         signaal = "SHORT"
+    elif skew_blocked and proba >= eff_threshold:
+        signaal = f"WACHT (25D skew gate — puts te duur, skew {skew_25d:+.1f}%)"
     elif death_cross and proba >= eff_threshold:
         signaal = "WACHT (death cross — EMA50 onder EMA200)"
     elif proba >= eff_threshold and not regime_ok:
@@ -1022,6 +1037,8 @@ def generate_live_signal(df_ohlcv, p1p2, p1_heatmap, direction_bias,
         "death_cross":         death_cross,
         "proba_4h":            f"{proba_4h:.1%}" if proba_4h is not None else "n/a",
         "confirm_4h":          confirm_4h,
+        "btc_skew_25d":        f"{skew_25d:+.1f}%",
+        "skew_blocked":        skew_blocked,
         "horizon":             f"{config.PREDICTION_HORIZON_H} uur",
         "prijs":               float(last_row["close"].iloc[0]),
     }
