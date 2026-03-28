@@ -1,8 +1,8 @@
 {
-  "tijdstip": "2026-03-27 03:00:00+00:00",
+  "tijdstip": "2026-03-27 04:00:00+00:00",
   "signaal": "WACHT",
-  "kans_stijging": "26.6%",
-  "proba_raw": 0.265625,
+  "kans_stijging": "32.3%",
+  "proba_raw": 0.32323232323232326,
   "long_threshold": "0.58",
   "long_threshold_base": "0.65",
   "short_threshold": "uitgeschakeld",
@@ -12,5 +12,5 @@
   "proba_4h": "n/a",
   "confirm_4h": true,
   "horizon": "24 uur",
-  "prijs": 2059.787841796875
+  "prijs": 2051.28076171875
 }
