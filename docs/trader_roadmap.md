@@ -31,9 +31,10 @@
 | Sprint 4 | +12.99 | +14% | Google Trends (3 features) |
 | Sprint 5 | +6.80* | -48% | HMM getest, code aanwezig maar uitgesloten (regressie) |
 | Sprint 6 | +13.13 | +93% | 19 schadelijke features verwijderd (66 -> 47) |
+| Sprint 7 | +24.18 | +84% | Bybit OI + Blockchain.info on-chain + Fear&Greed momentum (47 -> 52) |
 
 *Sprint 5 regressie: nieuwe marktdata + HMM redundant met ADX market_regime.
-ETH: Sprint 5 +5.57 -> Sprint 6 +7.83 (+41%)
+ETH: Sprint 5 +5.57 -> Sprint 6 +7.83 (+41%) -> Sprint 7 +11.97 (+53%)
 
 ---
 
@@ -96,20 +97,20 @@ Fear & Greed) domineren. Technische indicatoren zijn ondersteunend, niet leidend
 
 Doel: Aanvullen op het schone 47-feature fundament met kwalitatieve nieuwe bronnen.
 
-#### S7-A Open Interest (OI) trend — prioriteit hoog
+#### S7-A Open Interest (OI) trend — VOLTOOID
 - Signaal: OI + prijs stijgen samen = echte koop-interesse; OI stijgt + prijs daalt = distributie
 - Features: oi_return_24h, oi_price_divergence (+1/0/-1)
 - Bron: Coinglass gratis API (tot 180 dagen history zonder key)
 - Blokkade: Binance Futures API slechts 30 dagen; evalueer Coinglass endpoint eerst
 - Implementatie: src/external_data.py -> fetch_open_interest_coinglass()
 
-#### S7-B On-chain basismetrics — prioriteit hoog
+#### S7-B On-chain basismetrics — VOLTOOID
 - Signaal: Exchange netflow positief = coins naar beurs (verkoopdruk); SOPR > 1 = winst nemen
 - Features: exchange_netflow_btc, sopr
 - Bron: CryptoQuant Community (beperkt gratis) of Glassnode Community (gratis)
 - Voordeel: Fundamenteel, lage correlatie met technische indicatoren
 
-#### S7-C News sentiment (CryptoPanic) — prioriteit medium
+#### S7-C Fear & Greed momentum — VOLTOOID (geen CryptoPanic, API dood)
 - Signaal: Sterk negatief nieuws = contrair entry of bevestigt bear
 - Features: news_sentiment_score (-1 tot +1), news_volume_spike
 - Bron: CryptoPanic API (gratis, 100 req/dag)
