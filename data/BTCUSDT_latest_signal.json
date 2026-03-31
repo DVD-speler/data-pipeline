@@ -1,5 +1,5 @@
 {
-  "tijdstip": "2026-03-30 12:00:00+00:00",
+  "tijdstip": "2026-03-30 19:00:00+00:00",
   "signaal": "WACHT (death cross \u2014 EMA50 onder EMA200)",
   "kans_stijging": "50.4%",
   "proba_raw": 0.5043062200956939,
@@ -12,5 +12,5 @@
   "proba_4h": "n/a",
   "confirm_4h": true,
   "horizon": "24 uur",
-  "prijs": 67624.53125
+  "prijs": 66424.765625
 }
