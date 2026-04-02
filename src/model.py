@@ -208,7 +208,10 @@ def optuna_tune(
 
     n = len(X_train)
     time_weights = np.linspace(0.5, 1.0, n)
-    use_sharpe = getattr(config, "OPTUNA_SHARPE_OBJECTIVE", True)
+    # S9-B: per-symbool Optuna objective.
+    # OPTUNA_SHARPE_SYMBOLS = lijst van symbolen waarvoor Sharpe beter werkt dan AUC.
+    sharpe_symbols = getattr(config, "OPTUNA_SHARPE_SYMBOLS", [])
+    use_sharpe = symbol in sharpe_symbols if sharpe_symbols else getattr(config, "OPTUNA_SHARPE_OBJECTIVE", True)
 
     from sklearn.metrics import roc_auc_score as _roc_auc
 

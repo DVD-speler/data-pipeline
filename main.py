@@ -169,6 +169,12 @@ def fase_model_compare(features=None, symbol: str = None):
     print("\n=== Vergelijkingstabel ===")
     print(comparison.to_string(index=False))
     print(f"\nOpgeslagen in: {config.DATA_DIR / 'stats'}/")
+
+    # Noot S9-A: model_best.pkl bevat het Sharpe-geselecteerde model (zie model_compare.py).
+    # Automatische promotie naar model.pkl is uitgeschakeld: model_compare Sharpe is gemeten
+    # zonder Kelly sizing en is daardoor geen betrouwbare proxy voor productie-Sharpe.
+    # model_best.pkl dient als referentie/analyse; model.pkl blijft het Optuna-LightGBM model.
+
     return comparison
 
 

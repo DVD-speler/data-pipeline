@@ -305,8 +305,22 @@ def compare_models(df: pd.DataFrame, symbol: str = config.SYMBOL) -> pd.DataFram
     _plot_roc_comparison(y_test, roc_data, out_dir)
     _plot_metrics_comparison(comparison, out_dir)
 
-    # Sla het beste individuele model op (Ensemble kan niet als joblib-object worden opgeslagen)
-    best_single = comparison[comparison["model"] != "Ensemble"].iloc[0]["model"]
+    # S9-A: Sla het beste individuele model op.
+    # Selecteer op Sharpe (met min_trades guard) als MODEL_SELECT_BY_SHARPE=True.
+    # Fallback naar ROC AUC als geen model de min_trades drempel haalt.
+    select_by_sharpe  = getattr(config, "MODEL_SELECT_BY_SHARPE", True)
+    min_trades_needed = getattr(config, "MODEL_SELECT_MIN_TRADES", 20)
+    singles = comparison[comparison["model"] != "Ensemble"].copy()
+    if select_by_sharpe:
+        eligible = singles[singles["n_trades"] >= min_trades_needed]
+        if not eligible.empty:
+            best_single = eligible.sort_values("sharpe_ratio", ascending=False).iloc[0]["model"]
+            print(f"  Model selectie: Sharpe-gebaseerd (min {min_trades_needed} trades) → {best_single}")
+        else:
+            best_single = singles.iloc[0]["model"]
+            print(f"  Model selectie: fallback ROC AUC (te weinig trades) → {best_single}")
+    else:
+        best_single = singles.iloc[0]["model"]
     best_model, _, _ = roc_data[best_single]
     best_path = config.symbol_path(symbol, "model_best.pkl")
     joblib.dump({"name": best_single, "model": best_model}, best_path)

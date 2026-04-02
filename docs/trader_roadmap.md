@@ -32,7 +32,8 @@
 | Sprint 5 | +6.80* | -48% | HMM getest, code aanwezig maar uitgesloten (regressie) |
 | Sprint 6 | +13.13 | +93% | 19 schadelijke features verwijderd (66 -> 47) |
 | Sprint 7 | +24.18 | +84% | Bybit OI + Blockchain.info on-chain + Fear&Greed momentum (47 -> 52) |
-| Sprint 8 | +24.76 | +2.4% | Optuna 150 trials + Sharpe objective + daily gate infra (BTC licht verbeterd, ETH regressie) |
+| Sprint 8 | +24.76 | +2.4% | Optuna 150 trials + Sharpe objective + daily gate infra |
+| Sprint 9 | ~15–25 | ±var | Model selectie op Sharpe in comparison; per-symbool config; geen structurele Sharpe winst |
 
 *Sprint 5 regressie: nieuwe marktdata + HMM redundant met ADX market_regime.
 ETH: Sprint 5 +5.57 -> Sprint 6 +7.83 (+41%) -> Sprint 7 +11.97 (+53%) -> Sprint 8 +7.77 (-35%)*
@@ -142,26 +143,43 @@ Doel: Aanvullen op het schone 47-feature fundament met kwalitatieve nieuwe bronn
 
 ---
 
-### Sprint 9 — ETH reparatie + model selectie verbetering
+### Sprint 9 — Infrastructuur (VOLTOOID, geen Sharpe winst)
 
-#### S9-A Sharpe-gebaseerde model selectie — prioriteit hoog
-- Huidig: `model_best.pkl` gekozen op ROC AUC → ETH kiest LightGBM (Sharpe 3.09) ipv RF (Sharpe 13.14)
-- Verbetering: selecteer beste individuele model op Sharpe (met min_trades=20 guard)
-- Verwacht effect: ETH Sharpe herstelt naar +13 niveau
+#### S9-A Sharpe-gebaseerde model selectie — VOLTOOID
+- model_compare.py selecteert nu model_best.pkl op Sharpe (met min_trades=20 guard)
+- Automatische promotie naar model.pkl uitgeschakeld: model_compare Sharpe (zonder Kelly) ≠ productie-Sharpe
+- Conclusie: model_best.pkl = correctere referentie; model.pkl = Optuna-LightGBM blijft primair
 
-#### S9-B Symbool-specifieke Optuna objective — prioriteit hoog
-- Huidig: één `OPTUNA_SHARPE_OBJECTIVE` flag voor alle symbolen
-- BTC profiteert van Sharpe objective; ETH profiteert van AUC objective
-- Verbetering: per-symbool config of auto-detect via cross-val score
+#### S9-B Symbool-specifieke Optuna objective — VOLTOOID (reverted)
+- Bevinding: AUC objective voor ETH geeft lagere Sharpe (+6.55) dan Sharpe objective (+7.77)
+- Conclusie: Sharpe objective (met penalty fix) is beter voor BEIDE symbolen
+- Config: `OPTUNA_SHARPE_SYMBOLS = []` → valt terug op `OPTUNA_SHARPE_OBJECTIVE=True`
 
-#### S9-C Dynamische TP op ATR-basis — prioriteit medium
-- Huidig: vaste TP% per regime (bull 8%, ranging 6%, bear 4%)
-- Verbetering: TP = entry x (1 + N x ATR/close); N = 3.0/2.5/2.0 per regime
+---
 
-#### S9-D Daily model trainen (1d timeframe) — prioriteit medium
+### Sprint 10 — Betrouwbaarheid & variantie reductie
+
+**Kernprobleem ontdekt (Sprint 9):** run-to-run Sharpe variantie is ±30% (BTC: 15-25 range).
+Dit maakt het onmogelijk om sprints eerlijk te vergelijken op single-run Sharpe.
+
+#### S10-A Walk-forward Sharpe als primaire metric — prioriteit hoog
+- Vervang single-run backtest door 3-fold walk-forward Sharpe (gemiddelde over 3 periodes)
+- Elke fold = 90 dagen test; schuif 90 dagen per fold
+- Geeft stabielere metric; onderscheidt echte signal van run-to-run ruis
+
+#### S10-B Seed-fixing voor vergelijkbaarheid — prioriteit medium
+- Voeg `random_state` toe aan alle Optuna runs (reproduceerbaar)
+- LightGBM seed fixen: `seed=42` in params
+- Maakt A/B vergelijking tussen sprints betrouwbaarder
+
+#### S10-C Daily model trainen (1d timeframe) — prioriteit medium
 - Train apart model op dagelijkse OHLCV + macro features
 - Activeer daily gate in backtest.py (infra al aanwezig)
 - Verwacht: filtert bear-markt entries, verbetert precision
+
+#### S10-D Dynamische TP op ATR-basis — prioriteit laag
+- Huidig: vaste TP% per regime (bull 8%, ranging 6%, bear 4%)
+- Verbetering: TP = entry x (1 + N x ATR/close); N = 3.0/2.5/2.0 per regime
 
 ---
 
@@ -176,10 +194,12 @@ Doel: Aanvullen op het schone 47-feature fundament met kwalitatieve nieuwe bronn
 | S8-A Optuna 150 trials | Hoog | Laag | *** | [x] |
 | S8-B Sharpe objective | Medium | Laag | ** | [x] gemengd (BTC+, ETH-) |
 | S8-C Daily gate infra | Hoog | Medium | *** | [x] code aanwezig, wacht op daily model |
-| S9-A Sharpe model selectie | Hoog | Laag | *** | [ ] ETH reparatie |
-| S9-B Symbool-specifieke objective | Hoog | Laag | *** | [ ] ETH reparatie |
-| S9-C Dynamische ATR-TP | Medium | Laag | ** | [ ] |
-| S9-D Daily model (1d timeframe) | Hoog | Medium | *** | [ ] |
+| S9-A Sharpe model selectie | Hoog | Laag | *** | [x] infra OK, geen productie impact |
+| S9-B Symbool-specifieke objective | Hoog | Laag | *** | [x] reverted: Sharpe obj. beter voor beiden |
+| S10-A Walk-forward Sharpe metric | Hoog | Medium | *** | [ ] kern prioriteit |
+| S10-B Seed-fixing reproduceerbaar | Medium | Laag | ** | [ ] |
+| S10-C Daily model (1d timeframe) | Hoog | Medium | *** | [ ] |
+| S10-D Dynamische ATR-TP | Medium | Laag | ** | [ ] |
 
 ---
 
@@ -195,3 +215,4 @@ Doel: Aanvullen op het schone 47-feature fundament met kwalitatieve nieuwe bronn
 | Sprint 6 | 2026-03-28 | Permutation importance analyse (20 iteraties BTC+ETH), 19 schadelijke features verwijderd (66 -> 47) | +6.80 -> +13.13 |
 | Sprint 7 | 2026-03-28 | Bybit OI (oi_return_24h, oi_price_divergence), blockchain.info (active_addresses, hash_rate), Fear&Greed 7d momentum | +13.13 -> +24.18 |
 | Sprint 8 | 2026-04-02 | Optuna 150 trials, Sharpe objective (penalty <10 trades), daily gate infra | +24.18 -> +24.76 |
+| Sprint 9 | 2026-04-02 | Model_compare selectie op Sharpe; OPTUNA_SHARPE_SYMBOLS config; per-symbool objective infra | geen meetbare winst; hoge run-to-run variantie ontdekt |

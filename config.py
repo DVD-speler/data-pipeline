@@ -31,13 +31,19 @@ MIN_HOURS_PER_DAY = 23
 # Sprint 3: test 24h horizon → top features zijn 24h+ in nature (prev_day_return, spx_return_24h, return_30d)
 PREDICTION_HORIZON_H = 24
 
-# ── Optuna hyperparameter search (S8-A / S8-B) ────────────────────────────────
+# ── Optuna hyperparameter search (S8-A / S8-B / S9-B) ────────────────────────
 # S8-A: trials verhoogd van 50 naar 150 voor stabielere params
 OPTUNA_N_TRIALS       = 150
-# S8-B: gebruik Sharpe als Optuna objective (i.p.v. ROC AUC op vaste val-set).
-# Sharpe-objective optimaliseert direct op handelsrendement; meer relevant dan discriminatievermogen.
-# Nadeel: hoger risico op overfit in het val-regime → wordt mitigated door auto_promote WF-check.
-OPTUNA_SHARPE_OBJECTIVE = True
+# S9-B: Sharpe objective alleen voor symbolen die er baat bij hebben.
+# BTC: Sharpe-objective werkt goed (stabiele trends, voldoende trades in valperiode).
+# ETH: AUC-objective werkt beter (kortere trends, minder trades → Optuna overfit).
+OPTUNA_SHARPE_SYMBOLS = []   # lege lijst = gebruik OPTUNA_SHARPE_OBJECTIVE voor alle symbolen
+
+# S8-C: model selectie op Sharpe i.p.v. ROC AUC (S9-A).
+# ETH RandomForest had Sharpe +13.14 maar werd niet gekozen (AUC-selectie koos LightGBM +3.09).
+# Guard: minimaal MODEL_SELECT_MIN_TRADES trades op testset nodig om in aanmerking te komen.
+MODEL_SELECT_BY_SHARPE  = True
+MODEL_SELECT_MIN_TRADES = 20
 
 # ── S9-B: Dagelijks model alignment gate ──────────────────────────────────────
 # Blokkeert 1h longs als het dagelijks model bearish is (proba < DAILY_GATE_THRESHOLD).
