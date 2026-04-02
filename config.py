@@ -31,6 +31,20 @@ MIN_HOURS_PER_DAY = 23
 # Sprint 3: test 24h horizon → top features zijn 24h+ in nature (prev_day_return, spx_return_24h, return_30d)
 PREDICTION_HORIZON_H = 24
 
+# ── Optuna hyperparameter search (S8-A / S8-B) ────────────────────────────────
+# S8-A: trials verhoogd van 50 naar 150 voor stabielere params
+OPTUNA_N_TRIALS       = 150
+# S8-B: gebruik Sharpe als Optuna objective (i.p.v. ROC AUC op vaste val-set).
+# Sharpe-objective optimaliseert direct op handelsrendement; meer relevant dan discriminatievermogen.
+# Nadeel: hoger risico op overfit in het val-regime → wordt mitigated door auto_promote WF-check.
+OPTUNA_SHARPE_OBJECTIVE = True
+
+# ── S9-B: Dagelijks model alignment gate ──────────────────────────────────────
+# Blokkeert 1h longs als het dagelijks model bearish is (proba < DAILY_GATE_THRESHOLD).
+# Voorkomt longs die ingaan tegen de hogere-timeframe trend.
+DAILY_GATE_ENABLED    = True
+DAILY_GATE_THRESHOLD  = 0.45   # dagelijks proba onder 0.45 = bearish dagelijks model
+
 # Stap A: testset verkleind van 365 naar 90 dagen → model ziet meer marktcycli
 TEST_SIZE_DAYS       = 90
 # Stap C: aparte validatieset voor threshold-optimalisatie (niet de testset)

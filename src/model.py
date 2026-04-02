@@ -181,12 +181,16 @@ def optuna_tune(
     X_train: pd.DataFrame,
     y_train: pd.Series,
     val_df: pd.DataFrame,
-    n_trials: int = 50,
+    n_trials: int = None,
     symbol: str = config.SYMBOL,
 ) -> dict:
     """
-    Gebruik Optuna om LightGBM hyperparameters te optimaliseren op de validatieset.
-    Objective: maximaliseer val-Sharpe (long-only, geen position sizing).
+    Gebruik Optuna om LightGBM hyperparameters te optimaliseren.
+
+    S8-A: n_trials uit config.OPTUNA_N_TRIALS (default 150).
+    S8-B: Objective is Sharpe op validatieset (config.OPTUNA_SHARPE_OBJECTIVE=True).
+          Sharpe optimaliseert direct op handelsrendement i.p.v. discriminatievermogen.
+          auto_promote_optuna() valideert vervolgens via 3-fold WF om regime-overfit te vangen.
 
     Returns dict met beste hyperparameters, of lege dict als Optuna/LightGBM niet beschikbaar is.
     """
@@ -197,10 +201,14 @@ def optuna_tune(
         print("  Optuna of LightGBM niet beschikbaar — standaard parameters gebruikt.")
         return {}
 
+    if n_trials is None:
+        n_trials = getattr(config, "OPTUNA_N_TRIALS", 150)
+
     optuna.logging.set_verbosity(optuna.logging.WARNING)
 
     n = len(X_train)
     time_weights = np.linspace(0.5, 1.0, n)
+    use_sharpe = getattr(config, "OPTUNA_SHARPE_OBJECTIVE", True)
 
     from sklearn.metrics import roc_auc_score as _roc_auc
 
@@ -210,25 +218,37 @@ def optuna_tune(
         # Conservatieve params → lager val-AUC maar betere walk-forward generalisatie.
         params = {
             "n_estimators":      trial.suggest_int("n_estimators", 200, 600),
-            "max_depth":         trial.suggest_int("max_depth", 3, 5),      # was 3-6; 5 max
+            "max_depth":         trial.suggest_int("max_depth", 3, 5),
             "learning_rate":     trial.suggest_float("learning_rate", 0.01, 0.07, log=True),
             "subsample":         trial.suggest_float("subsample", 0.5, 0.85),
-            "colsample_bytree":  trial.suggest_float("colsample_bytree", 0.4, 0.70),  # was 0.9 max
-            "min_child_samples": trial.suggest_int("min_child_samples", 50, 200),     # was 30 min
+            "colsample_bytree":  trial.suggest_float("colsample_bytree", 0.4, 0.70),
+            "min_child_samples": trial.suggest_int("min_child_samples", 50, 200),
             "reg_alpha":         trial.suggest_float("reg_alpha", 0.0, 0.5),
             "reg_lambda":        trial.suggest_float("reg_lambda", 0.5, 4.0),
             "random_state":      42,
             "verbose":           -1,
         }
-        model = lgb.LGBMClassifier(**params)
-        model.fit(X_train[config.FEATURE_COLS], y_train, sample_weight=time_weights)
+        m = lgb.LGBMClassifier(**params)
+        m.fit(X_train[config.FEATURE_COLS], y_train, sample_weight=time_weights)
+        probas = m.predict_proba(val_df[config.FEATURE_COLS])[:, 1]
 
-        # Objective: ROC AUC op validatieset — regime-agnostisch discriminatievermogen.
-        # Sharpe als objective overfit op het regime van de valperiode (aug-nov 2025: bull).
-        probas = model.predict_proba(val_df[config.FEATURE_COLS])[:, 1]
-        return _roc_auc(val_df["target"], probas)
+        if use_sharpe:
+            # S8-B: Sharpe-based objective — optimaliseert direct op handelsrendement.
+            # Gebruik eenvoudige long-only strategie zonder gates voor snelheid.
+            # Penaliseer oplossingen met < 10 trades om degeneratie (0 trades = 0.0) te voorkomen.
+            try:
+                from src.backtest import run_backtest, compute_metrics
+                res = run_backtest(val_df, probas, use_position_sizing=False, stop_loss=0.0)
+                m_stats = compute_metrics(res)
+                if m_stats["n_trades"] < 10:
+                    return -10.0  # hard penalty voor geen/weinig trades
+                return m_stats["sharpe_ratio"]
+            except Exception:
+                return _roc_auc(val_df["target"], probas)
+        else:
+            return _roc_auc(val_df["target"], probas)
 
-    print(f"\nOptuna hyperparameter search ({n_trials} trials)...")
+    print(f"\nOptuna hyperparameter search ({n_trials} trials, objective={'Sharpe' if use_sharpe else 'ROC AUC'})...")
     study = optuna.create_study(direction="maximize")
     study.optimize(objective, n_trials=n_trials, show_progress_bar=False)
 
@@ -505,7 +525,7 @@ def train_model(df: pd.DataFrame, symbol: str = config.SYMBOL) -> tuple:
             print("\nGebruik standaard LightGBM-params (geen lgb_best_params.json gevonden)")
 
         # Optuna: vindt kandidaat-params en probeert automatisch te promoveren (C1)
-        optuna_tune(train, y_train, val, n_trials=50, symbol=symbol)
+        optuna_tune(train, y_train, val, symbol=symbol)  # n_trials uit config.OPTUNA_N_TRIALS
         auto_promote_optuna(df, symbol=symbol, min_improvement=0.1)
 
         # Herlaad params na eventuele promotie

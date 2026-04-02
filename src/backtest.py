@@ -174,6 +174,47 @@ def run_backtest(
             confirm_4h = (probas_4h >= thr4).astype(int)
             results["signal_long"] = results["signal_long"] * confirm_4h
 
+    # ── S9-B: Dagelijks model alignment gate ─────────────────────────────────
+    # Blokkeert 1h longs als het dagelijks model bearish is (proba < threshold).
+    # Laad daily features + model on-the-fly als DAILY_GATE_ENABLED=True.
+    # Toepasbaar op het testperiode-deel dat door de daily data wordt gedekt.
+    if getattr(config, "DAILY_GATE_ENABLED", False) and regime_filter:
+        try:
+            import config_daily
+            from pathlib import Path
+            sym_guess = getattr(config, "SYMBOL", "BTCUSDT")
+            daily_feat_path = config_daily.symbol_path_daily(sym_guess, "features.parquet")
+            if not daily_feat_path.exists():
+                # Probeer uit test_df de symbol te achterhalen via kolom of pad
+                raise FileNotFoundError(f"{daily_feat_path} niet gevonden")
+            daily_feat = pd.read_parquet(daily_feat_path)
+            daily_feat_cols = config_daily.FEATURE_COLS_DAILY
+            if not all(c in daily_feat.columns for c in daily_feat_cols):
+                raise ValueError("daily features kolommen niet compleet")
+            from src.model import load_model as _load_model
+            daily_model = _load_model(symbol=sym_guess, calibrated=False)
+            # Gebruik 1d model als het beschikbaar is
+            daily_model_path = config.DATA_DIR / f"{sym_guess}_1d_model.pkl"
+            if daily_model_path.exists():
+                import joblib as _jl
+                daily_model = _jl.load(daily_model_path)
+            daily_feat = daily_feat.dropna(subset=daily_feat_cols)
+            daily_probas = daily_model.predict_proba(daily_feat[daily_feat_cols])[:, 1]
+            daily_proba_s = pd.Series(daily_probas, index=daily_feat.index, name="daily_proba")
+            # Forward-fill dagelijkse proba naar uurlijkse index
+            daily_proba_h = (
+                daily_proba_s
+                .reindex(daily_proba_s.index.union(results.index))
+                .sort_index()
+                .ffill()
+                .reindex(results.index)
+            )
+            daily_thr = getattr(config, "DAILY_GATE_THRESHOLD", 0.45)
+            daily_ok  = (daily_proba_h >= daily_thr).fillna(True)  # NaN = geen data = niet blokkeren
+            results["signal_long"] = results["signal_long"] * daily_ok.astype(int)
+        except Exception:
+            pass  # daily gate niet beschikbaar → stilzwijgend overslaan
+
     results["signal"] = results["signal_long"]
 
     # ── Basisrendement ────────────────────────────────────────────────────────

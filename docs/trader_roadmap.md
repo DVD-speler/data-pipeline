@@ -2,7 +2,7 @@
 
 ---
 
-## Huidige staat van het model (2026-03-28)
+## Huidige staat van het model (2026-04-02)
 
 | Categorie | Geïmplementeerd |
 |---|---|
@@ -32,9 +32,11 @@
 | Sprint 5 | +6.80* | -48% | HMM getest, code aanwezig maar uitgesloten (regressie) |
 | Sprint 6 | +13.13 | +93% | 19 schadelijke features verwijderd (66 -> 47) |
 | Sprint 7 | +24.18 | +84% | Bybit OI + Blockchain.info on-chain + Fear&Greed momentum (47 -> 52) |
+| Sprint 8 | +24.76 | +2.4% | Optuna 150 trials + Sharpe objective + daily gate infra (BTC licht verbeterd, ETH regressie) |
 
 *Sprint 5 regressie: nieuwe marktdata + HMM redundant met ADX market_regime.
-ETH: Sprint 5 +5.57 -> Sprint 6 +7.83 (+41%) -> Sprint 7 +11.97 (+53%)
+ETH: Sprint 5 +5.57 -> Sprint 6 +7.83 (+41%) -> Sprint 7 +11.97 (+53%) -> Sprint 8 +7.77 (-35%)*
+ETH Sprint 8 regressie: Optuna Sharpe objective overfits ETH validatieperiode. BF: RandomForest scoort +13.14 maar niet geselecteerd (AUC-selectie).
 
 ---
 
@@ -123,41 +125,43 @@ Doel: Aanvullen op het schone 47-feature fundament met kwalitatieve nieuwe bronn
 
 ---
 
-### Sprint 8 — Model architectuur verbetering
+### Sprint 8 — Model architectuur verbetering — VOLTOOID
 
-#### S8-A Optuna budget verhoging — prioriteit hoog
-- Huidig: 50 trials -> verhogen naar 150 trials
-- Effect: stabielere hyperparameters, minder variantie tussen trainruns
+#### S8-A Optuna budget verhoging — VOLTOOID
+- 50 trials -> 150 trials via `config.OPTUNA_N_TRIALS`
+- BTC: stabielere params, +24.18 -> +24.76
 
-#### S8-B Walk-forward Optuna — prioriteit medium
-- Optuna apart per rolling 6-maands venster
-- Voorkomt overfit op één marktfase (bijv. 2022 bear of 2024 bull)
+#### S8-B Sharpe-based Optuna objective — VOLTOOID (gemengd resultaat)
+- Objective: Sharpe op validatieset ipv ROC AUC
+- Penalty: -10.0 als < 10 trades (voorkomt degeneratie naar 0 trades)
+- BTC: lichte verbetering (+2.4%); ETH: regressie (-35%) door overfit validatieperiode
 
-#### S8-C LSTM ensemble — prioriteit laag (complex)
-- LightGBM behandelt features onafhankelijk per tijdstip
-- LSTM leert sequentiële patronen (serie rode candles + hammer = reversal)
-- Blend: 0.6 x LightGBM + 0.4 x LSTM
-- Vereist: PyTorch, 48h lookback window
+#### S8-C Daily alignment gate infra — VOLTOOID (wacht op daily model)
+- Code aanwezig in backtest.py; blokkeert 1h longs als daily model bearish is
+- Activeren zodra `BTCUSDT_1d_model.pkl` + `ETHUSDT_1d_model.pkl` beschikbaar zijn
 
 ---
 
-### Sprint 9 — Live trading optimalisatie
+### Sprint 9 — ETH reparatie + model selectie verbetering
 
-#### S9-A Dynamische TP op ATR-basis — prioriteit hoog
+#### S9-A Sharpe-gebaseerde model selectie — prioriteit hoog
+- Huidig: `model_best.pkl` gekozen op ROC AUC → ETH kiest LightGBM (Sharpe 3.09) ipv RF (Sharpe 13.14)
+- Verbetering: selecteer beste individuele model op Sharpe (met min_trades=20 guard)
+- Verwacht effect: ETH Sharpe herstelt naar +13 niveau
+
+#### S9-B Symbool-specifieke Optuna objective — prioriteit hoog
+- Huidig: één `OPTUNA_SHARPE_OBJECTIVE` flag voor alle symbolen
+- BTC profiteert van Sharpe objective; ETH profiteert van AUC objective
+- Verbetering: per-symbool config of auto-detect via cross-val score
+
+#### S9-C Dynamische TP op ATR-basis — prioriteit medium
 - Huidig: vaste TP% per regime (bull 8%, ranging 6%, bear 4%)
 - Verbetering: TP = entry x (1 + N x ATR/close); N = 3.0/2.5/2.0 per regime
 
-#### S9-B Daily alignment filter — prioriteit hoog
-- Huidig: 4h confirmatie (threshold 0.52)
-- Verbetering: blokkeer 1h longs als daily model bearish is
-
-#### S9-C Value at Risk (VaR) tracking — prioriteit medium
-- Bereken dagelijkse 95% VaR op basis van historische volatiliteit
-- Blokkeer nieuwe entries als VaR > 5% van kapitaal
-
-#### S9-D Retest entry timing — prioriteit medium
-- Huidig: entry op eerste uur dat proba > threshold
-- Verbetering: wacht op pullback naar VWAP of EMA(20) na signaal
+#### S9-D Daily model trainen (1d timeframe) — prioriteit medium
+- Train apart model op dagelijkse OHLCV + macro features
+- Activeer daily gate in backtest.py (infra al aanwezig)
+- Verwacht: filtert bear-markt entries, verbetert precision
 
 ---
 
@@ -165,17 +169,17 @@ Doel: Aanvullen op het schone 47-feature fundament met kwalitatieve nieuwe bronn
 
 | Taak | Impact | Moeite | Prioriteit | Status |
 |---|---|---|---|---|
-| S7-A OI trend (Coinglass) | Hoog | Medium | *** | [ ] |
-| S7-B On-chain (SOPR / netflow) | Hoog | Medium | *** | [ ] |
-| S7-C News sentiment | Medium | Medium | ** | [ ] |
-| S7-D USDT dominantie | Medium | Laag | * | [ ] wacht op data |
-| S8-A Optuna 150 trials | Hoog | Laag | *** | [ ] |
-| S8-B Walk-forward Optuna | Medium | Medium | ** | [ ] |
-| S8-C LSTM ensemble | Hoog | Hoog | ** | [ ] |
-| S9-A Dynamische ATR-TP | Medium | Laag | *** | [ ] |
-| S9-B Daily alignment filter | Hoog | Medium | *** | [ ] |
-| S9-C VaR tracking | Medium | Laag | ** | [ ] |
-| S9-D Retest entry timing | Medium | Medium | ** | [ ] |
+| S7-A OI trend (Bybit) | Hoog | Medium | *** | [x] |
+| S7-B On-chain (blockchain.info) | Hoog | Medium | *** | [x] |
+| S7-C Fear&Greed momentum | Medium | Laag | ** | [x] |
+| S7-D USDT dominantie | Medium | Laag | * | [ ] wacht op data (apr 2027) |
+| S8-A Optuna 150 trials | Hoog | Laag | *** | [x] |
+| S8-B Sharpe objective | Medium | Laag | ** | [x] gemengd (BTC+, ETH-) |
+| S8-C Daily gate infra | Hoog | Medium | *** | [x] code aanwezig, wacht op daily model |
+| S9-A Sharpe model selectie | Hoog | Laag | *** | [ ] ETH reparatie |
+| S9-B Symbool-specifieke objective | Hoog | Laag | *** | [ ] ETH reparatie |
+| S9-C Dynamische ATR-TP | Medium | Laag | ** | [ ] |
+| S9-D Daily model (1d timeframe) | Hoog | Medium | *** | [ ] |
 
 ---
 
@@ -189,3 +193,5 @@ Doel: Aanvullen op het schone 47-feature fundament met kwalitatieve nieuwe bronn
 | Sprint 4 | 2026-03-28 | Google Trends (3 features), Deribit 25D skew live gate | +11.44 -> +12.99 |
 | Sprint 5 | 2026-03-28 | HMM regime detectie code (features.py); uitgesloten na regressietest (HMM +10.05, corr +7.76 vs baseline +12.99) | +12.99 -> +6.80 |
 | Sprint 6 | 2026-03-28 | Permutation importance analyse (20 iteraties BTC+ETH), 19 schadelijke features verwijderd (66 -> 47) | +6.80 -> +13.13 |
+| Sprint 7 | 2026-03-28 | Bybit OI (oi_return_24h, oi_price_divergence), blockchain.info (active_addresses, hash_rate), Fear&Greed 7d momentum | +13.13 -> +24.18 |
+| Sprint 8 | 2026-04-02 | Optuna 150 trials, Sharpe objective (penalty <10 trades), daily gate infra | +24.18 -> +24.76 |
