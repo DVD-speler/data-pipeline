@@ -172,25 +172,35 @@ Doel: Aanvullen op het schone 47-feature fundament met kwalitatieve nieuwe bronn
 
 ---
 
-### Sprint 11 — Regime-bewuste verbetering
+### Sprint 11 — Bear-regime short model — VOLTOOID
 
-**Inzicht uit WF:** Model functioneert goed in bull regimes, maar heeft 0 trades in bear (jan-feb correctie).
-Dit is fundamenteel juist (geen longs in dalende markt), maar er is ruimte voor korte en ranging strategieën.
+#### S11-A Bear-regime short model — VOLTOOID
+- Short signaal: `market_regime == -1` AND `proba < 0.30` AND `return_30d < -3%`
+- Geen conflict met longs (short alleen bij signal_long == 0)
+- Positie sizing: `(0.5 - proba) * 2 * vol_scale` (symetrisch met longs)
+- Stop-loss: ATR-gebaseerd (zelfde als longs)
+- Resultaat: bear-fold (jan-feb) van 0 trades naar +9.76 BTC / +6.97 ETH
 
-#### S11-A Bear-regime short model — prioriteit hoog
-- Huidig: short volledig uitgeschakeld
-- Verbetering: activeer short signalen in bear regime (market_regime = -1)
-- Verwacht: bear-periode genereert revenue i.p.v. 0 trades
+#### S11-B WF rapport verbeteren — doorgeschoven naar Sprint 12
+#### S11-C Daily model trainen — doorgeschoven naar Sprint 12
 
-#### S11-B WF rapport verbeteren — prioriteit medium
-- Huidig: WF gebruikt simpel LGBMClassifier (geen calibratie, geen 4h gate)
-- Verbetering: gebruik calibratie + volledige backtest settings in WF folds
-- Maakt WF Sharpe vergelijkbaar met single-run Sharpe
+---
 
-#### S11-C Daily model trainen (1d timeframe) — prioriteit medium
+### Sprint 12 — Volgende verbeteringen
+
+#### S12-A Short model tuning — prioriteit hoog
+- Huidig: SHORT_ENTRY_THRESHOLD=0.30, return_30d < -3%
+- Verfijn: optimaliseer short threshold op validatieset (ipv hardcoded 0.30)
+- Toevoeging: fear_greed_7d_chg < -5 als extra bevestiging
+
+#### S12-B Daily model trainen (1d timeframe) — prioriteit hoog
 - Train apart model op dagelijkse OHLCV + macro features
 - Activeer daily gate in backtest.py (infra al aanwezig via S8-C)
-- Verwacht: filtert bear-markt entries, verbetert precision in correcties
+- Verwacht: filtert bear-markt entries, verbetert precision
+
+#### S12-C WF rapport verbeterd — prioriteit medium
+- Gebruik calibratie + volledige backtest settings in WF folds
+- Maakt WF Sharpe beter vergelijkbaar met single-run Sharpe
 
 ---
 
@@ -209,9 +219,10 @@ Dit is fundamenteel juist (geen longs in dalende markt), maar er is ruimte voor 
 | S9-B Symbool-specifieke objective | Hoog | Laag | *** | [x] reverted: Sharpe obj. beter voor beiden |
 | S10-A Walk-forward Sharpe rapport | Hoog | Medium | *** | [x] BTC +0.76, ETH +2.90 WF Sharpe |
 | S10-B Seed-fixing reproduceerbaar | Medium | Laag | ** | [x] al gedaan |
-| S11-A Bear-regime short model | Hoog | Medium | *** | [ ] |
-| S11-B WF rapport verbeteren | Medium | Medium | ** | [ ] |
-| S11-C Daily model (1d timeframe) | Hoog | Medium | *** | [ ] |
+| S11-A Bear-regime short model | Hoog | Medium | *** | [x] WF BTC +191%, ETH +67% |
+| S12-A Short model tuning | Hoog | Laag | *** | [ ] |
+| S12-B Daily model (1d timeframe) | Hoog | Medium | *** | [ ] |
+| S12-C WF rapport verbeterd | Medium | Medium | ** | [ ] |
 
 ---
 
@@ -229,3 +240,4 @@ Dit is fundamenteel juist (geen longs in dalende markt), maar er is ruimte voor 
 | Sprint 8 | 2026-04-02 | Optuna 150 trials, Sharpe objective (penalty <10 trades), daily gate infra | +24.18 -> +24.76 |
 | Sprint 9 | 2026-04-02 | Model_compare selectie op Sharpe; OPTUNA_SHARPE_SYMBOLS config; per-symbool objective infra | geen meetbare winst; hoge run-to-run variantie ontdekt |
 | Sprint 10 | 2026-04-03 | wf_sharpe_report() toegevoegd (3 folds); seed-fixing was al goed | WF BTC +0.76, ETH +2.90 (bear-markt fold = 0 trades, correct) |
+| Sprint 11 | 2026-04-03 | Bear-regime short model (market_regime=-1, proba<0.30, return_30d<-3%) | WF BTC +0.76→+2.21 (+191%), ETH +2.90→+4.84 (+67%); bear-fold nu winstgevend |

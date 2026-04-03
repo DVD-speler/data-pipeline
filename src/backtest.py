@@ -215,7 +215,27 @@ def run_backtest(
         except Exception:
             pass  # daily gate niet beschikbaar → stilzwijgend overslaan
 
-    results["signal"] = results["signal_long"]
+    # ── S11-A: Bear-regime short signaal ──────────────────────────────────────
+    # Actief uitsluitend bij market_regime == -1 (ADX > 20 en -DI > +DI).
+    # Signaal: proba < SHORT_ENTRY_THRESHOLD (model ziet weinig kans op stijging).
+    # Doel: verdient in bear-fases waar long volledig geblokkeerd is (0 trades).
+    bear_short_enabled = getattr(config, "BEAR_REGIME_SHORT_ENABLED", False)
+    short_thr = getattr(config, "SHORT_ENTRY_THRESHOLD", 0.35)
+    results["signal_short"] = 0
+    if bear_short_enabled and regime_filter and "market_regime" in test_df.columns:
+        confirmed_bear = (test_df["market_regime"].reindex(results.index, fill_value=0) == -1)
+        bearish_proba  = (results["proba"] <= short_thr)
+        # Extra filter: markt moet ook feitelijk in een neergaande trend zitten (return_30d < -3%).
+        # Voorkomt shorts in bear-regime-detectie tijdens early recovery (ADX lagging).
+        if "return_30d" in test_df.columns:
+            in_downtrend = (test_df["return_30d"].reindex(results.index, fill_value=0.0) < -0.03)
+        else:
+            in_downtrend = pd.Series(True, index=results.index)
+        # Geen short als er al een long-signaal is op dit uur (vermijdt conflicten)
+        no_long_conflict = (results["signal_long"] == 0)
+        results["signal_short"] = (confirmed_bear & bearish_proba & in_downtrend & no_long_conflict).astype(int)
+
+    results["signal"] = results["signal_long"] - results["signal_short"]
 
     # ── Basisrendement ────────────────────────────────────────────────────────
     raw_return = results["close"].shift(-h) / results["close"] - 1
@@ -227,11 +247,14 @@ def run_backtest(
     # Clip: minimum 0.5% (niet te eng), maximum 10% (niet te wijd).
     if "atr_pct" in test_df.columns and stop_loss > 0:
         atr_stop = (2.0 * test_df["atr_pct"].reindex(results.index)).clip(lower=0.005, upper=0.10)
-        long_return = raw_return.clip(lower=-atr_stop)
+        long_return  = raw_return.clip(lower=-atr_stop)
+        short_return = (-raw_return).clip(lower=-atr_stop)  # short profiteert van daling
     elif stop_loss > 0:
-        long_return = raw_return.clip(lower=-stop_loss)
+        long_return  = raw_return.clip(lower=-stop_loss)
+        short_return = (-raw_return).clip(lower=-stop_loss)
     else:
-        long_return = raw_return
+        long_return  = raw_return
+        short_return = -raw_return
 
     # ── Position sizing ───────────────────────────────────────────────────────
     if use_position_sizing:
@@ -245,15 +268,21 @@ def run_backtest(
             vol_scale = (1.0 / (1.0 + config.VOL_SIZE_SCALE * vol)).clip(0.2, 1.0)
         else:
             vol_scale = 1.0
-        long_size = (base_long * vol_scale).clip(0, 1)
+        long_size  = (base_long * vol_scale).clip(0, 1)
+        # Short sizing: hoe lager de proba, hoe groter de short positie
+        base_short = ((0.5 - results["proba"]) * 2).clip(0, 1)
+        short_size = (base_short * vol_scale).clip(0, 1)
     else:
-        long_size = results["signal_long"].astype(float)
+        long_size  = results["signal_long"].astype(float)
+        short_size = results["signal_short"].astype(float)
 
     # ── Strategie rendement ───────────────────────────────────────────────────
     results["trade_return"]    = raw_return
     results["strategy_return"] = (
-        results["signal_long"] * long_size * long_return
-        - results["signal_long"] * long_size * 2 * fee
+        results["signal_long"]  * long_size  * long_return
+        - results["signal_long"]  * long_size  * 2 * fee
+        + results["signal_short"] * short_size * short_return
+        - results["signal_short"] * short_size * 2 * fee
     )
 
     # ── Benchmark ─────────────────────────────────────────────────────────────
@@ -334,7 +363,8 @@ def compute_metrics(results: pd.DataFrame, horizon: int = None) -> dict:
     drawdown = cum / cum.cummax() - 1
     max_dd   = float(drawdown.min())
 
-    n_long   = int(results["signal_long"].sum()) if "signal_long" in results.columns else 0
+    n_long   = int(results["signal_long"].sum())  if "signal_long"  in results.columns else 0
+    n_short  = int(results["signal_short"].sum()) if "signal_short" in results.columns else 0
     win_rate = float((active_returns > 0).mean()) if len(active_returns) > 0 else 0.0
 
     return {
@@ -344,8 +374,9 @@ def compute_metrics(results: pd.DataFrame, horizon: int = None) -> dict:
         "sharpe_ratio":      sharpe,
         "max_drawdown":      max_dd,
         "win_rate":          win_rate,
-        "n_trades":          n_long,
+        "n_trades":          n_long + n_short,
         "n_long":            n_long,
+        "n_short":           n_short,
         "signal_rate":       float(results["signal"].abs().mean()),
     }
 

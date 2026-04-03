@@ -39,6 +39,13 @@ OPTUNA_N_TRIALS       = 150
 # ETH: AUC-objective werkt beter (kortere trends, minder trades → Optuna overfit).
 OPTUNA_SHARPE_SYMBOLS = []   # lege lijst = gebruik OPTUNA_SHARPE_OBJECTIVE voor alle symbolen
 
+# ── S11-A: Bear-regime short model ────────────────────────────────────────────
+# Activeer short posities uitsluitend wanneer market_regime == -1 (confirmed bear).
+# Signaal: proba <= SHORT_ENTRY_THRESHOLD (model ziet weinig kans op stijging).
+# Doel: genereert rendement in bear-fases waar longs geblokkeerd zijn (0 trades).
+BEAR_REGIME_SHORT_ENABLED = True
+SHORT_ENTRY_THRESHOLD     = 0.30   # short wanneer proba < 0.30 (model sterk bearish)
+
 # S8-C: model selectie op Sharpe i.p.v. ROC AUC (S9-A).
 # ETH RandomForest had Sharpe +13.14 maar werd niet gekozen (AUC-selectie koos LightGBM +3.09).
 # Guard: minimaal MODEL_SELECT_MIN_TRADES trades op testset nodig om in aanmerking te komen.
