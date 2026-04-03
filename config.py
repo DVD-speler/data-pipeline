@@ -149,6 +149,9 @@ FEATURE_COLS_1H = [
     "ath_7d_distance",          # afstand van 7-daags ATH (negatief = in correctie)
     # Regime detectie
     "adx",                      # ADX(14) trendsterkte 0-100 (>20 = trending markt)
+    # S14-A: Multi-indicator regime features
+    "bb_width",                 # BB-breedte genormaliseerd: laag=squeeze/ranging, hoog=trending
+    "macd_hist_stability",      # MACD-histogram ruis (rolling std/5): laag=trending, hoog=ranging
     "vwap_distance",            # (close − dag-VWAP) / close
     "poc_distance",             # (close − POC_168h) / close — wekelijks volume-zwaartepunt
     # Opties-markt (volatiliteit)
@@ -177,6 +180,8 @@ FEATURE_COLS_1H = [
     "active_addresses_7d_chg",  # S7-B: blockchain.info wekelijkse verandering unieke adressen
     "hash_rate_7d_chg",         # S7-B: wekelijkse verandering BTC hash rate (miner vertrouwen)
     "fear_greed_7d_chg",        # S7-C: Fear & Greed 7-daags momentum (168h diff)
+    # S18-A: interactie-features TERUGGEDRAAID (mediaan Sharpe -2.59, LGB vangt dit zelf op)
+    # "macro_risk_score", "fomo_uptrend_score", "dxy_momentum_align" — niet als model-input
 ]
 # Uitgesloten features (code aanwezig, niet in FEATURE_COLS):
 #   btc_skew_25d         — LIVE-ONLY gate (geen historische Deribit data)
@@ -189,7 +194,7 @@ FEATURE_COLS_1H = [
 # adx_trend en market_regime geven expliciete richting → over-confidence in bullish val-periode
 #   → threshold zakt naar 0.50 → model overfits op val-regime.
 # Oplossing: model leert slechts trendsterkte (adx), backtest-filter gebruikt market_regime.
-FILTER_COLS = ["market_regime"]   # altijd in feature matrix, nooit in model-input
+FILTER_COLS = ["market_regime", "ranging_score", "crash_mode", "macd_size_mult"]   # altijd in feature matrix, nooit in model-input
 # Verwijderd (feature importance ≈ 0 of gebroken data):
 #   "return_4h"       — 0.000 belang (letterlijk nul) in meerdere runs → verwijderd Fase 2
 #   "direction_bias"  — 0.000762 belang, biedt geen additioneel signaal boven p1_probability
@@ -210,6 +215,16 @@ FEATURE_COLS = FEATURE_COLS_1H + FEATURE_COLS_4H
 # ── Horizon scan ───────────────────────────────────────────────────────────────
 HORIZON_SCAN = [12, 24, 48]   # te testen voorspellingstijdshorizons (in uren)
 
+# ── S14: Multi-indicator ranging detectie ─────────────────────────────────────
+# ranging_score telt 3 indicatoren die elk +1 bijdragen als ze ranging signaleren:
+#   1. ADX < 20         — geen bevestigde trend
+#   2. bb_width < THR   — BB-breedte te smal voor een echte trend
+#   3. macd_hist_stab > THR — MACD histogram oscilieert (noisy = ranging)
+# ranging_score ≥ RANGING_SCORE_THR → shorts uitgeschakeld (false-bear risico)
+RANGING_BB_WIDTH_THR = 0.025   # BB-breedte < 2.5% van close = squeeze/ranging
+RANGING_MACD_STB_THR = 0.0002  # genormaliseerde MACD-histogram ruis > 0.02% = noisy
+RANGING_SCORE_THR    = 2       # vanaf score 2 van 3 → beschouw markt als ranging
+
 # ── Regime-adaptieve drempelwaarden ───────────────────────────────────────────
 # Offset toegepast bovenop de geoptimaliseerde threshold, per marktregime.
 # market_regime: +1=bevestigde bull (ADX>20, +DI>-DI), 0=ranging, -1=bevestigde bear
@@ -217,9 +232,36 @@ HORIZON_SCAN = [12, 24, 48]   # te testen voorspellingstijdshorizons (in uren)
 # Bear  → hogere drempel (alleen longs met extreem hoge zekerheid)
 REGIME_THRESHOLD_OFFSETS = {1: -0.05, 0: 0.0, -1: 0.08}
 
+# S15 (ADX-band bonus + 4h confluence bonus) teruggedraaid na WF regressie:
+# 21/31 folds slechter, mediaan Sharpe +6.14 → +3.52. Lagere drempel introduceert
+# te veel marginale trades in bull-regime (fold27: 0 trades S14 vs 1 verliezende trade S15).
+ADX_THRESHOLD_OFFSETS = {}   # uitgeschakeld — S15 revert
+TREND_4H_THRESHOLD_BONUS = 0.0  # uitgeschakeld — S15 revert
+
 # ── Backtest ───────────────────────────────────────────────────────────────────
 TRADE_FEE     = 0.001
 STOP_LOSS_PCT = 0.02
+
+# ── S16-A: ATR-gebaseerde stop-loss multiplier ────────────────────────────────
+# Dynamische stop = ATR_STOP_MULTIPLIER × atr_pct (genormaliseerde ATR).
+# Hogere vol → ruimere stop (voorkomt whipsaw); lagere vol → nauwere stop.
+# Clip: minimum 0.5%, maximum 10% per trade.
+# 2.0× ATR(14) is het startpunt; kan worden geoptimaliseerd via sweep (1.0–3.0).
+ATR_STOP_MULTIPLIER = 2.0
+
+# ── S16-B: Crash-modus positie-halvering ─────────────────────────────────────
+# Crash-modus actief als return_1h < -CRASH_SIGMA_THR × rolling_vol_24h
+# OF return_24h < -CRASH_RETURN_THR (grote dagelijkse daling).
+# Bij crash-modus: positiegrootte × CRASH_SIZE_FACTOR (halvering beschermt kapitaal).
+CRASH_SIGMA_THR  = 2.5   # 2.5σ eenmalige candle-daling
+CRASH_RETURN_THR = 0.10  # 10% daling in 24u
+CRASH_SIZE_FACTOR = 0.5  # halve positiegrootte in crash-modus
+
+# ── S17-B: MACD momentum-gewogen positiescaling ───────────────────────────────
+# Bij entry: long_size *= (1 + macd_size_mult) waarbij macd_size_mult ∈ [0, 0.5].
+# Sterk positief MACD-momentum → tot 1.5× groter positie bij entry.
+# MACD_MOMENTUM_SCALE = False om S17-B uit te schakelen.
+MACD_MOMENTUM_SCALE = True
 
 # ── Multi-timeframe signaalconfirmatie ────────────────────────────────────────
 # 4h-model proba moet boven deze drempel liggen voor een 1h-entry.

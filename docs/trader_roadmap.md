@@ -2,7 +2,7 @@
 
 ---
 
-## Huidige staat van het model (2026-04-02)
+## Huidige staat van het model (2026-04-03)
 
 | Categorie | Geïmplementeerd |
 |---|---|
@@ -34,6 +34,10 @@
 | Sprint 7 | +24.18 | +84% | Bybit OI + Blockchain.info on-chain + Fear&Greed momentum (47 -> 52) |
 | Sprint 8 | +24.76 | +2.4% | Optuna 150 trials + Sharpe objective + daily gate infra |
 | Sprint 9 | ~15–25 | ±var | Model selectie op Sharpe in comparison; per-symbool config; geen structurele Sharpe winst |
+| Sprint 10 | WF +0.76 | — | Walk-forward Sharpe rapport (3 folds); WF = stabielere metric dan single-run |
+| Sprint 11 | WF +2.21 | +191% | Bear-regime short model; bear-fold van 0 trades naar +9.76 |
+| Sprint 12 | WF +5.57 | +152% | Short threshold tuning + BTC daily gate (AUC 0.63) |
+| Sprint 13 | WF +4.05 | -27% | ETH daily verbetering mislukt; 28 features hersteld; run-to-run var |
 
 *Sprint 5 regressie: nieuwe marktdata + HMM redundant met ADX market_regime.
 ETH: Sprint 5 +5.57 -> Sprint 6 +7.83 (+41%) -> Sprint 7 +11.97 (+53%) -> Sprint 8 +7.77 (-35%)*
@@ -205,19 +209,231 @@ Doel: Aanvullen op het schone 47-feature fundament met kwalitatieve nieuwe bronn
 
 ### Sprint 13 — ETH verbetering + model diversificatie
 
-#### S13-A ETH daily model verbeteren — prioriteit hoog
-- Huidig: AUC 0.53 (te zwak voor gating)
-- Verbetering: meer features voor dagelijks ETH model (ETH/BTC ratio, funding, on-chain)
-- Doel: AUC > 0.58 zodat daily gate ook voor ETH geactiveerd kan worden
+#### S13-A ETH daily model verbeteren — VOLTOOID (geen verbetering)
+- Poging 1: 38 features → BTC AUC 0.57, ETH AUC 0.49 (curse of dimensionality, <500 trainrows)
+- Poging 2: 31 features (top-3 extra) → zelfde probleem
+- Poging 3: revert 28 features + AUC objective (Sharpe obj had <10 trades penalty → degeneratie)
+- Resultaat: BTC AUC 0.6302 (baseline hersteld), ETH AUC 0.5268 (geen verbetering)
+- Conclusie: ETH daily gate blijft uitgeschakeld; ETH dagelijkse patronen te weinig predictief
+- WF BTC S13: +4.05 (std 7.39); ETH S13: +1.91 (std 4.52) — run-to-run variantie
 
-#### S13-B ETH short model herintroductie — prioriteit medium
-- Huidig: disabled (single-run negatief bij 0.30 threshold)
-- Aanpak: gebruik BTC-geoptimaliseerde 0.30 threshold als ETH-start + tighter filter
-- Test: WF verbetering als gate voor herintroductie
+#### S13-B ETH short model herintroductie — VERVALT
+- Focus verschoven naar BTC optimalisatie (zie analyse 2026-04-03)
+- ETH AUC 0.53 maakt betrouwbare short-signalen onmogelijk
+- Revisie: pas na structurele ETH model verbetering (niet voor Sprint 17+)
 
-#### S13-C WF rapport met calibratie — prioriteit laag
-- Huidig WF gebruikt simpel LGBMClassifier (geen calibratie, geen 4h gate)
-- Doel: WF Sharpe beter vergelijkbaar met single-run Sharpe
+#### S13-C WF rapport met calibratie — doorgeschoven naar Sprint 18
+- Deprioritized t.o.v. regime-detectie en drempel-optimalisatie
+- Blijft relevant als referentie-metric, maar blokkeert geen hogere-impact sprints
+
+---
+
+## Analyse: tekortkomingen geïdentificeerd (2026-04-03)
+
+Op basis van 30-fold walk-forward analyse (mrt 2023 → feb 2026) zijn drie structurele zwaktes ontdekt:
+
+### Zwakte 1 — Model mist explosieve bull runs
+- Folds 9 (BTC +61%, model -2%), 16 (BTC +29%, model -6%): threshold te hoog bij sterke trends
+- ADX-regime offset slechts -0.05 in bull → te conservatief bij bevestigde opwaartse trend
+- Oorzaak: traindata heeft weinig extreme bull periodes → model underfit op explosieve bewegingen
+
+### Zwakte 2 — Vals-negatieve short-signalen in ranging/kantelende markten
+- Folds 12, 21, 25: ranging of naar boven kantelende markt triggert bear-shorts → -14%, -15%, -14%
+- ADX is een lagging indicator; regime-wissel wordt 2–4 candles te laat gedetecteerd
+- BB-breedte en MACD-histogram stabiliteit zijn ongebruikte aanvullende regime-signalen
+
+### Zwakte 3 — Cumulatieve verliezen bij crashes
+- Fold 29 (BTC -28%, model -19%): beter dan B&H maar nog -19% absoluut verlies
+- Fixed stop-loss -3% per trade; shorts in snelle crash genereren meerdere kleine verliezen
+- Crash-modus (versnelde daling) wordt niet apart gedetecteerd
+
+---
+
+### Sprint 14 — Multi-indicator regime classificatie (PRIORITEIT 1)
+
+**Doel:** Zwakte 2 aanpakken — betere onderscheid bull / ranging / bear voordat shorts worden geactiveerd
+
+**Verwachte WF Sharpe winst:** +1.0–2.0
+
+#### S14-A BB-breedte + MACD-stabiliteit als regime-features — VOLTOOID
+- `bb_width` (al berekend in _add_ta_indicators) + `macd_hist_stability` (rolling std/5 van genorm. histogram) toegevoegd aan FEATURE_COLS_1H
+- Volgorde-bug gefixed: macd_hist_stability moet vóór ranging_score berekend worden
+
+#### S14-B Ensemble regime-score — VOLTOOID
+- `ranging_score` = ADX<20 + bb_width<0.025 + macd_hist_stability>0.0002 (som 0–3)
+- Toegevoegd aan FILTER_COLS (niet als model-input)
+- Config params: RANGING_BB_WIDTH_THR=0.025, RANGING_MACD_STB_THR=0.0002, RANGING_SCORE_THR=2
+
+#### S14-C Shorts filteren op ranging_score — VOLTOOID
+- `not_ranging = (ranging_score < 2)` toegevoegd als extra filter in backtest.py short-signaal
+- Probleem-folds: 0 false-shorts in fold12/21 (was 30/42 shorts → beide nu 0)
+
+#### Evaluatie Sprint 14:
+- **Mediaan Sharpe: +6.14** (was 0.0 in S13) — grote verbetering
+- **Winstgevende folds: 20/31** (was 14/30)
+- **Negatieve Sharpe folds: 10/31** (was 13/30)
+- **Gem shorts per fold: 7.0** (was 24.2) — 71% minder false-short signalen
+- **Gem longs per fold: 90.2** (was 26.5) — model heeft meer vertrouwen door betere features
+- Probleem-fold12: -14.0% → **+44.6%** (0 shorts nu vs 30 eerder)
+- Probleem-fold25: -13.9% → **+102.7%**
+- Sprint geslaagd — alle acceptatiecriteria behaald
+
+#### S14-A BB-breedte + MACD-stabiliteit als regime-features — HISTORISCH (zie boven)
+- Hieronder stond de originele planning, ter referentie bewaard
+- BB-breedte = (upper - lower) / SMA(20): laag = squeeze/ranging, hoog = trending
+- MACD-histogram stabiliteit = rolling std(5) van MACD_hist: hoog = noisy/ranging, laag = trending
+- Toevoegen aan `src/features.py` als `bb_width` en `macd_hist_stability`
+- Retrain + permutation importance: verwacht top-10 feature bij bull/bear detectie
+
+#### S14-B Ensemble regime-score — prioriteit hoog
+- Combineer drie signalen: ADX(<20), BB-breedte(<drempel), MACD-stabiliteit(>drempel)
+- `ranging_score` = som van de drie (0–3): ≥2 = RANGING, negeer short-signalen
+- `strong_trend_score` = ADX>25 + BB-breedte>0.06 + MACD_hist stabiel: ≥2 = STERKE TREND
+- Vervang huidige `market_regime` binaire check door ensemble score in backtest.py
+- Validatie: manueel check folds 12, 21, 25 — worden false-short gevallen gefilterd?
+
+#### S14-C Shorts uitschakelen bij ranging_score ≥ 2 — prioriteit hoog
+- In `src/backtest.py`: voeg `ranging_score` als filter toe vóór short-signaal
+- Short pas actief als: `market_regime == -1` AND `ranging_score < 2` AND `return_30d < -3%`
+- Verwacht: folds 12/21/25 verbeteren van -14% naar ~0% (geen trades in ranging)
+
+**Acceptatiecriteria:**
+- WF mean Sharpe ≥ +1.0 t.o.v. S13
+- Folds 12, 21, 25 geen negatieve returns meer door false shorts
+- Geen regressie op bull-folds (6, 15, 26)
+
+---
+
+### Sprint 15 — Dynamische drempelaanpassing in bevestigde trends — TERUGGEDRAAID
+
+**Doel:** Zwakte 1 aanpakken — model eerder laten instappen bij explosieve bull moves
+
+**Verwachte WF Sharpe winst:** +0.5–1.5
+
+#### S15-A ADX-geschaalde long-drempel — GEÏMPLEMENTEERD, daarna TERUGGEDRAAID
+- ADX-band bonus geïmplementeerd: ADX 30–39 → -0.03, ADX 40+ → -0.07 extra drempelverlaging
+- `config.ADX_THRESHOLD_OFFSETS = {30: -0.03, 40: -0.07}`
+
+#### S15-B 4h confluence bonus — GEÏMPLEMENTEERD, daarna TERUGGEDRAAID
+- `config.TREND_4H_THRESHOLD_BONUS = 0.03` (drempel -0.03 bij 4h proba > 0.65)
+
+#### Evaluatie Sprint 15 — MISLUKT, teruggedraaid:
+- **Mediaan Sharpe: +3.52** (S14 baseline: +6.14) — regressie -2.62
+- **Gem Sharpe: +1.01** (S14: +3.86) — regressie -2.85
+- **Winstgevende folds: 19/31** (S14: 20/31)
+- **Oorzaak regressie:** lagere drempel genereert te veel marginale trades in bull-regime
+  - Fold27: S14=0 trades (veilig, Sharpe +33.9) → S15=1 verliezende trade (Sharpe -23.8)
+  - 21 van 31 folds slechter met S15 dan S14
+- **Besluit:** S15 teruggedraaid — ADX-bonus verlaagt de selectiviteit te agressief
+- **Nieuwe baseline:** mediaan Sharpe **+7.14** (32 folds, inclusief nieuwe data tot april 2026)
+- Code: `ADX_THRESHOLD_OFFSETS = {}` en `TREND_4H_THRESHOLD_BONUS = 0.0` in config.py
+- S15-A/B blokken verwijderd uit `src/backtest.py`
+
+#### S15-C Drempeloptimalisatie per ADX-band — UITGESTELD naar Sprint 17
+- Sweep: (ADX < 20), (20–30), (30–40), (>40) — welke offset-combinatie geeft beste WF?
+- Optuna-sweep op validatieset per ADX-band — vereist zorgvuldigere aanpak dan vaste offsets
+
+**Acceptatiecriteria (niet behaald):**
+- ~~Folds 9 en 16 verbeteren~~
+- ~~WF mean Sharpe ≥ +0.5 t.o.v. Sprint 14 baseline~~
+
+---
+
+### Sprint 16 — ATR-scaled stops + crash detector — VOLTOOID
+
+**Doel:** Zwakte 3 aanpakken — minder cumulatief verlies bij snelle crashes
+
+#### S16-A ATR-gebaseerde stop-loss — VOLTOOID (was al gedeeltelijk geïmplementeerd)
+- Code gebruikte al `2.0 × atr_pct` als dynamische stop (hardcoded)
+- Configureerbaar gemaakt via `config.ATR_STOP_MULTIPLIER = 2.0` in `config.py`
+- `src/backtest.py`: hardcoded `2.0` vervangen door `getattr(config, "ATR_STOP_MULTIPLIER", 2.0)`
+
+#### S16-B Crash-modus detector — VOLTOOID
+- `crash_mode` binary feature toegevoegd aan `src/features.py`
+  - Actief als: `return_1h < -2.5 × rolling_vol_24h` OF `return_24h < -10%`
+  - 2.6% van alle uren actief — correct voor zeldzame crash-events
+- Toegevoegd aan `config.FILTER_COLS` (niet als model-input)
+- `src/backtest.py`: positiegrootte × 0.5 bij crash_mode=1 (binnen `use_position_sizing=True` blok)
+- Config: `CRASH_SIGMA_THR=2.5`, `CRASH_RETURN_THR=0.10`, `CRASH_SIZE_FACTOR=0.5`
+
+#### S16-C Per-trade circuit breaker — UITGESTELD
+- Te complex voor vectorized backtest architectuur; vereist trade-level simulatie
+
+#### Evaluatie Sprint 16 — AANVAARD (robuuster profiel):
+- **Mediaan Sharpe: +7.33** (baseline: +7.14) — licht verbeterd (+0.19)
+- **Gem Sharpe: +6.22** (baseline: +7.35) — gedaald door gedempt outlier fold24 (+44.9→+18.6)
+- **Positieve folds: 20/32** — onveranderd
+- **Crash-bescherming werkt:** fold4 -4.6→-2.6, fold11 -3.1→+8.5
+- **Effect:** modereert uitschieters (minder variance), stabielere mediaan
+- **Besluit:** aanvaard — robuuster profiel is meer waard dan hogere gemiddelde met extreme outliers
+- WF resultaten: `data/stats/walkforward_lightgbm.csv`
+
+---
+
+### Sprint 17 — Pyramiding in sterke trends (PRIORITEIT 3)
+
+**Doel:** Grotere positie opbouwen in bevestigde trends om meer van bull moves te profiteren
+
+#### S17-A Add-on logica — UITGESTELD
+- Vereist trade-level simulatie (weet "trade zit in winst") — niet mogelijk in vectorized backtest
+- Doorgeschoven naar latere sprint als backtest-architectuur wordt uitgebreid
+
+#### S17-B Momentum-gewogen sizing — VOLTOOID, AANVAARD (marginaal positief)
+- `macd_size_mult` feature toegevoegd aan `src/features.py` (FILTER_COL)
+  - `macd_size_mult = clip(macd_hist.clip(0) / rolling_mean_abs_20d, 0, 0.5)`
+- `src/backtest.py`: `long_size *= (1 + macd_size_mult)` bij `MACD_MOMENTUM_SCALE=True`
+- `config.py`: `MACD_MOMENTUM_SCALE = True`
+
+#### Evaluatie Sprint 17 — AANVAARD (bescheiden verbetering):
+- **Gem Sharpe: +6.357** (S16: +6.224) — +0.133
+- **Mediaan Sharpe: +7.122** (S16: +7.333) — -0.211 (te klein om significant te zijn)
+- **Positieve folds: 20/32** — onveranderd
+- **16 van 32 folds verbeterd** (7 verslechterd, 9 onveranderd) — 2:1 verhouding
+- **Bull-run captures verbeterd:** fold26 +291%→+366%, fold15 +154%→+184%
+- **Kanttekening:** hogere returns in bull folds gaan gepaard met hogere variance → Sharpe neutraal
+- Acceptatiecriterium (+0.3 Sharpe gem) **niet gehaald**, maar geen regressie → aanvaard
+- WF resultaten: `data/stats/walkforward_lightgbm.csv`
+
+---
+
+### Sprint 18 — SHAP analyse + WF calibratie — VOLTOOID (analyse nuttig, code teruggedraaid)
+
+**Doel:** Model blind spots identificeren; WF Sharpe vergelijkbaar maken met single-run Sharpe
+
+#### S18-A SHAP feature interactie analyse — VOLTOOID, features TERUGGEDRAAID
+
+**SHAP bevindingen (top-5 meest impactvolle features op testset):**
+1. `dxy_return_24h` — 0.164 (sterkste predictor: dollar richting)
+2. `trends_momentum_4w` — 0.142 (Google trends 4w momentum)
+3. `dxy_return_7d` — 0.123 (dollar trend)
+4. `google_trends_btc` — 0.120 (retail FOMO)
+5. `eurusd_return_24h` — 0.118 (EUR/USD als DXY proxy)
+
+**SHAP per regime (top-3):**
+- BEAR: `dxy_return_24h`, `google_trends_btc`, `trends_momentum_4w`
+- RANGING: `dxy_return_24h`, `trends_momentum_4w`, `spx_return_24h`
+- BULL: `trends_momentum_4w`, `dxy_return_24h`, `bb_pct`
+
+**3 sterkste interacties gevonden:**
+1. `macro_risk_score` (DXY↓ + SPX↑ = risk-on): SHAP-delta +0.29 — sterkste interactie
+2. `fomo_uptrend_score` (google_trends × return_30d>0): SHAP-delta +0.11
+3. `dxy_momentum_align` (beide DXY timeframes negatief): aanhoudende dollarweakheid
+
+**A/B test resultaat — TERUGGEDRAAID:**
+- Mediaan Sharpe: 7.12 → 4.53 (-2.59) — regressie
+- Oorzaak: LightGBM vangt interacties al op via boomsplitsingen; expliciete interactie-features voegen redundantie toe → verlegt drempeloptimalisatie verkeerd
+- **Conclusie:** SHAP is waardevol voor interpretatie maar interactie-features niet toevoegen als model-input bij boom-modellen
+
+#### S18-B WF calibratie — GEÏMPLEMENTEERD, daarna TERUGGEDRAAID
+- Per-fold isotonische calibratie op validatieset geïmplementeerd
+- Resultaat: fold4 Sharpe -82.9, fold27 Sharpe +99.6 (extreme instabiliteit)
+- Oorzaak: kleine validatieset (≈1152 rijen) maakt isotone calibratie instabiel; verschuift drempeloptimalisatie
+- **Conclusie:** calibratie vereist minstens 5000× val-rijen of Platt scaling in plaats van isotonic
+
+#### Evaluatie Sprint 18 — GEEN CODE WIJZIGINGEN ACTIEF:
+- Beide aanpassingen teruggedraaid na regressie-testen
+- **Waardevol inzicht:** `dxy_return_24h` is dominante predictor; macro-omgeving > technische indicatoren
+- **Aanbeveling voor toekomstige sprint:** betere DXY/SPX data coverage (huidig 28-31% null) verbeteren
 
 ---
 
@@ -239,10 +455,23 @@ Doel: Aanvullen op het schone 47-feature fundament met kwalitatieve nieuwe bronn
 | S11-A Bear-regime short model | Hoog | Medium | *** | [x] WF BTC +191%, ETH +67% |
 | S12-A Short threshold optimalisatie | Hoog | Laag | *** | [x] per-symbool (BTC only) |
 | S12-B Daily model BTC | Hoog | Medium | *** | [x] AUC 0.63, WF fold3: -8→0 |
-| S12-C Daily model ETH | Medium | Medium | ** | [ ] AUC 0.53 te zwak |
-| S13-A ETH daily model verbeteren | Hoog | Medium | *** | [ ] |
-| S13-B ETH short model herintroductie | Medium | Medium | ** | [ ] |
-| S13-C WF rapport met calibratie | Laag | Medium | * | [ ] |
+| S12-C Daily model ETH | Medium | Medium | ** | [ ] AUC 0.53 te zwak — on hold |
+| S13-A ETH daily model verbeteren | Hoog | Medium | *** | [x] geen verbetering; ETH AUC 0.53 (BTC 0.63 hersteld) |
+| S13-B ETH short model herintroductie | Medium | Medium | ** | [x] VERVALT — focus naar BTC optimalisatie |
+| S13-C WF rapport met calibratie | Laag | Medium | * | [ ] doorgeschoven → S18-B |
+| **S14-A** BB-breedte + MACD-stabiliteit features | Hoog | Laag | **** | [x] mediaan Sharpe 0.0→+6.14 |
+| **S14-B** Ensemble regime-score (3-indicator) | Hoog | Medium | **** | [x] ranging_score in FILTER_COLS |
+| **S14-C** Shorts filteren op ranging_score | Hoog | Laag | **** | [x] 71% minder false-shorts |
+| **S15-A** ADX-geschaalde long-drempel | Hoog | Laag | **** | [x] TERUGGEDRAAID — regressie |
+| **S15-B** 4h confluence bonus (drempel verlaging) | Medium | Laag | *** | [x] TERUGGEDRAAID — regressie |
+| **S15-C** Drempeloptimalisatie per ADX-band | Medium | Medium | *** | [ ] → S17 |
+| **S16-A** ATR-gebaseerde stop-loss | Hoog | Medium | *** | [x] configureerbaar (ATR_STOP_MULTIPLIER=2.0) |
+| **S16-B** Crash-modus detector | Hoog | Medium | *** | [x] crash_mode feature + positie halvering |
+| **S16-C** Per-trade circuit breaker | Medium | Medium | ** | [ ] → uitgesteld (vereist trade-level sim) |
+| **S17-A** Add-on logica (pyramiding) | Medium | Hoog | ** | [ ] → uitgesteld (vereist trade-sim) |
+| **S17-B** Momentum-gewogen entry sizing | Laag | Medium | * | [x] MACD_MOMENTUM_SCALE +0.13 gem Sharpe |
+| **S18-A** SHAP feature interactie analyse | Medium | Medium | ** | [x] TERUGGEDRAAID — LGB vangt interacties zelf op |
+| **S18-B** WF rapport met calibratie | Laag | Medium | * | [x] TERUGGEDRAAID — instabiel op kleine val-set |
 
 ---
 
@@ -262,3 +491,5 @@ Doel: Aanvullen op het schone 47-feature fundament met kwalitatieve nieuwe bronn
 | Sprint 10 | 2026-04-03 | wf_sharpe_report() toegevoegd (3 folds); seed-fixing was al goed | WF BTC +0.76, ETH +2.90 (bear-markt fold = 0 trades, correct) |
 | Sprint 11 | 2026-04-03 | Bear-regime short model (market_regime=-1, proba<0.30, return_30d<-3%) | WF BTC +0.76→+2.21 (+191%), ETH +2.90→+4.84 (+67%); bear-fold nu winstgevend |
 | Sprint 12 | 2026-04-03 | Short threshold optim. op val-set; daily 1d model actief (BTC only, AUC 0.63); per-symbool gates | WF BTC +5.57 (+632% vs S10), ETH +2.97 (short disabled, ETH daily AUC 0.53 te zwak) |
+| Sprint 13 | 2026-04-03 | S13-A: ETH daily model verbeteren mislukt (curse of dimensionality); revert 28 features + AUC obj; BTC AUC 0.63 hersteld | WF BTC +4.05 (run-to-run var), ETH +1.91; ETH daily gate uitgeschakeld |
+| Sprint 14 | 2026-04-03 | BB-breedte + MACD-hist-stabiliteit features; ensemble ranging_score filter; false-shorts in ranging markten 71% gereduceerd | Mediaan WF Sharpe 0.0→+6.14; 20/31 folds winstgevend; fold12: -14%→+45% |

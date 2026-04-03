@@ -663,6 +663,56 @@ def build_features(
             0)
         ).astype(float)
 
+    # MACD histogram + afgeleide features (S14-A — moet vóór ranging_score staan)
+    if "macd" in df.columns and "macd_signal" in df.columns:
+        macd_hist = df["macd"] - df["macd_signal"]
+        df["macd_hist"]       = macd_hist                  # ruwe histogram (prijs-eenheden)
+        df["macd_hist_slope"] = macd_hist.diff(3)          # 3h verandering (reversal indicator)
+        # S14-A: MACD histogram stabiliteit — rolling std(5) van genormaliseerde histogram.
+        # Laag = histogram beweegt gestaag in één richting (trending).
+        # Hoog = histogram oscilleert sterk (ranging / kantelende markt).
+        macd_hist_norm = macd_hist / (df["close"] + 1e-10)
+        df["macd_hist_stability"] = macd_hist_norm.rolling(5).std()
+
+        # S17-B: MACD momentum-gewogen positiescaling (FILTER_COL).
+        # Sterk positief MACD-momentum → hogere positiegrootte bij entry.
+        # Normalisatie: positief histogram / 20-daags gemiddelde van |histogram|.
+        # Clip [0, 0.5] → size_multiplier = 1 + macd_size_mult ∈ [1.0, 1.5].
+        mean_abs_hist = macd_hist.abs().rolling(20 * 24).mean()
+        df["macd_size_mult"] = (
+            macd_hist.clip(lower=0) / (mean_abs_hist + 1e-10)
+        ).clip(0, 0.5)
+
+    # S14-B: Ensemble ranging score (3 indicatoren gecombineerd).
+    # Elk signaal voegt 1 punt toe als het een ranging/kantelende markt suggereert:
+    #   adx_ranging  — ADX < 20: geen bevestigde trend
+    #   bb_squeeze   — BB-breedte < drempel: prijs in nauwe band (lage vol = ranging)
+    #   macd_noisy   — MACD-histogram stabiliteit > drempel: onstabiel momentum
+    # ranging_score ≥ 2 → backtest filtert shorts (te groot risico false-bear signaal)
+    if all(c in df.columns for c in ["adx", "bb_width", "macd_hist_stability"]):
+        bb_thr   = getattr(config, "RANGING_BB_WIDTH_THR", 0.025)
+        stb_thr  = getattr(config, "RANGING_MACD_STB_THR", 0.0002)
+        adx_ranging = (df["adx"] < 20).astype(int)
+        bb_squeeze  = (df["bb_width"] < bb_thr).astype(int)
+        macd_noisy  = (df["macd_hist_stability"] > stb_thr).astype(int)
+        df["ranging_score"] = adx_ranging + bb_squeeze + macd_noisy
+
+    # S16-B: Crash-modus detector (FILTER_COL — niet als model-input).
+    # Crash actief als:
+    #   (a) return_1h < -CRASH_SIGMA_THR × rolling_vol_24h (enige candle > 2.5σ neerwaarts)
+    #   OF
+    #   (b) return_24h < -CRASH_RETURN_THR (24u daling > 10%)
+    # Bij crash-modus halveert de backtest de positiegrootte om kapitaal te beschermen.
+    if "returns" in df.columns and "volatility_24h" in df.columns:
+        sigma_thr  = getattr(config, "CRASH_SIGMA_THR",  2.5)
+        ret_thr    = getattr(config, "CRASH_RETURN_THR", 0.10)
+        ret_24h    = df["close"].pct_change(24)
+        sharp_drop = df["returns"] < -(sigma_thr * df["volatility_24h"].shift(1).fillna(0.02))
+        large_drop = ret_24h < -ret_thr
+        df["crash_mode"] = (sharp_drop | large_drop).astype(int)
+    else:
+        df["crash_mode"] = 0
+
     # EMA alignment score: hoeveel EMAs zijn in bull-volgorde gestapeld (0–3)
     # Logica: ema_ratio = close/ema, dus kleinere ratio = EMA hoger dan bij grotere ratio
     #   ema20 > ema50  ↔  ema_ratio_20 < ema_ratio_50
@@ -672,12 +722,6 @@ def build_features(
         ema50_above_ema200 = (df["ema_ratio_50"]    < df["price_vs_ema200"]).astype(int)
         close_above_ema200 = (df["price_vs_ema200"] > 1.0).astype(int)
         df["ema_alignment"] = ema20_above_ema50 + ema50_above_ema200 + close_above_ema200
-
-    # MACD histogram versnelling: richting van momentumverandering (reversal indicator)
-    # Positief = histogram groeit (stijgende momentum), negatief = histogram krimpt (afnemend momentum)
-    if "macd" in df.columns and "macd_signal" in df.columns:
-        macd_hist = df["macd"] - df["macd_signal"]
-        df["macd_hist_slope"] = macd_hist.diff(3)  # 3h verandering in MACD histogram
 
     # VWAP-afstand: dagelijks hersteld om 00:00 UTC
     # Positief = close boven daag-VWAP (intraday bullish), negatief = onder VWAP

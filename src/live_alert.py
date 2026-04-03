@@ -440,6 +440,25 @@ def run_live_alert(
                       f"→ positie gehalveerd (${position_size:,.0f} → ${position_size/2:,.0f})")
                 position_size /= 2
 
+            # ── S16-B: Crash-modus positie-halvering ─────────────────────────
+            # Flash-crash (>2.5σ candle) of -10% dag → halve positie.
+            _crash_factor = getattr(config, "CRASH_SIZE_FACTOR", 0.5)
+            if signaal.get("crash_mode") and _crash_factor < 1.0:
+                new_size = position_size * _crash_factor
+                print(f"  ⚠️  Crash-modus actief: positie gehalveerd "
+                      f"(${position_size:,.0f} → ${new_size:,.0f})")
+                position_size = new_size
+
+            # ── S17-B: MACD momentum-gewogen positiescaling ───────────────────
+            # Sterk positief MACD-momentum → tot 1.5× positiegroottegrootte.
+            if getattr(config, "MACD_MOMENTUM_SCALE", False):
+                _macd_mult = 1.0 + float(signaal.get("macd_size_mult", 0.0))
+                if _macd_mult > 1.005:  # alleen printen bij merkbare verhoging
+                    new_size = position_size * _macd_mult
+                    print(f"  📈 MACD momentum ×{_macd_mult:.2f}: "
+                          f"${position_size:,.0f} → ${new_size:,.0f}")
+                    position_size = new_size
+
             if _use_structural:
                 sl_price, tp_price = compute_structural_sl_tp(
                     entry_price, direction, _supports, _resistances,

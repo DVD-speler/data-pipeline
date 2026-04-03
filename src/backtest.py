@@ -75,13 +75,16 @@ def run_backtest(
             _rthr = _lrt()
             eff_thr = regime.map(
                 lambda r: _rthr.get(_regime_map.get(r, "ranging"), threshold)
-            ).clip(0.50, 0.95)
+            ).astype(float)
         except Exception:
             offsets = config.REGIME_THRESHOLD_OFFSETS
-            eff_thr = regime.map(lambda r: threshold + offsets.get(r, 0.0)).clip(0.50, 0.95)
-        results["signal_long"] = (results["proba"] >= eff_thr).astype(int)
+            eff_thr = regime.map(lambda r: threshold + offsets.get(r, 0.0)).astype(float)
     else:
-        results["signal_long"] = (results["proba"] >= threshold).astype(int)
+        regime = pd.Series(0, index=results.index)
+        eff_thr = pd.Series(float(threshold), index=results.index)
+
+    eff_thr = eff_thr.clip(0.48, 0.95)
+    results["signal_long"] = (results["proba"] >= eff_thr).astype(int)
     # ── Regime filter ─────────────────────────────────────────────────────────
     if regime_filter and "price_vs_ema200" in test_df.columns:
         above_ema200 = (test_df["price_vs_ema200"] > 1.0).reindex(results.index, fill_value=True)
@@ -248,7 +251,17 @@ def run_backtest(
             in_downtrend = pd.Series(True, index=results.index)
         # Geen short als er al een long-signaal is op dit uur (vermijdt conflicten)
         no_long_conflict = (results["signal_long"] == 0)
-        results["signal_short"] = (confirmed_bear & bearish_proba & in_downtrend & no_long_conflict).astype(int)
+        # S14-C: ranging_score filter — geen shorts als markt mogelijk kantelend is.
+        # ADX is een lagging indicator: ranging_score ≥ 2 betekent dat minstens 2 van 3
+        # indicatoren (ADX, BB-breedte, MACD-stabiliteit) ranging signaleren → short overgeslagen.
+        ranging_thr = getattr(config, "RANGING_SCORE_THR", 2)
+        if "ranging_score" in test_df.columns:
+            not_ranging = (test_df["ranging_score"].reindex(results.index, fill_value=0) < ranging_thr)
+        else:
+            not_ranging = pd.Series(True, index=results.index)
+        results["signal_short"] = (
+            confirmed_bear & bearish_proba & in_downtrend & no_long_conflict & not_ranging
+        ).astype(int)
 
     results["signal"] = results["signal_long"] - results["signal_short"]
 
@@ -261,7 +274,8 @@ def run_backtest(
     # nauwere stops in rustige markten (betere risico/beloning verhouding).
     # Clip: minimum 0.5% (niet te eng), maximum 10% (niet te wijd).
     if "atr_pct" in test_df.columns and stop_loss > 0:
-        atr_stop = (2.0 * test_df["atr_pct"].reindex(results.index)).clip(lower=0.005, upper=0.10)
+        _atr_mult = getattr(config, "ATR_STOP_MULTIPLIER", 2.0)
+        atr_stop = (_atr_mult * test_df["atr_pct"].reindex(results.index)).clip(lower=0.005, upper=0.10)
         long_return  = raw_return.clip(lower=-atr_stop)
         short_return = (-raw_return).clip(lower=-atr_stop)  # short profiteert van daling
     elif stop_loss > 0:
@@ -287,6 +301,23 @@ def run_backtest(
         # Short sizing: hoe lager de proba, hoe groter de short positie
         base_short = ((0.5 - results["proba"]) * 2).clip(0, 1)
         short_size = (base_short * vol_scale).clip(0, 1)
+
+        # S16-B: Crash-modus positie-halvering.
+        # Bij een scherpe 1h-daling (>2.5σ) of >10% dagverlies halveert de positie.
+        # Beschermt kapitaal in flash-crash/cascadering zonder de trade te stoppen.
+        _crash_factor = getattr(config, "CRASH_SIZE_FACTOR", 0.5)
+        if "crash_mode" in test_df.columns and _crash_factor < 1.0:
+            crash = test_df["crash_mode"].reindex(results.index, fill_value=0).astype(float)
+            crash_scale = 1.0 - crash * (1.0 - _crash_factor)
+            long_size  = (long_size  * crash_scale).clip(0, 1)
+            short_size = (short_size * crash_scale).clip(0, 1)
+
+        # S17-B: MACD momentum-gewogen positiescaling.
+        # Sterk positief MACD-momentum → max 1.5× positiegrootte bij entry.
+        # Alleen longs: short-positie niet vergroot bij bullish momentum.
+        if getattr(config, "MACD_MOMENTUM_SCALE", False) and "macd_size_mult" in test_df.columns:
+            macd_mult = 1.0 + test_df["macd_size_mult"].reindex(results.index, fill_value=0)
+            long_size = (long_size * macd_mult).clip(0, 1)
     else:
         long_size  = results["signal_long"].astype(float)
         short_size = results["signal_short"].astype(float)
@@ -829,7 +860,7 @@ def run_walkforward(
         val   = df.iloc[train_end - val_h : train_end]
         test  = df.iloc[train_end : train_end + test_h]
 
-        if len(train) < 500 or len(val) < 100:
+        if len(train) < 500 or len(val) < 100 or len(test) == 0:
             start += step_h
             fold  += 1
             continue
@@ -1095,10 +1126,29 @@ def generate_live_signal(df_ohlcv, p1p2, p1_heatmap, direction_bias,
     except Exception:
         pass  # skew gate uitgeschakeld als Deribit onbereikbaar
 
+    # S14-C: ranging_score filter — geen shorts als markt mogelijk kantelend is.
+    ranging_score_val = 0.0
+    if "ranging_score" in last_row.columns:
+        ranging_score_val = float(last_row["ranging_score"].iloc[0])
+    ranging_thr = getattr(config, "RANGING_SCORE_THR", 2)
+    not_ranging = (ranging_score_val < ranging_thr)
+
+    # S16-B: crash_mode — geef terug aan run_live_alert voor positie-halvering
+    crash_mode_val = 0
+    if "crash_mode" in last_row.columns:
+        crash_mode_val = int(last_row["crash_mode"].iloc[0])
+
+    # S17-B: macd_size_mult — geef terug voor momentum-scaling
+    macd_size_mult_val = 0.0
+    if "macd_size_mult" in last_row.columns:
+        macd_size_mult_val = float(last_row["macd_size_mult"].iloc[0])
+
     if proba >= eff_threshold and regime_ok and not death_cross and confirm_4h and not skew_blocked:
         signaal = "LONG"
-    elif proba <= threshold_short and threshold_short > 0 and not regime_ok:
+    elif proba <= threshold_short and threshold_short > 0 and not regime_ok and not_ranging:
         signaal = "SHORT"
+    elif proba <= threshold_short and threshold_short > 0 and not regime_ok and not not_ranging:
+        signaal = f"WACHT (ranging_score {ranging_score_val:.0f} ≥ {ranging_thr} — geen short in ranging markt)"
     elif skew_blocked and proba >= eff_threshold:
         signaal = f"WACHT (25D skew gate — puts te duur, skew {skew_25d:+.1f}%)"
     elif death_cross and proba >= eff_threshold:
@@ -1128,6 +1178,10 @@ def generate_live_signal(df_ohlcv, p1p2, p1_heatmap, direction_bias,
         "skew_blocked":        skew_blocked,
         "horizon":             f"{config.PREDICTION_HORIZON_H} uur",
         "prijs":               float(last_row["close"].iloc[0]),
+        # S14-C / S16-B / S17-B: waarden voor positie-sizing in run_live_alert
+        "ranging_score":       ranging_score_val,
+        "crash_mode":          crash_mode_val,
+        "macd_size_mult":      macd_size_mult_val,
     }
 
 
