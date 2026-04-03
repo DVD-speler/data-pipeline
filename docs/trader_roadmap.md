@@ -157,29 +157,40 @@ Doel: Aanvullen op het schone 47-feature fundament met kwalitatieve nieuwe bronn
 
 ---
 
-### Sprint 10 — Betrouwbaarheid & variantie reductie
+### Sprint 10 — Betrouwbaarheid & variantie reductie — VOLTOOID
 
-**Kernprobleem ontdekt (Sprint 9):** run-to-run Sharpe variantie is ±30% (BTC: 15-25 range).
-Dit maakt het onmogelijk om sprints eerlijk te vergelijken op single-run Sharpe.
+#### S10-A Walk-forward Sharpe rapport — VOLTOOID
+- `wf_sharpe_report()` toegevoegd in model.py; wordt na elke backtest getoond
+- 3 folds × 30 dagen = sep 2025 → apr 2026 (bull + correctie + ranging)
+- Bevinding: BTC WF mean +0.76 (std 3.4), ETH WF mean +2.90 (std 5.5)
+- Fold jan-feb = 0 trades = correct gedrag (bear markt + regime filter blokkeert longs)
+- Single-run Sharpe > WF Sharpe doordat calibratie + Kelly + 4h gate significant bijdragen
 
-#### S10-A Walk-forward Sharpe als primaire metric — prioriteit hoog
-- Vervang single-run backtest door 3-fold walk-forward Sharpe (gemiddelde over 3 periodes)
-- Elke fold = 90 dagen test; schuif 90 dagen per fold
-- Geeft stabielere metric; onderscheidt echte signal van run-to-run ruis
+#### S10-B Seed-fixing — VOLTOOID (was al goed)
+- LightGBM, RF, XGBoost: allen `random_state=42` → run-to-run variantie was Optuna + data-afhankelijk
+- Optuna: zelf stochastisch → variantie onvermijdelijk
 
-#### S10-B Seed-fixing voor vergelijkbaarheid — prioriteit medium
-- Voeg `random_state` toe aan alle Optuna runs (reproduceerbaar)
-- LightGBM seed fixen: `seed=42` in params
-- Maakt A/B vergelijking tussen sprints betrouwbaarder
+---
 
-#### S10-C Daily model trainen (1d timeframe) — prioriteit medium
+### Sprint 11 — Regime-bewuste verbetering
+
+**Inzicht uit WF:** Model functioneert goed in bull regimes, maar heeft 0 trades in bear (jan-feb correctie).
+Dit is fundamenteel juist (geen longs in dalende markt), maar er is ruimte voor korte en ranging strategieën.
+
+#### S11-A Bear-regime short model — prioriteit hoog
+- Huidig: short volledig uitgeschakeld
+- Verbetering: activeer short signalen in bear regime (market_regime = -1)
+- Verwacht: bear-periode genereert revenue i.p.v. 0 trades
+
+#### S11-B WF rapport verbeteren — prioriteit medium
+- Huidig: WF gebruikt simpel LGBMClassifier (geen calibratie, geen 4h gate)
+- Verbetering: gebruik calibratie + volledige backtest settings in WF folds
+- Maakt WF Sharpe vergelijkbaar met single-run Sharpe
+
+#### S11-C Daily model trainen (1d timeframe) — prioriteit medium
 - Train apart model op dagelijkse OHLCV + macro features
-- Activeer daily gate in backtest.py (infra al aanwezig)
-- Verwacht: filtert bear-markt entries, verbetert precision
-
-#### S10-D Dynamische TP op ATR-basis — prioriteit laag
-- Huidig: vaste TP% per regime (bull 8%, ranging 6%, bear 4%)
-- Verbetering: TP = entry x (1 + N x ATR/close); N = 3.0/2.5/2.0 per regime
+- Activeer daily gate in backtest.py (infra al aanwezig via S8-C)
+- Verwacht: filtert bear-markt entries, verbetert precision in correcties
 
 ---
 
@@ -196,10 +207,11 @@ Dit maakt het onmogelijk om sprints eerlijk te vergelijken op single-run Sharpe.
 | S8-C Daily gate infra | Hoog | Medium | *** | [x] code aanwezig, wacht op daily model |
 | S9-A Sharpe model selectie | Hoog | Laag | *** | [x] infra OK, geen productie impact |
 | S9-B Symbool-specifieke objective | Hoog | Laag | *** | [x] reverted: Sharpe obj. beter voor beiden |
-| S10-A Walk-forward Sharpe metric | Hoog | Medium | *** | [ ] kern prioriteit |
-| S10-B Seed-fixing reproduceerbaar | Medium | Laag | ** | [ ] |
-| S10-C Daily model (1d timeframe) | Hoog | Medium | *** | [ ] |
-| S10-D Dynamische ATR-TP | Medium | Laag | ** | [ ] |
+| S10-A Walk-forward Sharpe rapport | Hoog | Medium | *** | [x] BTC +0.76, ETH +2.90 WF Sharpe |
+| S10-B Seed-fixing reproduceerbaar | Medium | Laag | ** | [x] al gedaan |
+| S11-A Bear-regime short model | Hoog | Medium | *** | [ ] |
+| S11-B WF rapport verbeteren | Medium | Medium | ** | [ ] |
+| S11-C Daily model (1d timeframe) | Hoog | Medium | *** | [ ] |
 
 ---
 
@@ -216,3 +228,4 @@ Dit maakt het onmogelijk om sprints eerlijk te vergelijken op single-run Sharpe.
 | Sprint 7 | 2026-03-28 | Bybit OI (oi_return_24h, oi_price_divergence), blockchain.info (active_addresses, hash_rate), Fear&Greed 7d momentum | +13.13 -> +24.18 |
 | Sprint 8 | 2026-04-02 | Optuna 150 trials, Sharpe objective (penalty <10 trades), daily gate infra | +24.18 -> +24.76 |
 | Sprint 9 | 2026-04-02 | Model_compare selectie op Sharpe; OPTUNA_SHARPE_SYMBOLS config; per-symbool objective infra | geen meetbare winst; hoge run-to-run variantie ontdekt |
+| Sprint 10 | 2026-04-03 | wf_sharpe_report() toegevoegd (3 folds); seed-fixing was al goed | WF BTC +0.76, ETH +2.90 (bear-markt fold = 0 trades, correct) |

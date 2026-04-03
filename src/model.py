@@ -324,6 +324,85 @@ def _quick_wf_sharpe(df: pd.DataFrame, params: dict, n_folds: int = 3) -> float:
     return float(np.mean(sharpes)) if sharpes else 0.0
 
 
+def wf_sharpe_report(df: pd.DataFrame, symbol: str = config.SYMBOL,
+                     n_folds: int = 3) -> dict:
+    """
+    S10-A: Walk-forward Sharpe rapport over n_folds testperiodes.
+    Hertraint het model per fold met de stabiele lgb_best_params.json params.
+    Rapporteert per-fold Sharpe, gemiddelde en standaarddeviatie.
+
+    Geeft dict terug: {"folds": [...], "mean": float, "std": float}
+    """
+    try:
+        import lightgbm as lgb
+        from src.backtest import compute_metrics, run_backtest
+    except ImportError:
+        print("  WF rapport niet beschikbaar (LightGBM niet geïnstalleerd)")
+        return {}
+
+    import json as _json
+    stable_path = config.symbol_path(symbol, "lgb_best_params.json")
+    if stable_path.exists():
+        with open(stable_path) as f:
+            params = _json.load(f)
+        params["verbose"] = -1
+        params["random_state"] = 42
+    else:
+        params = {"n_estimators": 400, "random_state": 42, "verbose": -1}
+
+    step_h  = config.WALKFORWARD_STEP_DAYS  * 24
+    train_h = config.WALKFORWARD_TRAIN_DAYS * 24
+    test_h  = config.WALKFORWARD_TEST_DAYS  * 24
+    val_h   = config.VALIDATION_SIZE_DAYS   * 24
+
+    n     = len(df)
+    start = n - test_h * n_folds - train_h
+    if start < 0:
+        print("  WF rapport: te weinig data voor walk-forward folds")
+        return {}
+
+    fold_results = []
+    print(f"\n=== Walk-forward Sharpe rapport ({n_folds} folds, {config.WALKFORWARD_TEST_DAYS}d per fold) ===")
+    for i in range(n_folds):
+        train_end   = start + train_h
+        train_start = max(0, train_end - train_h)
+        train_data  = df.iloc[train_start : train_end - val_h]
+        val_data    = df.iloc[train_end - val_h : train_end]
+        test_data   = df.iloc[train_end : train_end + test_h]
+
+        if len(train_data) < 300 or len(test_data) < 50:
+            start += step_h
+            continue
+
+        m = lgb.LGBMClassifier(**params)
+        n_tr = len(train_data)
+        tw = np.linspace(0.5, 1.0, n_tr)
+        m.fit(train_data[config.FEATURE_COLS], train_data["target"], sample_weight=tw)
+
+        probas = m.predict_proba(test_data[config.FEATURE_COLS])[:, 1]
+        thr = optimize_threshold(m, val_data)
+        res = run_backtest(test_data, probas, threshold=thr)
+        m_stats = compute_metrics(res)
+        sharpe = m_stats["sharpe_ratio"]
+        n_trades = m_stats["n_trades"]
+
+        fold_start = test_data.index[0].strftime("%Y-%m-%d") if len(test_data) else "?"
+        fold_end   = test_data.index[-1].strftime("%Y-%m-%d") if len(test_data) else "?"
+        print(f"  Fold {i+1}: {fold_start} → {fold_end}  |  Sharpe: {sharpe:+.2f}  |  Trades: {n_trades}")
+        fold_results.append(sharpe)
+        start += step_h
+
+    if not fold_results:
+        return {}
+
+    mean_s = float(np.mean(fold_results))
+    std_s  = float(np.std(fold_results))
+    print(f"  ─────────────────────────────────────────────────────")
+    print(f"  Gemiddelde Sharpe: {mean_s:+.2f}  |  Std: {std_s:.2f}  |  Range: [{min(fold_results):+.2f}, {max(fold_results):+.2f}]")
+
+    return {"folds": fold_results, "mean": mean_s, "std": std_s}
+
+
 def auto_promote_optuna(df: pd.DataFrame, symbol: str = config.SYMBOL,
                         min_improvement: float = 0.1) -> bool:
     """

@@ -211,6 +211,17 @@ def fase_backtest(model=None, test_df=None, probas=None, symbol: str = None):
             print(f"  {k:<22}: {v}")
 
     plot_results(results, metrics)
+
+    # S10-A: Walk-forward Sharpe rapport — stabielere metric dan single-run Sharpe.
+    # Hertraint per fold met stabiele lgb_best_params; rapporteert mean ± std over n folds.
+    try:
+        import pandas as _pd
+        from src.model import wf_sharpe_report
+        full_features = _pd.read_parquet(config.symbol_path(sym, "features.parquet"))
+        wf_sharpe_report(full_features, symbol=sym, n_folds=3)
+    except Exception as _e:
+        print(f"  WF rapport overgeslagen: {_e}")
+
     return results, metrics
 
 
