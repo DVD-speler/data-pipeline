@@ -346,11 +346,27 @@ def run_live_alert(
             print(f"  Nieuw kapitaal: €{state['capital']:,.2f}")
 
             gross_pct = state["closed_trades"][-1]["gross_return_pct"]
+            hours_open = round(
+                (pd.Timestamp(exit_info["exit_time"]) - pd.Timestamp(pos["open_time"])).total_seconds() / 3600, 1
+            )
+            exit_reason = exit_info["exit_reason"]
+            if "SL" in exit_reason:
+                exit_explain = f"Stop-loss geraakt — prijs daalde tot ${exit_info['exit_price']:,.0f} (−{abs(pos['entry_price']-exit_info['exit_price'])/pos['entry_price']*100:.1f}%)"
+            elif "TP" in exit_reason:
+                exit_explain = f"Take-profit bereikt — prijs steeg tot ${exit_info['exit_price']:,.0f} (+{abs(exit_info['exit_price']-pos['entry_price'])/pos['entry_price']*100:.1f}%)"
+            elif "Model" in exit_reason:
+                exit_explain = f"Model-exit — stijgingskans daalde onder drempelwaarde ({exit_reason})"
+            else:
+                exit_explain = f"168h tijdsvangnet bereikt — positie gesloten op huidige prijs"
+
             msg = (
                 f"{icon} **TRADE GESLOTEN** — {symbol}\n"
-                f"📈 **{pos['direction']}** | ${pos['entry_price']:,.0f} → ${exit_info['exit_price']:,.0f}\n"
-                f"🎯 Reden: {exit_info['exit_reason']} | Rendement: {sign}{gross_pct:.2f}%\n"
-                f"💰 P&L: {sign}€{pnl_euro:.2f} | Kapitaal: €{state['capital']:,.2f}"
+                f"📊 **{pos['direction']}** | Entry: ${pos['entry_price']:,.0f} → Exit: ${exit_info['exit_price']:,.0f}\n"
+                f"🎯 **Reden:** {exit_explain}\n"
+                f"⏱️ {hours_open:.0f}h open "
+                f"(open: {pd.Timestamp(pos['open_time']).strftime('%d-%m %H:%M')}, "
+                f"exit: {pd.Timestamp(exit_info['exit_time']).strftime('%d-%m %H:%M')} UTC)\n"
+                f"💰 Rendement: {sign}{gross_pct:.2f}% | P&L: {sign}€{pnl_euro:.2f} | Kapitaal: €{state['capital']:,.2f}"
             )
             send_alert(msg)
         else:
@@ -493,63 +509,136 @@ def run_live_alert(
 
             coin_name = symbol.replace("USDT", "")
             coin_amount = round(position_size / entry_price, 6)
-            icon = "🟢"
-            ema200_label = "boven EMA200" if signaal.get("regime_boven_ema200") else "onder EMA200"
+            sl_pct_actual = abs(entry_price - sl_price) / entry_price
+            tp_pct_actual = abs(tp_price - entry_price) / entry_price
+            rr_ratio = tp_pct_actual / max(sl_pct_actual, 0.001)
+            sl_type = "structureel swing-low" if _use_structural else f"ATR×{getattr(config, 'ATR_STOP_MULTIPLIER', 2.0):.1f}"
+            tp_type = "structurele resistance" if _use_structural else "vaste TP-pct"
+
+            # Onderbouwingsregels
+            checks = []
+            checks.append(
+                f"• Model 1h: **{signaal['kans_stijging']}** ≥ {signaal['long_threshold']} "
+                f"(regime-drempel {regime_label})"
+            )
+            if signaal.get("proba_4h", "n/a") != "n/a":
+                c4h = "✅" if signaal.get("confirm_4h") else "⚠️"
+                checks.append(f"• 4h bevestiging: {signaal['proba_4h']} {c4h}")
+            ema_lbl = "✅ boven" if signaal.get("regime_boven_ema200") else "❌ onder"
+            dc_lbl = "⚠️ ja" if signaal.get("death_cross") else "✅ nee"
+            checks.append(f"• EMA200: {ema_lbl} | Death cross: {dc_lbl}")
+            rs = int(signaal.get("ranging_score", 0))
+            checks.append(
+                f"• Ranging score: {rs}/3 — {'markt trending ✅' if rs < 2 else 'lichte squeeze ⚠️'}"
+            )
+            skew_lbl = f"⚠️ puts duur ({signaal.get('btc_skew_25d','?')})" if signaal.get("skew_blocked") else f"✅ normaal ({signaal.get('btc_skew_25d','?')})"
+            checks.append(f"• 25D skew: {skew_lbl}")
+            if signaal.get("crash_mode"):
+                checks.append("• ⚠️ Crash-modus: positie gehalveerd")
+            macd_mult = 1.0 + float(signaal.get("macd_size_mult", 0.0))
+            if macd_mult > 1.01:
+                checks.append(f"• 📈 MACD momentum ×{macd_mult:.2f}: positie vergroot")
+
             msg = (
-                f"{icon} **{direction} SIGNAAL** — {symbol}\n"
-                f"⏰ {pd.Timestamp(latest_ts).strftime('%d-%m-%Y %H:%M')} UTC\n"
-                f"💰 Entry: ${entry_price:,.0f} | SL: ${sl_price:,.0f} (−{abs(entry_price-sl_price)/entry_price*100:.1f}%) | "
-                f"TP: ${tp_price:,.0f} (+{abs(tp_price-entry_price)/entry_price*100:.1f}%)\n"
-                f"📊 Proba 1h: {signaal['kans_stijging']} | 4h: {signaal.get('proba_4h','n/a')} | "
-                f"Regime: {regime_label} ({ema200_label})\n"
-                f"💼 Positie: ${position_size:,.0f} ({coin_amount:.6f} {coin_name}) | Risico: €{capital*risk_pct:.2f} ({risk_pct*100:.0f}% kapitaal)"
+                f"🟢 **LONG — {symbol}**\n"
+                f"⏰ {pd.Timestamp(latest_ts).strftime('%d-%m-%Y %H:%M')} UTC | Entry: **${entry_price:,.0f}**\n"
+                f"\n**Onderbouwing**\n"
+                + "\n".join(checks) +
+                f"\n\n**Niveaus**\n"
+                f"• SL: **${sl_price:,.0f}** (−{sl_pct_actual*100:.1f}%) — {sl_type}\n"
+                f"• TP: **${tp_price:,.0f}** (+{tp_pct_actual*100:.1f}%) — {tp_type}\n"
+                f"• R/R: **{rr_ratio:.1f}** | Max houdtijd: 168h "
+                f"(tot {horizon_end.strftime('%d-%m %H:%M')} UTC)\n"
+                f"\n**Positie**\n"
+                f"• **${position_size:,.0f}** ({coin_amount:.5f} {coin_name}) "
+                f"| Risico: €{capital*risk_pct:.2f} ({risk_pct*100:.0f}% kapitaal)"
             )
             opened_new_position = True
             send_discord_alert(msg)
 
     # ── WACHT bericht (geen nieuwe trade geopend deze run) ────────────────────
+    # Throttle: stuur max 1x per 4 uur, tenzij proba binnen 5% van drempel (near-miss)
     if not opened_new_position:
         ts_str = pd.Timestamp(latest_ts).strftime("%d-%m-%Y %H:%M")
         sig_label = signaal["signaal"]
+        proba_raw = signaal.get("proba_raw", 0.0)
+        try:
+            long_thr_float = float(signaal["long_threshold"])
+        except (ValueError, KeyError):
+            long_thr_float = 0.58
+        near_miss = proba_raw >= long_thr_float - 0.05
+        hour_now = pd.Timestamp(latest_ts).hour
+        send_wacht = near_miss or (hour_now % 4 == 0)
 
-        if had_open_pos and state["open_position"] is not None:
-            # Positie loopt nog — nieuw signaal (indien aanwezig) genegeerd
-            pos = state["open_position"]
-            hours_open = round(
-                (pd.Timestamp(latest_ts) - pd.Timestamp(pos["open_time"])).total_seconds() / 3600, 1
-            )
-            reden = (
-                f"Al een **{pos['direction']}** positie open "
-                f"({hours_open}h geleden, entry ${pos['entry_price']:,.0f})\n"
-                f"📍 SL: ${pos['sl_price']:,.0f} | TP: ${pos['tp_price']:,.0f} | "
-                f"Vangnet: {pd.Timestamp(pos['horizon_end']).strftime('%d-%m %H:%M')} UTC (168h)"
-            )
-        elif "death cross" in sig_label.lower() or "EMA50" in sig_label:
-            reden = (
-                f"**Death cross actief** (EMA50 onder EMA200) → long geblokkeerd\n"
-                f"📊 Proba: {signaal['kans_stijging']} | Drempel: {signaal['long_threshold']} "
-                f"| Regime: {signaal.get('market_regime', '?')}"
-            )
-        elif "EMA200" in sig_label:
-            reden = (
-                f"Proba hoog genoeg ({signaal['kans_stijging']} ≥ {signaal['long_threshold']}) "
-                f"maar prijs **onder EMA200** → long geblokkeerd door regime-filter"
-            )
-        else:
-            regime = signaal.get("market_regime", "")
-            base_thr = signaal.get("long_threshold_base", signaal["long_threshold"])
-            regime_info = f" (regime: {regime}, offset toegepast)" if regime else ""
-            reden = (
-                f"Proba te laag voor signaal: **{signaal['kans_stijging']}** "
-                f"(drempel: {signaal['long_threshold']}{regime_info})"
-            )
+        if send_wacht:
+            if had_open_pos and state["open_position"] is not None:
+                pos = state["open_position"]
+                hours_open = round(
+                    (pd.Timestamp(latest_ts) - pd.Timestamp(pos["open_time"])).total_seconds() / 3600, 1
+                )
+                pnl_pct = (latest_close - pos["entry_price"]) / pos["entry_price"] * 100
+                pnl_sign = "+" if pnl_pct >= 0 else ""
+                reden = (
+                    f"**{pos['direction']}** open ({hours_open:.0f}h) | Entry ${pos['entry_price']:,.0f}\n"
+                    f"📍 SL: ${pos['sl_price']:,.0f} | TP: ${pos['tp_price']:,.0f} | "
+                    f"Huidig: ${latest_close:,.0f} ({pnl_sign}{pnl_pct:.1f}%)\n"
+                    f"⏱️ Vangnet: {pd.Timestamp(pos['horizon_end']).strftime('%d-%m %H:%M')} UTC"
+                )
+            elif "skew" in sig_label.lower():
+                reden = (
+                    f"**25D skew gate actief** — puts te duur voor veilige long\n"
+                    f"📊 Proba: {signaal['kans_stijging']} ≥ {signaal['long_threshold']} ✅ | "
+                    f"Skew: {signaal.get('btc_skew_25d','?')} (grens: {getattr(config,'SKEW_BEARISH_GATE',5.0):.0f}%)\n"
+                    f"💡 Wacht tot skew < {getattr(config,'SKEW_BEARISH_GATE',5.0):.0f}% voor herstart long-signalen"
+                )
+            elif "death cross" in sig_label.lower():
+                reden = (
+                    f"**Death cross actief** (EMA50 < EMA200) — bull trap risico\n"
+                    f"📊 Proba: {signaal['kans_stijging']} | Drempel: {signaal['long_threshold']} "
+                    f"| Regime: {signaal.get('market_regime','?')}\n"
+                    f"💡 Wacht op EMA50 > EMA200 herstellijn"
+                )
+            elif "EMA200" in sig_label or "ema200" in sig_label.lower():
+                reden = (
+                    f"Proba hoog genoeg (**{signaal['kans_stijging']}** ≥ {signaal['long_threshold']}) "
+                    f"maar prijs **onder EMA200** — long geblokkeerd\n"
+                    f"💡 Regime: {signaal.get('market_regime','?')} | "
+                    f"Wacht op herstel boven de 200-uur gemiddelde"
+                )
+            elif "4h" in sig_label.lower():
+                reden = (
+                    f"1h model klaar (**{signaal['kans_stijging']}** ≥ {signaal['long_threshold']}) "
+                    f"maar **4h bevestiging ontbreekt**\n"
+                    f"📊 4h proba: {signaal.get('proba_4h','n/a')} | "
+                    f"Regime: {signaal.get('market_regime','?')}\n"
+                    f"💡 Beide tijdsframes moeten bevestigen voor entry"
+                )
+            elif "ranging" in sig_label.lower():
+                reden = (
+                    f"**Ranging market** gedetecteerd — short geblokkeerd\n"
+                    f"📊 Ranging score: {signaal.get('ranging_score',0):.0f}/3 "
+                    f"(ADX laag + BB squeeze + MACD instabiel)\n"
+                    f"💡 Geen short in zijwaartse markt — wacht op trendbevestiging"
+                )
+            else:
+                regime = signaal.get("market_regime", "")
+                gap_pct = (long_thr_float - proba_raw) * 100
+                near_str = f" — nog **{gap_pct:.1f}%** te gaan" if gap_pct < 5 else ""
+                reden = (
+                    f"Proba te laag: **{signaal['kans_stijging']}** < {signaal['long_threshold']} "
+                    f"({regime} regime){near_str}\n"
+                    f"📊 4h: {signaal.get('proba_4h','n/a')} | "
+                    f"Skew: {signaal.get('btc_skew_25d','?')} | "
+                    f"Ranging: {signaal.get('ranging_score',0):.0f}/3"
+                )
 
-        wacht_msg = (
-            f"⏸️ **WACHT** — {symbol}\n"
-            f"⏰ {ts_str} UTC | Prijs: ${latest_close:,.0f}\n"
-            f"💡 {reden}"
-        )
-        send_alert(wacht_msg)
+            wacht_icon = "🔔" if near_miss else "⏸️"
+            wacht_msg = (
+                f"{wacht_icon} **WACHT** — {symbol}\n"
+                f"⏰ {ts_str} UTC | Prijs: ${latest_close:,.0f}\n"
+                f"💡 {reden}"
+            )
+            send_alert(wacht_msg)
 
     # ── Opslaan ───────────────────────────────────────────────────────────────
     state["last_checked"] = str(latest_ts)
