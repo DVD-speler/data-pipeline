@@ -188,6 +188,8 @@ def fase_backtest(model=None, test_df=None, probas=None, symbol: str = None):
     from src.model import load_model, load_optimal_threshold, time_split
 
     sym = symbol or config.SYMBOL
+    # Zet config.SYMBOL zodat daily gate in run_backtest het juiste symbool laadt
+    config.SYMBOL = sym
     if model is None:
         model = load_model(symbol=sym)
         features = pd.read_parquet(config.symbol_path(sym, "features.parquet"))
@@ -482,6 +484,14 @@ def fase_model_daily(features=None, symbol: str = None):
     hourly_params_path = config.symbol_path(sym, "lgb_best_params.json")
     hourly_params_bak  = config.symbol_path(sym, "lgb_best_params.json.bak")
 
+    # Pad-backups voor bestanden die train_model() overschrijft
+    hourly_model_path  = config.symbol_path(sym, "model.pkl")
+    hourly_model_bak   = config.symbol_path(sym, "model.pkl.bak")
+    hourly_cal_path    = config.symbol_path(sym, "model_calibrated.pkl")
+    hourly_cal_bak     = config.symbol_path(sym, "model_calibrated.pkl.bak")
+    hourly_thr_path    = config.symbol_path(sym, "optimal_threshold.json")
+    hourly_thr_bak     = config.symbol_path(sym, "optimal_threshold.json.bak")
+
     # Patch config zodat train_model de dagelijkse features en split gebruikt
     orig_feature_cols   = config.FEATURE_COLS
     orig_filter_cols    = config.FILTER_COLS
@@ -492,36 +502,40 @@ def fase_model_daily(features=None, symbol: str = None):
     config.TEST_SIZE_DAYS       = cfg_daily.TEST_SIZE_DAYS
     config.VALIDATION_SIZE_DAYS = cfg_daily.VALIDATION_SIZE_DAYS
 
-    # Wissel tijdelijk naar dagmodel-params
-    if hourly_params_path.exists():
-        shutil.copy2(hourly_params_path, hourly_params_bak)
+    # Maak backups van hourly bestanden die train_model() zal overschrijven
+    for src, bak in [(hourly_params_path, hourly_params_bak),
+                     (hourly_model_path, hourly_model_bak),
+                     (hourly_cal_path, hourly_cal_bak),
+                     (hourly_thr_path, hourly_thr_bak)]:
+        if src.exists():
+            shutil.copy2(src, bak)
+
+    # Zet dagmodel-params actief
     if daily_params_src.exists():
         shutil.copy2(daily_params_src, hourly_params_path)
 
     try:
         model, test_df, probas = train_model(features, symbol=sym)
+        # Kopieer dagmodel-output naar 1d_* paden VOOR het herstellen van hourly
+        for src, dst_name in [(hourly_model_path, "model.pkl"),
+                              (hourly_thr_path,   "optimal_threshold.json")]:
+            if src.exists():
+                dst = cfg_daily.symbol_path_daily(sym, dst_name)
+                shutil.copy2(src, dst)
+                print(f"Dagmodel opgeslagen: {dst}")
     finally:
         config.FEATURE_COLS         = orig_feature_cols
         config.FILTER_COLS          = orig_filter_cols
         config.TEST_SIZE_DAYS       = orig_test_days
         config.VALIDATION_SIZE_DAYS = orig_val_days
-        # Herstel originele uurmodel-params
-        if hourly_params_bak.exists():
-            shutil.copy2(hourly_params_bak, hourly_params_path)
-            hourly_params_bak.unlink()
-
-    # Kopieer model en threshold naar dagmodel-pad (BTCUSDT_1d_*.*)
-    src_model = config.symbol_path(sym, "model.pkl")
-    dst_model = cfg_daily.symbol_path_daily(sym, "model.pkl")
-    if src_model.exists():
-        shutil.copy2(src_model, dst_model)
-        print(f"Dagmodel opgeslagen: {dst_model}")
-
-    src_thr = config.symbol_path(sym, "optimal_threshold.json")
-    dst_thr = cfg_daily.symbol_path_daily(sym, "optimal_threshold.json")
-    if src_thr.exists():
-        shutil.copy2(src_thr, dst_thr)
-        print(f"Drempelwaarden opgeslagen: {dst_thr}")
+        # Herstel hourly bestanden (params, model, threshold)
+        for src, bak in [(hourly_params_path, hourly_params_bak),
+                         (hourly_model_path, hourly_model_bak),
+                         (hourly_cal_path, hourly_cal_bak),
+                         (hourly_thr_path, hourly_thr_bak)]:
+            if bak.exists():
+                shutil.copy2(bak, src)
+                bak.unlink()
 
     return model, test_df, probas
 

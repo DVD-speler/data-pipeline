@@ -170,9 +170,58 @@ def optimize_threshold(
     return _optimize_threshold_from_probas(probas, val_df, thr_min, thr_max, min_trades)
 
 
-def optimize_short_threshold(*args, **kwargs) -> float:
-    """Verwijderd (B5: long-only codebase). Geeft altijd 0.0 terug."""
-    return 0.0
+def optimize_short_threshold(
+    model,
+    val_df: pd.DataFrame,
+    thr_min: float = 0.20,
+    thr_max: float = 0.40,
+    min_trades: int = 5,
+) -> float:
+    """
+    S12-A: Zoek de optimale short-drempelwaarde op de validatieset.
+    Evalueert uitsluitend op bear-regime rijen (market_regime == -1).
+    Sweept proba-drempel van thr_min tot thr_max; kiest drempel met hoogste Sharpe.
+
+    Returns 0.0 als er te weinig bear-regime data is of als geen threshold
+    rendabel is (short volledig uitgeschakeld).
+    """
+    if "market_regime" not in val_df.columns:
+        return 0.0
+
+    # Gebruik alleen bear-regime periode voor short threshold optimalisatie
+    bear_val = val_df[val_df["market_regime"] == -1]
+    if len(bear_val) < 100:
+        return 0.0
+
+    from src.backtest import compute_metrics, run_backtest
+
+    probas_full = model.predict_proba(val_df[config.FEATURE_COLS])[:, 1]
+    probas_bear = probas_full[val_df.index.isin(bear_val.index)]
+
+    best_sharpe = -np.inf
+    best_thr    = 0.0
+
+    n_steps = round((thr_max - thr_min) / 0.01)
+    for thr in np.linspace(thr_min, thr_max, n_steps, endpoint=False):
+        # Tijdelijk config waarde overschrijven voor de sweep
+        _orig = getattr(config, "SHORT_ENTRY_THRESHOLD", 0.30)
+        config.SHORT_ENTRY_THRESHOLD = float(thr)
+        try:
+            r = run_backtest(
+                bear_val, probas_bear,
+                threshold=2.0,          # geen longs (threshold onbereikbaar hoog)
+                use_position_sizing=False,
+                stop_loss=0.0,
+                regime_filter=True,
+            )
+            m = compute_metrics(r)
+            if m["n_short"] >= min_trades and m["sharpe_ratio"] > best_sharpe:
+                best_sharpe = m["sharpe_ratio"]
+                best_thr    = float(thr)
+        finally:
+            config.SHORT_ENTRY_THRESHOLD = _orig
+
+    return round(best_thr, 2) if best_sharpe > 0 else 0.0
 
 
 # ── Optuna hyperparameter search ─────────────────────────────────────────────

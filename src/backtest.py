@@ -178,11 +178,17 @@ def run_backtest(
     # Blokkeert 1h longs als het dagelijks model bearish is (proba < threshold).
     # Laad daily features + model on-the-fly als DAILY_GATE_ENABLED=True.
     # Toepasbaar op het testperiode-deel dat door de daily data wordt gedekt.
-    if getattr(config, "DAILY_GATE_ENABLED", False) and regime_filter:
+    # S12-B: daily gate alleen voor symbolen met voldoende model-kwaliteit (DAILY_GATE_SYMBOLS).
+    _daily_symbols = getattr(config, "DAILY_GATE_SYMBOLS", [])
+    _sym_now = getattr(config, "SYMBOL", "BTCUSDT")
+    _daily_gate_ok = getattr(config, "DAILY_GATE_ENABLED", False) and (
+        not _daily_symbols or _sym_now in _daily_symbols
+    )
+    if _daily_gate_ok and regime_filter:
         try:
             import config_daily
             from pathlib import Path
-            sym_guess = getattr(config, "SYMBOL", "BTCUSDT")
+            sym_guess = _sym_now
             daily_feat_path = config_daily.symbol_path_daily(sym_guess, "features.parquet")
             if not daily_feat_path.exists():
                 # Probeer uit test_df de symbol te achterhalen via kolom of pad
@@ -219,8 +225,17 @@ def run_backtest(
     # Actief uitsluitend bij market_regime == -1 (ADX > 20 en -DI > +DI).
     # Signaal: proba < SHORT_ENTRY_THRESHOLD (model ziet weinig kans op stijging).
     # Doel: verdient in bear-fases waar long volledig geblokkeerd is (0 trades).
-    bear_short_enabled = getattr(config, "BEAR_REGIME_SHORT_ENABLED", False)
-    short_thr = getattr(config, "SHORT_ENTRY_THRESHOLD", 0.35)
+    _short_symbols = getattr(config, "BEAR_REGIME_SHORT_SYMBOLS", [])
+    bear_short_enabled = getattr(config, "BEAR_REGIME_SHORT_ENABLED", False) and (
+        not _short_symbols or getattr(config, "SYMBOL", "BTCUSDT") in _short_symbols
+    )
+    # S12-A: laad geoptimaliseerde short threshold uit optimal_threshold.json als beschikbaar.
+    # Fallback naar config.SHORT_ENTRY_THRESHOLD (handmatig ingesteld: 0.30).
+    try:
+        _, _saved_short_thr = load_optimal_threshold()
+        short_thr = _saved_short_thr if _saved_short_thr > 0 else getattr(config, "SHORT_ENTRY_THRESHOLD", 0.30)
+    except Exception:
+        short_thr = getattr(config, "SHORT_ENTRY_THRESHOLD", 0.30)
     results["signal_short"] = 0
     if bear_short_enabled and regime_filter and "market_regime" in test_df.columns:
         confirmed_bear = (test_df["market_regime"].reindex(results.index, fill_value=0) == -1)

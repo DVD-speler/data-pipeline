@@ -45,6 +45,9 @@ OPTUNA_SHARPE_SYMBOLS = []   # lege lijst = gebruik OPTUNA_SHARPE_OBJECTIVE voor
 # Doel: genereert rendement in bear-fases waar longs geblokkeerd zijn (0 trades).
 BEAR_REGIME_SHORT_ENABLED = True
 SHORT_ENTRY_THRESHOLD     = 0.30   # short wanneer proba < 0.30 (model sterk bearish)
+# Short alleen voor symbolen met bewezen WF-verbetering (BTC: WF +0.76→+4.97 met daily gate).
+# ETH: short model hurt performance (WF regressie + negatieve single-run) → uitgeschakeld.
+BEAR_REGIME_SHORT_SYMBOLS = ["BTCUSDT"]  # lege lijst = short voor alle symbolen
 
 # S8-C: model selectie op Sharpe i.p.v. ROC AUC (S9-A).
 # ETH RandomForest had Sharpe +13.14 maar werd niet gekozen (AUC-selectie koos LightGBM +3.09).
@@ -57,6 +60,9 @@ MODEL_SELECT_MIN_TRADES = 20
 # Voorkomt longs die ingaan tegen de hogere-timeframe trend.
 DAILY_GATE_ENABLED    = True
 DAILY_GATE_THRESHOLD  = 0.45   # dagelijks proba onder 0.45 = bearish dagelijks model
+# Activeer daily gate alleen voor symbolen met voldoende kwaliteit (AUC > ~0.57).
+# BTC: AUC 0.63 → gate actief. ETH: AUC 0.53 → gate uitgeschakeld (te zwak).
+DAILY_GATE_SYMBOLS    = ["BTCUSDT"]  # lege lijst = gate voor alle symbolen
 
 # Stap A: testset verkleind van 365 naar 90 dagen → model ziet meer marktcycli
 TEST_SIZE_DAYS       = 90

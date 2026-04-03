@@ -188,19 +188,36 @@ Doel: Aanvullen op het schone 47-feature fundament met kwalitatieve nieuwe bronn
 
 ### Sprint 12 — Volgende verbeteringen
 
-#### S12-A Short model tuning — prioriteit hoog
-- Huidig: SHORT_ENTRY_THRESHOLD=0.30, return_30d < -3%
-- Verfijn: optimaliseer short threshold op validatieset (ipv hardcoded 0.30)
-- Toevoeging: fear_greed_7d_chg < -5 als extra bevestiging
+#### S12-A Short model tuning — VOLTOOID
+- `optimize_short_threshold()` opnieuw geïmplementeerd (sweept 0.20–0.40 op bear val-data)
+- BTC: val te bullish → fallback config 0.30. ETH: 0.26 gevonden maar short disabled
+- `BEAR_REGIME_SHORT_SYMBOLS = ["BTCUSDT"]` — short alleen actief voor BTC
 
-#### S12-B Daily model trainen (1d timeframe) — prioriteit hoog
-- Train apart model op dagelijkse OHLCV + macro features
-- Activeer daily gate in backtest.py (infra al aanwezig via S8-C)
-- Verwacht: filtert bear-markt entries, verbetert precision
+#### S12-B Daily model trainen — VOLTOOID (BTC only)
+- BTC daily model: AUC 0.63 → gate actief, WF fold 3: -8.17→0.00 (blokkering werkt!)
+- ETH daily model: AUC 0.53 → gate uitgeschakeld (te zwak, hurt performance)
+- `DAILY_GATE_SYMBOLS = ["BTCUSDT"]` — gate alleen voor BTC
+- Bug gefixed: `fase_model_daily()` overschreef hourly model → backup/restore logica
 
-#### S12-C WF rapport verbeterd — prioriteit medium
-- Gebruik calibratie + volledige backtest settings in WF folds
-- Maakt WF Sharpe beter vergelijkbaar met single-run Sharpe
+#### S12-C WF rapport verbeterd — doorgeschoven naar Sprint 13
+
+---
+
+### Sprint 13 — ETH verbetering + model diversificatie
+
+#### S13-A ETH daily model verbeteren — prioriteit hoog
+- Huidig: AUC 0.53 (te zwak voor gating)
+- Verbetering: meer features voor dagelijks ETH model (ETH/BTC ratio, funding, on-chain)
+- Doel: AUC > 0.58 zodat daily gate ook voor ETH geactiveerd kan worden
+
+#### S13-B ETH short model herintroductie — prioriteit medium
+- Huidig: disabled (single-run negatief bij 0.30 threshold)
+- Aanpak: gebruik BTC-geoptimaliseerde 0.30 threshold als ETH-start + tighter filter
+- Test: WF verbetering als gate voor herintroductie
+
+#### S13-C WF rapport met calibratie — prioriteit laag
+- Huidig WF gebruikt simpel LGBMClassifier (geen calibratie, geen 4h gate)
+- Doel: WF Sharpe beter vergelijkbaar met single-run Sharpe
 
 ---
 
@@ -220,9 +237,12 @@ Doel: Aanvullen op het schone 47-feature fundament met kwalitatieve nieuwe bronn
 | S10-A Walk-forward Sharpe rapport | Hoog | Medium | *** | [x] BTC +0.76, ETH +2.90 WF Sharpe |
 | S10-B Seed-fixing reproduceerbaar | Medium | Laag | ** | [x] al gedaan |
 | S11-A Bear-regime short model | Hoog | Medium | *** | [x] WF BTC +191%, ETH +67% |
-| S12-A Short model tuning | Hoog | Laag | *** | [ ] |
-| S12-B Daily model (1d timeframe) | Hoog | Medium | *** | [ ] |
-| S12-C WF rapport verbeterd | Medium | Medium | ** | [ ] |
+| S12-A Short threshold optimalisatie | Hoog | Laag | *** | [x] per-symbool (BTC only) |
+| S12-B Daily model BTC | Hoog | Medium | *** | [x] AUC 0.63, WF fold3: -8→0 |
+| S12-C Daily model ETH | Medium | Medium | ** | [ ] AUC 0.53 te zwak |
+| S13-A ETH daily model verbeteren | Hoog | Medium | *** | [ ] |
+| S13-B ETH short model herintroductie | Medium | Medium | ** | [ ] |
+| S13-C WF rapport met calibratie | Laag | Medium | * | [ ] |
 
 ---
 
@@ -241,3 +261,4 @@ Doel: Aanvullen op het schone 47-feature fundament met kwalitatieve nieuwe bronn
 | Sprint 9 | 2026-04-02 | Model_compare selectie op Sharpe; OPTUNA_SHARPE_SYMBOLS config; per-symbool objective infra | geen meetbare winst; hoge run-to-run variantie ontdekt |
 | Sprint 10 | 2026-04-03 | wf_sharpe_report() toegevoegd (3 folds); seed-fixing was al goed | WF BTC +0.76, ETH +2.90 (bear-markt fold = 0 trades, correct) |
 | Sprint 11 | 2026-04-03 | Bear-regime short model (market_regime=-1, proba<0.30, return_30d<-3%) | WF BTC +0.76→+2.21 (+191%), ETH +2.90→+4.84 (+67%); bear-fold nu winstgevend |
+| Sprint 12 | 2026-04-03 | Short threshold optim. op val-set; daily 1d model actief (BTC only, AUC 0.63); per-symbool gates | WF BTC +5.57 (+632% vs S10), ETH +2.97 (short disabled, ETH daily AUC 0.53 te zwak) |
