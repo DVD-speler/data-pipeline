@@ -165,9 +165,15 @@ def build_features_daily(
         df["funding_momentum"] = 0.0
 
     # Defaults voor ontbrekende externe kolommen
-    for col in ["fear_greed", "btc_dvol"]:
+    _ext_defaults = {
+        "fear_greed": 50.0, "btc_dvol": 0.45, "vix_level": 20.0,
+        "dxy_return_7d": 0.0, "usdjpy_return_7d": 0.0,
+        "fear_greed_7d_chg": 0.0, "active_addresses_7d_chg": 0.0,
+        "hash_rate_7d_chg": 0.0, "oi_return_24h": 0.0,
+    }
+    for col, default in _ext_defaults.items():
         if col not in df.columns:
-            df[col] = 0.0
+            df[col] = default
 
     # ── Target variabele ──────────────────────────────────────────────────────
     # target = 1 als volgende dagclose > huidig × (1 + dead)

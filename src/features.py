@@ -789,8 +789,14 @@ def build_features(
     try:
         from src.external_data import load_all_external
         df_ext = load_all_external(df.index, symbol=symbol)
-        for col in df_ext.columns:
+        new_cols = df_ext.columns.difference(df.columns)
+        existing_cols = df_ext.columns.intersection(df.columns)
+        # Update existing columns in-place, batch-concat new ones
+        for col in existing_cols:
             df[col] = df_ext[col]
+        if len(new_cols):
+            df = pd.concat([df, df_ext[new_cols]], axis=1)
+        df = df.copy()  # defragmenteer
     except (KeyError, ValueError, TypeError) as e:
         print(f"  Waarschuwing: externe data laden mislukt ({e}) — defaults gebruikt")
         import traceback; traceback.print_exc()
@@ -852,6 +858,7 @@ def build_features(
     # target = 1  als future_close > close × (1 + dead_up)
     # target = 0  als future_close < close × (1 - dead_down)
     # NaN (neutraal) → verwijderd uit feature matrix
+    df = df.copy()  # defragmenteer voor target-kolommen
     h         = config.PREDICTION_HORIZON_H
     dead_up   = getattr(config, "TARGET_DEAD_ZONE_UP",   config.TARGET_DEAD_ZONE_PCT)
     dead_down = getattr(config, "TARGET_DEAD_ZONE_DOWN",  config.TARGET_DEAD_ZONE_PCT)

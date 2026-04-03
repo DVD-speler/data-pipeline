@@ -1,6 +1,6 @@
 {
   "bull": 0.5,
-  "ranging": 0.5,
-  "bear": 0.58,
+  "ranging": 0.58,
+  "bear": 0.5,
   "global": 0.65
 }

@@ -497,10 +497,14 @@ def fase_model_daily(features=None, symbol: str = None):
     orig_filter_cols    = config.FILTER_COLS
     orig_test_days      = config.TEST_SIZE_DAYS
     orig_val_days       = config.VALIDATION_SIZE_DAYS
+    # Dagmodel: Sharpe objective uitschakelen (val=48 rijen → < 10 trades penalty schiet altijd af)
+    # ROC AUC is beter geschikt voor kleine dagelijkse val-sets
+    orig_sharpe_obj     = getattr(config, "OPTUNA_SHARPE_OBJECTIVE", True)
     config.FEATURE_COLS         = cfg_daily.FEATURE_COLS_DAILY
     config.FILTER_COLS          = cfg_daily.FILTER_COLS_DAILY
     config.TEST_SIZE_DAYS       = cfg_daily.TEST_SIZE_DAYS
     config.VALIDATION_SIZE_DAYS = cfg_daily.VALIDATION_SIZE_DAYS
+    config.OPTUNA_SHARPE_OBJECTIVE = False  # dagmodel gebruikt AUC objective
 
     # Maak backups van hourly bestanden die train_model() zal overschrijven
     for src, bak in [(hourly_params_path, hourly_params_bak),
@@ -528,6 +532,11 @@ def fase_model_daily(features=None, symbol: str = None):
         config.FILTER_COLS          = orig_filter_cols
         config.TEST_SIZE_DAYS       = orig_test_days
         config.VALIDATION_SIZE_DAYS = orig_val_days
+        config.FEATURE_COLS             = orig_feature_cols
+        config.FILTER_COLS              = orig_filter_cols
+        config.TEST_SIZE_DAYS           = orig_test_days
+        config.VALIDATION_SIZE_DAYS     = orig_val_days
+        config.OPTUNA_SHARPE_OBJECTIVE  = orig_sharpe_obj
         # Herstel hourly bestanden (params, model, threshold)
         for src, bak in [(hourly_params_path, hourly_params_bak),
                          (hourly_model_path, hourly_model_bak),

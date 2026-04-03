@@ -55,6 +55,8 @@ TRADE_FEE = 0.001
 STOP_LOSS_PCT = 0.02
 
 # ── Features (dagelijks timeframe — 28 features) ──────────────────────────────
+# S13-A bevinding: extra features hurt bij 500 trainrows (curse of dimensionality)
+# Reverted naar originele set + AUC objective (was Sharpe → te weinig val-trades)
 FEATURE_COLS_DAILY = [
     # Tijdfeature
     "day_of_week",
