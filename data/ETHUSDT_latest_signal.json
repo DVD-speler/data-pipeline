@@ -1,6 +1,6 @@
 {
-  "tijdstip": "2026-04-03 12:00:00+00:00",
-  "signaal": "WACHT (ranging_score 2 \u2265 2 \u2014 geen short in ranging markt)",
+  "tijdstip": "2026-04-03 14:00:00+00:00",
+  "signaal": "WACHT (ranging_score 3 \u2265 2 \u2014 geen short in ranging markt)",
   "kans_stijging": "0.0%",
   "proba_raw": 0.0,
   "long_threshold": "0.58",
@@ -14,8 +14,8 @@
   "btc_skew_25d": "+6.8%",
   "skew_blocked": true,
   "horizon": "24 uur",
-  "prijs": 2062.582275390625,
-  "ranging_score": 2.0,
+  "prijs": 2048.089111328125,
+  "ranging_score": 3.0,
   "crash_mode": 0,
-  "macd_size_mult": 0.5
+  "macd_size_mult": 0.15684653566565632
 }
