@@ -1,5 +1,5 @@
 {
-  "tijdstip": "2026-04-07 15:00:00+00:00",
+  "tijdstip": "2026-04-07 16:00:00+00:00",
   "signaal": "SHORT",
   "kans_stijging": "27.4%",
   "proba_raw": 0.2736842105263158,
@@ -11,10 +11,10 @@
   "death_cross": false,
   "proba_4h": "n/a",
   "confirm_4h": true,
-  "btc_skew_25d": "+6.4%",
+  "btc_skew_25d": "+5.5%",
   "skew_blocked": true,
   "horizon": "24 uur",
-  "prijs": 2069.432861328125,
+  "prijs": 2079.685546875,
   "ranging_score": 1.0,
   "crash_mode": 0,
   "macd_size_mult": 0.0
