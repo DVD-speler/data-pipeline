@@ -697,19 +697,26 @@ def build_features(
         macd_noisy  = (df["macd_hist_stability"] > stb_thr).astype(int)
         df["ranging_score"] = adx_ranging + bb_squeeze + macd_noisy
 
-    # S16-B: Crash-modus detector (FILTER_COL — niet als model-input).
-    # Crash actief als:
-    #   (a) return_1h < -CRASH_SIGMA_THR × rolling_vol_24h (enige candle > 2.5σ neerwaarts)
-    #   OF
-    #   (b) return_24h < -CRASH_RETURN_THR (24u daling > 10%)
-    # Bij crash-modus halveert de backtest de positiegrootte om kapitaal te beschermen.
+    # S16-B / S19-A7: Crash-modus 3-tier detector (FILTER_COL — niet als model-input).
+    # crash_mode = 0 (geen), 1 (mild >1σ), 2 (ernstig >2.5σ of >10% dag), 3 (extreem >5σ)
+    # Backtest past positiegrootte aan per tier: 0.75× / 0.50× / 0.25×
     if "returns" in df.columns and "volatility_24h" in df.columns:
-        sigma_thr  = getattr(config, "CRASH_SIGMA_THR",  2.5)
-        ret_thr    = getattr(config, "CRASH_RETURN_THR", 0.10)
-        ret_24h    = df["close"].pct_change(24)
-        sharp_drop = df["returns"] < -(sigma_thr * df["volatility_24h"].shift(1).fillna(0.02))
+        sigma_mild    = getattr(config, "CRASH_SIGMA_THR_MILD",    1.0)
+        sigma_thr     = getattr(config, "CRASH_SIGMA_THR",         2.5)
+        sigma_extreme = getattr(config, "CRASH_SIGMA_THR_EXTREME", 5.0)
+        ret_thr       = getattr(config, "CRASH_RETURN_THR",       0.10)
+        vol_ref       = df["volatility_24h"].shift(1).fillna(0.02)
+        ret_24h       = df["close"].pct_change(24)
+        tier1 = df["returns"] < -(sigma_mild    * vol_ref)
+        tier2 = df["returns"] < -(sigma_thr     * vol_ref)
+        tier3 = df["returns"] < -(sigma_extreme * vol_ref)
         large_drop = ret_24h < -ret_thr
-        df["crash_mode"] = (sharp_drop | large_drop).astype(int)
+        import numpy as _np
+        crash = _np.zeros(len(df), dtype=int)
+        crash[tier1.values] = 1
+        crash[tier2.values] = 2
+        crash[(tier3 | large_drop).values] = 3
+        df["crash_mode"] = crash
     else:
         df["crash_mode"] = 0
 

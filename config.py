@@ -249,13 +249,17 @@ STOP_LOSS_PCT = 0.02
 # 2.0× ATR(14) is het startpunt; kan worden geoptimaliseerd via sweep (1.0–3.0).
 ATR_STOP_MULTIPLIER = 2.0
 
-# ── S16-B: Crash-modus positie-halvering ─────────────────────────────────────
-# Crash-modus actief als return_1h < -CRASH_SIGMA_THR × rolling_vol_24h
-# OF return_24h < -CRASH_RETURN_THR (grote dagelijkse daling).
-# Bij crash-modus: positiegrootte × CRASH_SIZE_FACTOR (halvering beschermt kapitaal).
-CRASH_SIGMA_THR  = 2.5   # 2.5σ eenmalige candle-daling
-CRASH_RETURN_THR = 0.10  # 10% daling in 24u
-CRASH_SIZE_FACTOR = 0.5  # halve positiegrootte in crash-modus
+# ── S16-B / S19-A7: Crash-modus 3-tier positiescaling ───────────────────────
+# crash_mode = 0 (geen crash), 1 (mild: >1σ), 2 (ernstig: >2.5σ), 3 (extreem: >5σ)
+# Tier 1 (>1σ daling)         : positie × 0.75
+# Tier 2 (>2.5σ of >10% dag)  : positie × 0.50
+# Tier 3 (>5σ extreem)        : positie × 0.25
+CRASH_SIGMA_THR         = 2.5   # 2.5σ → tier 2
+CRASH_SIGMA_THR_MILD    = 1.0   # 1.0σ → tier 1
+CRASH_SIGMA_THR_EXTREME = 5.0   # 5.0σ → tier 3
+CRASH_RETURN_THR        = 0.10  # 10% daling in 24u → tier 2
+CRASH_SIZE_FACTOR       = 0.5   # legacy (tier 2); vervangen door CRASH_SIZE_FACTORS
+CRASH_SIZE_FACTORS      = {2: 0.50, 3: 0.25}  # tier → positiefactor (tier 1 verwijderd: buy-the-dip entries niet afschalen)
 
 # ── S17-B: MACD momentum-gewogen positiescaling ───────────────────────────────
 # Bij entry: long_size *= (1 + macd_size_mult) waarbij macd_size_mult ∈ [0, 0.5].
@@ -272,8 +276,11 @@ SIGNAL_THRESHOLD_4H = 0.52   # lager dan 1h drempel (4h is trager signaal)
 # ── Model-gestuurd sluitmodel ─────────────────────────────────────────────────
 # Sluit LONG als proba daalt onder EXIT_PROBA_LONG (model ziet kans niet meer).
 # Sluit SHORT als proba stijgt boven EXIT_PROBA_SHORT.
+# S19-A1: EXIT_PROBA_LONG wordt nu ook actief gebruikt in run_backtest() en de
+# WF-loop (per-fold geoptimaliseerd op de interne validatieset).
 # Initiële waarden; worden geoptimaliseerd via backtest-sweep en opgeslagen in
 # {symbol}_exit_proba.json (overschrijft deze defaults voor dat symbool).
+MODEL_EXIT_ENABLED = False  # S19-A1: TERUGGEDRAAID — whipsaw in WF (exits te vroeg bij tijdelijke proba-dip)
 EXIT_PROBA_LONG  = 0.45   # te optimaliseren: sweep 0.30–0.55
 EXIT_PROBA_SHORT = 0.55   # symmetrisch voor shorts
 MAX_HOLD_HOURS   = 168    # absolute tijdsvangnet: 1 week (vervangt 24h timeout)

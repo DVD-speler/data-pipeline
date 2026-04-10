@@ -437,6 +437,98 @@ Op basis van 30-fold walk-forward analyse (mrt 2023 → feb 2026) zijn drie stru
 
 ---
 
+### Sprint 19 — Model-driven exit + Crash-mode 3-tier — IN PROGRESS
+
+**Doel:** (A1) Vroeg uitstappen als model vertrouwen verliest; (A7) Betere positiescaling bij crashes
+
+#### S19-A1 Model-driven exit — GEÏMPLEMENTEERD, TERUGGEDRAAID
+- `exit_proba_long` parameter toegevoegd aan `run_backtest()`
+- Per-fold sweep 0.30–0.55 op validatieset om optimale exit-drempel te vinden
+- Resultaat: WF mediaan +3.15 (regressie vs baseline +4.76) — whipsaw bij tijdelijke proba-dips
+- Oorzaak: Model proba daalt tijdelijk midden in valide trend → early exit → trade mist verdere opwaartse beweging
+- **Besluit:** `MODEL_EXIT_ENABLED = False` — code aanwezig maar uitgeschakeld
+
+#### S19-A7 Crash-mode 3-tier positiescaling — VOLTOOID
+- `crash_mode` uitgebreid van binary (0/1) naar 3 tiers:
+  - Tier 0: normaal (87.3% van uren)
+  - Tier 1: mild >1σ (10.1%) — **verwijderd uit scaling** (buy-the-dip entries)
+  - Tier 2: ernstig >2.5σ (1.9%) → positie ×0.50
+  - Tier 3: extreem >5σ of return_24h<-10% (0.7%) → positie ×0.25
+- `CRASH_SIZE_FACTORS = {2: 0.50, 3: 0.25}` in config.py
+- Config: `CRASH_SIGMA_THR_MILD=1.0`, `CRASH_SIGMA_THR=2.5`, `CRASH_SIGMA_THR_EXTREME=5.0`
+- Tier 1 initieel getest (×0.75) → regressie (normale dip-entries worden afgeschaald) → verwijderd
+- WF mediaan met tier2+3: +4.76 (onveranderd t.o.v. nieuwe baseline — beschermt zonder regressie)
+- Live alert bijgewerkt: 3-tier labels in Discord LONG-melding + positiescaling uitleg
+
+#### Evaluatie Sprint 19 — DEELS AANVAARD:
+- A1 teruggedraaid (whipsaw); code behouden voor toekomstig gebruik
+- A7 aanvaard: tier 2+3 beschermen bij echte crashes zonder normale trades te raken
+- **BTC WF definitief: gem. Sharpe +5.97, positieve folds 20/32** (verbetering t.o.v. +4.76 pre-S19)
+- **ETH WF definitief: gem. Sharpe -4.83 (mediaan positief)** — extreme outlier-folds (fold6 -155, fold15 -91) vertekenen gemiddelde; ETH model blijft volatiel
+- WF baseline BTC na Sprint 19: **+5.97**
+
+---
+
+### Sprint 20 — Live order executie via Bybit
+
+**Doel:** Automatisch trades uitvoeren op basis van Discord/model-signalen zodat nachtelijke meldingen niet gemist worden
+
+**Geschatte WF impact:** n.v.t. (infrastructuur sprint)
+
+**Afhankelijkheden:** Bybit API keys (verificatie vereist), CCXT installatie, sandbox test
+
+#### S20-A Order Executor module — PRIORITEIT 1
+- Nieuw bestand: `src/order_executor.py`
+- CCXT wrapper voor Bybit spot/futures API
+- Functies:
+  - `place_order(symbol, side, size_usdt, sl_pct, tp_pct)` — marktorder + SL/TP in één
+  - `close_position(symbol)` — sluit open positie
+  - `get_open_positions()` — status opvragen
+- Sandbox mode via `BYBIT_SANDBOX = True` in config.py (start hier altijd mee)
+- API keys via `.env` bestand (nooit hardcoded, al in .gitignore)
+- Config: `BYBIT_API_KEY`, `BYBIT_API_SECRET`, `BYBIT_SANDBOX`, `LIVE_TRADING_ENABLED`
+
+#### S20-B SQLite positie tracking — PRIORITEIT 1
+- Nieuw bestand: `data/open_orders.db` (SQLite)
+- Schema: `(id, symbol, side, entry_price, size, sl_price, tp_price, opened_at, status)`
+- Slaat open trades op zodat position_monitor SL/TP kan controleren
+- Voorkomt dubbele orders bij herstart van live_alert.py
+
+#### S20-C Integratie in live_alert.py — PRIORITEIT 1
+- Na Discord-melding verzenden: `order_executor.place_order(...)` aanroepen
+- Guard: `if config.LIVE_TRADING_ENABLED and not config.BYBIT_SANDBOX`
+- Positiegroottte: zelfde Kelly-sizing als Discord-melding gebruikt
+- SL/TP: zelfde waarden als in Discord-melding
+
+#### S20-D Position monitor — PRIORITEIT 2
+- Nieuw bestand: `src/position_monitor.py`
+- Achtergrond loop (elke 5 minuten) die controleert:
+  - Is SL/TP al geraakt? → sluit positie + stuur Discord-melding "TRADE GESLOTEN (monitor)"
+  - Is max houdtijd (PREDICTION_HORIZON_H) verstreken? → sluit positie
+- Alternatief: volledig delegeren aan Bybit conditional orders (eenvoudiger, minder code)
+- **Aanbeveling:** Bybit conditional orders als primaire SL/TP → position_monitor alleen als fallback
+
+#### S20-E Papier-trading fase — VEREIST VOOR LIVE GO
+- `BYBIT_SANDBOX = True` eerste 2 weken
+- Controleer: orders worden correct geplaatst, SL/TP zit op juiste prijs, Discord-melding klopt
+- Vergelijk sandbox P&L met Discord-melding P&L (moeten overeenkomen)
+- Pas na succesvolle sandbox fase: `BYBIT_SANDBOX = False` + `LIVE_TRADING_ENABLED = True`
+
+**Acceptatiecriteria:**
+- Sandbox trade wordt correct geplaatst na LONG-signaal (juiste size, SL, TP)
+- Position monitor detecteert SL-hit en sluit positie
+- Discord-melding "TRADE GESLOTEN" wordt verstuurd bij sluiting
+- Geen dubbele orders bij herstart van alert-loop
+- API keys nooit in git history
+
+**Risico's:**
+- Bybit verificatie (KYC) vereist voor live futures — tijdsinvestering
+- Slippage: marktorder bij lage liquiditeit kan ongunstig uitvallen — gebruik limit order als alternatief
+- Over-leveraging: begin met 1× (spot) of max 2× leverage
+- Exchange downtime: fallback naar handmatige uitvoering blijft altijd mogelijk
+
+---
+
 ## Prioriteitenmatrix
 
 | Taak | Impact | Moeite | Prioriteit | Status |
@@ -472,6 +564,13 @@ Op basis van 30-fold walk-forward analyse (mrt 2023 → feb 2026) zijn drie stru
 | **S17-B** Momentum-gewogen entry sizing | Laag | Medium | * | [x] MACD_MOMENTUM_SCALE +0.13 gem Sharpe |
 | **S18-A** SHAP feature interactie analyse | Medium | Medium | ** | [x] TERUGGEDRAAID — LGB vangt interacties zelf op |
 | **S18-B** WF rapport met calibratie | Laag | Medium | * | [x] TERUGGEDRAAID — instabiel op kleine val-set |
+| **S19-A1** Model-driven exit (exit_proba sweep) | Medium | Medium | ** | [x] TERUGGEDRAAID — whipsaw op tijdelijke proba-dips |
+| **S19-A7** Crash-mode 3-tier positiescaling | Hoog | Laag | *** | [~] tier2+3 actief; tier1 verwijderd (buy-the-dip) |
+| **S20-A** Order executor (CCXT Bybit) | Hoog | Medium | **** | [ ] nog niet gestart |
+| **S20-B** SQLite positie tracking | Hoog | Laag | **** | [ ] nog niet gestart |
+| **S20-C** Integratie live_alert.py | Hoog | Laag | **** | [ ] nog niet gestart |
+| **S20-D** Position monitor (SL/TP check) | Medium | Medium | *** | [ ] nog niet gestart |
+| **S20-E** Papier-trading sandbox fase | Hoog | Laag | **** | [ ] vereist voor live go |
 
 ---
 

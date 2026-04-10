@@ -38,6 +38,7 @@ def run_backtest(
     horizon: int = None,
     probas_4h: np.ndarray = None,
     threshold_4h: float = None,
+    exit_proba_long: float = None,   # S19-A1: model-driven exit drempel
     # Legacy kwargs — genegeerd, behouden voor achterwaartse compatibiliteit
     threshold_short: float = 0.0,
     use_short: bool = False,
@@ -302,15 +303,16 @@ def run_backtest(
         base_short = ((0.5 - results["proba"]) * 2).clip(0, 1)
         short_size = (base_short * vol_scale).clip(0, 1)
 
-        # S16-B: Crash-modus positie-halvering.
-        # Bij een scherpe 1h-daling (>2.5σ) of >10% dagverlies halveert de positie.
-        # Beschermt kapitaal in flash-crash/cascadering zonder de trade te stoppen.
-        _crash_factor = getattr(config, "CRASH_SIZE_FACTOR", 0.5)
-        if "crash_mode" in test_df.columns and _crash_factor < 1.0:
-            crash = test_df["crash_mode"].reindex(results.index, fill_value=0).astype(float)
-            crash_scale = 1.0 - crash * (1.0 - _crash_factor)
-            long_size  = (long_size  * crash_scale).clip(0, 1)
-            short_size = (short_size * crash_scale).clip(0, 1)
+        # S16-B / S19-A7: Crash-modus 3-tier positiescaling.
+        # crash_mode = 0 (geen) / 1 (>1σ: ×0.75) / 2 (>2.5σ of >10%dag: ×0.50) / 3 (>5σ: ×0.25)
+        if "crash_mode" in test_df.columns:
+            _crash_factors = getattr(config, "CRASH_SIZE_FACTORS", {1: 0.75, 2: 0.50, 3: 0.25})
+            crash = test_df["crash_mode"].reindex(results.index, fill_value=0).astype(int)
+            crash_scale = pd.Series(1.0, index=results.index)
+            for _tier, _factor in sorted(_crash_factors.items()):
+                crash_scale[crash >= _tier] = _factor
+            long_size  = (long_size  * crash_scale.values).clip(0, 1)
+            short_size = (short_size * crash_scale.values).clip(0, 1)
 
         # S17-B: MACD momentum-gewogen positiescaling.
         # Sterk positief MACD-momentum → max 1.5× positiegrootte bij entry.
@@ -321,6 +323,33 @@ def run_backtest(
     else:
         long_size  = results["signal_long"].astype(float)
         short_size = results["signal_short"].astype(float)
+
+    # ── S19-A1: Model-driven early exit ──────────────────────────────────────
+    # Voor elke long-entry op tijdstip t: controleer of proba in [t+1, t+h]
+    # ooit onder exit_proba_long zakt. Zo ja, exit op dat moment (kortere return).
+    # Dit voorkomt dat verliesgevende posities 24h vastgehouden worden terwijl
+    # het model al bearish is gedraaid.
+    _model_exit_enabled = getattr(config, "MODEL_EXIT_ENABLED", False)
+    _exit_proba = exit_proba_long if exit_proba_long is not None else (
+        config.EXIT_PROBA_LONG if _model_exit_enabled else None
+    )
+    if _model_exit_enabled and _exit_proba is not None:
+        closes_arr = test_df["close"].values
+        proba_arr  = results["proba"].values
+        n_arr      = len(closes_arr)
+        mod_return = raw_return.copy()
+        for t in np.where(results["signal_long"].values == 1)[0]:
+            for k in range(1, min(h + 1, n_arr - t)):
+                if proba_arr[t + k] < _exit_proba:
+                    mod_return.iloc[t] = (closes_arr[t + k] - closes_arr[t]) / closes_arr[t]
+                    break
+        raw_return  = mod_return
+        # Herbereken ATR-geclipte returns na early exit
+        if "atr_pct" in test_df.columns and stop_loss > 0:
+            atr_stop   = (_atr_mult * test_df["atr_pct"].reindex(results.index)).clip(0.005, 0.10)
+            long_return  = raw_return.clip(lower=-atr_stop)
+        else:
+            long_return  = raw_return.clip(lower=-stop_loss) if stop_loss > 0 else raw_return
 
     # ── Strategie rendement ───────────────────────────────────────────────────
     results["trade_return"]    = raw_return
@@ -876,10 +905,25 @@ def run_walkforward(
         else:
             model.fit(train[config.FEATURE_COLS], train["target"])
 
-        # Long + short threshold per fold optimaliseren op interne validatieset
+        # Long + short threshold + exit proba per fold optimaliseren op validatieset
         from src.model import optimize_short_threshold
         opt_thr       = optimize_threshold(model, val)
         opt_short_thr = optimize_short_threshold(model, val)
+
+        # S19-A1: per-fold exit_proba_long optimaliseren op validatieset
+        opt_exit_proba = config.EXIT_PROBA_LONG  # fallback
+        if getattr(config, "MODEL_EXIT_ENABLED", False):
+            val_probas = model.predict_proba(val[config.FEATURE_COLS])[:, 1]
+            best_exit_sharpe = -np.inf
+            for _ep in np.arange(0.30, 0.56, 0.025):
+                _ep = round(float(_ep), 3)
+                _r = run_backtest(val, val_probas, threshold=opt_thr,
+                                  use_position_sizing=True, regime_filter=True,
+                                  exit_proba_long=_ep)
+                _m = compute_metrics(_r)
+                if _m["sharpe_ratio"] > best_exit_sharpe and _m["n_trades"] >= 3:
+                    best_exit_sharpe = _m["sharpe_ratio"]
+                    opt_exit_proba = _ep
 
         # Regime-geconditioneerde voorspelling (optioneel)
         if use_regime_models and "market_regime" in train.columns and model_name == "LightGBM":
@@ -922,11 +966,13 @@ def run_walkforward(
             use_short=(opt_short_thr > 0),
             use_position_sizing=True,
             regime_filter=True,
+            exit_proba_long=opt_exit_proba,
         )
         metrics = compute_metrics(results)
-        metrics["fold"]          = fold
-        metrics["opt_thr"]       = opt_thr
-        metrics["opt_short_thr"] = opt_short_thr
+        metrics["fold"]           = fold
+        metrics["opt_thr"]        = opt_thr
+        metrics["opt_short_thr"]  = opt_short_thr
+        metrics["opt_exit_proba"] = opt_exit_proba
         metrics["test_start"]    = str(test.index[0].date())
         metrics["test_end"]      = str(test.index[-1].date())
 

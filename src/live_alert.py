@@ -456,14 +456,18 @@ def run_live_alert(
                       f"→ positie gehalveerd (${position_size:,.0f} → ${position_size/2:,.0f})")
                 position_size /= 2
 
-            # ── S16-B: Crash-modus positie-halvering ─────────────────────────
-            # Flash-crash (>2.5σ candle) of -10% dag → halve positie.
-            _crash_factor = getattr(config, "CRASH_SIZE_FACTOR", 0.5)
-            if signaal.get("crash_mode") and _crash_factor < 1.0:
-                new_size = position_size * _crash_factor
-                print(f"  ⚠️  Crash-modus actief: positie gehalveerd "
-                      f"(${position_size:,.0f} → ${new_size:,.0f})")
-                position_size = new_size
+            # ── S16-B / S19-A7: Crash-modus 3-tier positiescaling ────────────
+            # Tier 1 (>1σ): ×0.75 | Tier 2 (>2.5σ of >10% dag): ×0.50 | Tier 3 (>5σ): ×0.25
+            _crash_tier = int(signaal.get("crash_mode", 0))
+            if _crash_tier > 0:
+                _crash_factors = getattr(config, "CRASH_SIZE_FACTORS", {1: 0.75, 2: 0.50, 3: 0.25})
+                _crash_factor = _crash_factors.get(_crash_tier, 1.0)
+                _tier_labels = {1: "mild >1σ", 2: "ernstig >2.5σ", 3: "extreem >5σ"}
+                if _crash_factor < 1.0:
+                    new_size = position_size * _crash_factor
+                    print(f"  ⚠️  Crash-modus tier {_crash_tier} ({_tier_labels.get(_crash_tier,'')}): "
+                          f"positie ×{_crash_factor:.2f} (${position_size:,.0f} → ${new_size:,.0f})")
+                    position_size = new_size
 
             # ── S17-B: MACD momentum-gewogen positiescaling ───────────────────
             # Sterk positief MACD-momentum → tot 1.5× positiegroottegrootte.
@@ -533,8 +537,11 @@ def run_live_alert(
             )
             skew_lbl = f"⚠️ puts duur ({signaal.get('btc_skew_25d','?')})" if signaal.get("skew_blocked") else f"✅ normaal ({signaal.get('btc_skew_25d','?')})"
             checks.append(f"• 25D skew: {skew_lbl}")
-            if signaal.get("crash_mode"):
-                checks.append("• ⚠️ Crash-modus: positie gehalveerd")
+            _crash_t = int(signaal.get("crash_mode", 0))
+            if _crash_t > 0:
+                _tier_pct = {1: "×0.75", 2: "×0.50", 3: "×0.25"}.get(_crash_t, "")
+                _tier_lbl = {1: "mild >1σ", 2: "ernstig >2.5σ", 3: "extreem >5σ"}.get(_crash_t, "")
+                checks.append(f"• ⚠️ Crash tier {_crash_t} ({_tier_lbl}): positie {_tier_pct}")
             macd_mult = 1.0 + float(signaal.get("macd_size_mult", 0.0))
             if macd_mult > 1.01:
                 checks.append(f"• 📈 MACD momentum ×{macd_mult:.2f}: positie vergroot")
