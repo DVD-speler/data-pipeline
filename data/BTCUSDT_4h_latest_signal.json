@@ -1,9 +1,9 @@
 {
   "signaal": "WACHT",
-  "richting": "BULLISH",
-  "kans_stijging": 0.5824854147944063,
-  "prijs": 72123.65625,
-  "tijdstip": "2026-04-10 12:00:00+00:00",
+  "richting": "NEUTRAAL",
+  "kans_stijging": 0.5077999054402406,
+  "prijs": 72431.109375,
+  "tijdstip": "2026-04-10 16:00:00+00:00",
   "market_regime": 1.0,
   "regime_label": "bull (ADX+)",
   "death_cross": false,
