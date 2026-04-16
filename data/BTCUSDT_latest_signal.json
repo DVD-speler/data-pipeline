@@ -1,6 +1,6 @@
 {
   "tijdstip": "2026-04-15 14:00:00+00:00",
-  "signaal": "WACHT (correlatie guard \u2014 ETHUSDT open, corr 92.8%)",
+  "signaal": "WACHT (correlatie guard \u2014 ETHUSDT open, corr 93.9%)",
   "kans_stijging": "57.2%",
   "proba_raw": 0.572072072072072,
   "long_threshold": "0.50",
@@ -11,7 +11,7 @@
   "death_cross": false,
   "proba_4h": "n/a",
   "confirm_4h": true,
-  "btc_skew_25d": "+3.8%",
+  "btc_skew_25d": "+4.8%",
   "skew_blocked": false,
   "horizon": "24 uur",
   "prijs": 73989.9375,
