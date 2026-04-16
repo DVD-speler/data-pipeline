@@ -1,16 +1,5 @@
 {
-  "open_position": {
-    "direction": "LONG",
-    "entry_price": 74944.0,
-    "sl_price": 74159.0,
-    "tp_price": 77456.0,
-    "open_time": "2026-04-16 03:00:00+00:00",
-    "horizon_end": "2026-04-23 03:00:00+00:00",
-    "position_size": 390.02,
-    "risk_euro": 9.75,
-    "proba": "63.2%",
-    "market_regime": "bull"
-  },
+  "open_position": null,
   "closed_trades": [
     {
       "direction": "LONG",
@@ -150,8 +139,26 @@
       "gross_return_pct": 0.67,
       "pnl_euro": 4.45,
       "capital_after": 975.05
+    },
+    {
+      "direction": "LONG",
+      "entry_price": 74944.0,
+      "sl_price": 74159.0,
+      "tp_price": 77456.0,
+      "open_time": "2026-04-16 03:00:00+00:00",
+      "horizon_end": "2026-04-23 03:00:00+00:00",
+      "position_size": 390.02,
+      "risk_euro": 9.75,
+      "proba": "63.2%",
+      "market_regime": "bull",
+      "exit_price": 74159.0,
+      "exit_reason": "SL \u2717",
+      "exit_time": "2026-04-16 14:00:00+00:00",
+      "gross_return_pct": -1.05,
+      "pnl_euro": -4.87,
+      "capital_after": 970.18
     }
   ],
-  "capital": 975.05,
-  "last_checked": "2026-04-16 13:00:00+00:00"
+  "capital": 970.18,
+  "last_checked": "2026-04-16 14:00:00+00:00"
 }
