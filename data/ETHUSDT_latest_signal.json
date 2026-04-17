@@ -1,5 +1,5 @@
 {
-  "tijdstip": "2026-04-16 21:00:00+00:00",
+  "tijdstip": "2026-04-16 22:00:00+00:00",
   "signaal": "WACHT",
   "kans_stijging": "29.5%",
   "proba_raw": 0.2948717948717949,
@@ -11,11 +11,11 @@
   "death_cross": false,
   "proba_4h": "n/a",
   "confirm_4h": true,
-  "btc_skew_25d": "+3.1%",
+  "btc_skew_25d": "+3.5%",
   "skew_blocked": false,
   "horizon": "24 uur",
-  "prijs": 2349.0,
+  "prijs": 2349.02001953125,
   "ranging_score": 2.0,
   "crash_mode": 0,
-  "macd_size_mult": 0.38747535318126
+  "macd_size_mult": 0.4783713549028908
 }
