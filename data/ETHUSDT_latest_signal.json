@@ -1,5 +1,5 @@
 {
-  "tijdstip": "2026-04-17 16:00:00+00:00",
+  "tijdstip": "2026-04-17 17:00:00+00:00",
   "signaal": "WACHT",
   "kans_stijging": "29.5%",
   "proba_raw": 0.2948717948717949,
@@ -7,15 +7,15 @@
   "long_threshold_base": "0.65",
   "short_threshold": "0.28",
   "regime_boven_ema200": true,
-  "market_regime": "ranging",
+  "market_regime": "bull",
   "death_cross": false,
   "proba_4h": "n/a",
   "confirm_4h": true,
-  "btc_skew_25d": "+5.3%",
+  "btc_skew_25d": "+6.2%",
   "skew_blocked": true,
   "horizon": "24 uur",
-  "prijs": 2448.3701171875,
-  "ranging_score": 2.0,
+  "prijs": 2450.39990234375,
+  "ranging_score": 1.0,
   "crash_mode": 0,
   "macd_size_mult": 0.5
 }
