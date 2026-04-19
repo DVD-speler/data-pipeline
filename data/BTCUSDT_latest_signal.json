@@ -1,6 +1,6 @@
 {
   "tijdstip": "2026-04-18 13:00:00+00:00",
-  "signaal": "WACHT (25D skew gate \u2014 puts te duur, skew +5.5%)",
+  "signaal": "WACHT (25D skew gate \u2014 puts te duur, skew +6.0%)",
   "kans_stijging": "63.2%",
   "proba_raw": 0.6319444444444444,
   "long_threshold": "0.50",
@@ -11,7 +11,7 @@
   "death_cross": false,
   "proba_4h": "n/a",
   "confirm_4h": true,
-  "btc_skew_25d": "+5.5%",
+  "btc_skew_25d": "+6.0%",
   "skew_blocked": true,
   "horizon": "24 uur",
   "prijs": 76218.7421875,
