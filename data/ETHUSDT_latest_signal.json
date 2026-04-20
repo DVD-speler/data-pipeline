@@ -1,5 +1,5 @@
 {
-  "tijdstip": "2026-04-19 21:00:00+00:00",
+  "tijdstip": "2026-04-19 22:00:00+00:00",
   "signaal": "WACHT (onder EMA200 \u2014 long geblokkeerd)",
   "kans_stijging": "51.4%",
   "proba_raw": 0.5135135135135136,
@@ -14,8 +14,8 @@
   "btc_skew_25d": "+4.8%",
   "skew_blocked": false,
   "horizon": "24 uur",
-  "prijs": 2283.300048828125,
+  "prijs": 2259.199951171875,
   "ranging_score": 1.0,
-  "crash_mode": 1,
+  "crash_mode": 2,
   "macd_size_mult": 0.0
 }
