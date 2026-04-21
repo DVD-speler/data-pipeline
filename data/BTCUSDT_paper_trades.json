@@ -1,16 +1,5 @@
 {
-  "open_position": {
-    "direction": "LONG",
-    "entry_price": 76130.0,
-    "sl_price": 75407.0,
-    "tp_price": 78059.0,
-    "open_time": "2026-04-20 18:00:00+00:00",
-    "horizon_end": "2026-04-27 18:00:00+00:00",
-    "position_size": 334.57,
-    "risk_euro": 9.65,
-    "proba": "57.2%",
-    "market_regime": "bear"
-  },
+  "open_position": null,
   "closed_trades": [
     {
       "direction": "LONG",
@@ -186,8 +175,26 @@
       "gross_return_pct": -3.78,
       "pnl_euro": -4.83,
       "capital_after": 965.35
+    },
+    {
+      "direction": "LONG",
+      "entry_price": 76130.0,
+      "sl_price": 75407.0,
+      "tp_price": 78059.0,
+      "open_time": "2026-04-20 18:00:00+00:00",
+      "horizon_end": "2026-04-27 18:00:00+00:00",
+      "position_size": 334.57,
+      "risk_euro": 9.65,
+      "proba": "57.2%",
+      "market_regime": "bear",
+      "exit_price": 75616.2109375,
+      "exit_reason": "Model \u2193 (24.7%<30%)",
+      "exit_time": "2026-04-21 18:00:00+00:00",
+      "gross_return_pct": -0.67,
+      "pnl_euro": -2.93,
+      "capital_after": 962.42
     }
   ],
-  "capital": 965.35,
-  "last_checked": "2026-04-21 17:00:00+00:00"
+  "capital": 962.42,
+  "last_checked": "2026-04-21 18:00:00+00:00"
 }
