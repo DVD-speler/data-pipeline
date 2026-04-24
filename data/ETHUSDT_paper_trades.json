@@ -1,12 +1,12 @@
 {
   "open_position": {
     "direction": "LONG",
-    "entry_price": 2306.0,
-    "sl_price": 2272.0,
-    "tp_price": 2398.0,
-    "open_time": "2026-04-24 05:00:00+00:00",
-    "horizon_end": "2026-05-01 05:00:00+00:00",
-    "position_size": 87.06,
+    "entry_price": 2314.0,
+    "sl_price": 2279.0,
+    "tp_price": 2407.0,
+    "open_time": "2026-04-24 06:00:00+00:00",
+    "horizon_end": "2026-05-01 06:00:00+00:00",
+    "position_size": 87.07,
     "risk_euro": 10.35,
     "proba": "51.0%",
     "market_regime": "bear"
@@ -348,8 +348,26 @@
       "gross_return_pct": -0.67,
       "pnl_euro": -0.76,
       "capital_after": 1034.54
+    },
+    {
+      "direction": "LONG",
+      "entry_price": 2306.0,
+      "sl_price": 2272.0,
+      "tp_price": 2398.0,
+      "open_time": "2026-04-24 05:00:00+00:00",
+      "horizon_end": "2026-05-01 05:00:00+00:00",
+      "position_size": 87.06,
+      "risk_euro": 10.35,
+      "proba": "51.0%",
+      "market_regime": "bear",
+      "exit_price": 2314.0,
+      "exit_reason": "Model \u2193 (51.0%<55%)",
+      "exit_time": "2026-04-24 06:00:00+00:00",
+      "gross_return_pct": 0.35,
+      "pnl_euro": 0.13,
+      "capital_after": 1034.67
     }
   ],
-  "capital": 1034.54,
-  "last_checked": "2026-04-24 05:00:00+00:00"
+  "capital": 1034.67,
+  "last_checked": "2026-04-24 06:00:00+00:00"
 }
