@@ -1,8 +1,8 @@
 {
-  "tijdstip": "2026-04-23 02:00:00+00:00",
+  "tijdstip": "2026-04-23 03:00:00+00:00",
   "signaal": "WACHT",
-  "kans_stijging": "33.8%",
-  "proba_raw": 0.3384615384615385,
+  "kans_stijging": "36.1%",
+  "proba_raw": 0.3611111111111111,
   "long_threshold": "0.50",
   "long_threshold_base": "0.65",
   "short_threshold": "0.28",
@@ -14,8 +14,8 @@
   "btc_skew_25d": "+5.5%",
   "skew_blocked": true,
   "horizon": "24 uur",
-  "prijs": 2363.800048828125,
-  "ranging_score": 2.0,
+  "prijs": 2352.39990234375,
+  "ranging_score": 1.0,
   "crash_mode": 0,
   "macd_size_mult": 0.0
 }
