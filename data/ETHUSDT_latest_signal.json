@@ -1,21 +1,21 @@
 {
-  "tijdstip": "2026-04-23 23:00:00+00:00",
+  "tijdstip": "2026-04-24 00:00:00+00:00",
   "signaal": "LONG",
-  "kans_stijging": "51.0%",
-  "proba_raw": 0.5098039215686275,
+  "kans_stijging": "51.4%",
+  "proba_raw": 0.5135135135135136,
   "long_threshold": "0.50",
   "long_threshold_base": "0.65",
   "short_threshold": "0.28",
   "regime_boven_ema200": true,
-  "market_regime": "bear",
+  "market_regime": "ranging",
   "death_cross": false,
   "proba_4h": "n/a",
   "confirm_4h": true,
   "btc_skew_25d": "+4.4%",
   "skew_blocked": false,
   "horizon": "24 uur",
-  "prijs": 2332.340087890625,
-  "ranging_score": 2.0,
+  "prijs": 2330.280029296875,
+  "ranging_score": 3.0,
   "crash_mode": 0,
-  "macd_size_mult": 0.31629869167821345
+  "macd_size_mult": 0.44832074608318856
 }
