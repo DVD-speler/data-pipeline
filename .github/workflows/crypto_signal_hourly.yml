@@ -19,6 +19,13 @@ defaults:
 env:
   PYTHONPATH: ${{ github.workspace }}
 
+# Alle 3 crypto signal-workflows delen één concurrency-group zodat ze in
+# serie commit + pushen i.p.v. parallel — voorkomt rebase-races wanneer
+# meerdere workflows tegelijk getriggerd worden (push-event raakt alle 3).
+concurrency:
+  group: crypto-signal-commit
+  cancel-in-progress: false
+
 jobs:
   signal:
     runs-on: ubuntu-latest
@@ -80,5 +87,5 @@ jobs:
                   crypto/data/BTCUSDT_paper_trades.json \
                   crypto/data/BTCUSDT_latest_signal.json
           git diff --cached --quiet || git commit -m "C: signal: $(date -u '+%Y-%m-%d %H:%M UTC')"
-          git pull --rebase origin master
+          git pull --rebase -X theirs origin master
           git push

@@ -18,6 +18,12 @@ defaults:
 env:
   PYTHONPATH: ${{ github.workspace }}
 
+# Gedeelde concurrency-group met de andere crypto signal-workflows
+# (zie crypto_signal_hourly.yml comment).
+concurrency:
+  group: crypto-signal-commit
+  cancel-in-progress: false
+
 jobs:
   daily-signal:
     runs-on: ubuntu-latest
@@ -73,5 +79,5 @@ jobs:
           git add crypto/data/external/ \
                   crypto/data/BTCUSDT_1d_latest_signal.json
           git diff --cached --quiet || git commit -m "C: daily-signal: $(date -u '+%Y-%m-%d %H:%M UTC')"
-          git pull --rebase origin master
+          git pull --rebase -X theirs origin master
           git push
