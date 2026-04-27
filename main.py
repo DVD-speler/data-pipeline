@@ -345,7 +345,7 @@ def main():
     parser.add_argument(
         "--symbol",
         default=None,
-        choices=["BTCUSDT", "ETHUSDT"],
+        choices=["BTCUSDT"],
         help="Handelssymbool (standaard: BTCUSDT uit config)",
     )
     parser.add_argument(

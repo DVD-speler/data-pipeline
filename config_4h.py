@@ -1,5 +1,5 @@
 """
-4h model configuratie — BTCUSDT / ETHUSDT
+4h model configuratie — BTCUSDT
 Voorspelling 3 candles (12 uur) vooruit op 4-uurlijkse OHLCV candles.
 Medium-term model tussen uurmodel (24h horizon) en dagmodel (1d horizon).
 """
@@ -20,6 +20,7 @@ def symbol_path_4h(symbol: str, filename: str) -> Path:
 # ── Binance API ────────────────────────────────────────────────────────────────
 BINANCE_BASE_URL = "https://api.binance.com"
 INTERVAL_4H = "4h"
+# ETH blijft als data-only symbool (cross-asset BTC-feature). Geen ETH-model.
 SYMBOLS = ["BTCUSDT", "ETHUSDT"]
 SYMBOL = "BTCUSDT"
 DAYS_HISTORY = 730  # 2 jaar × 6 candles/dag = ~4380 rijen

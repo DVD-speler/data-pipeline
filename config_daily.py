@@ -1,5 +1,5 @@
 """
-Dagelijks model configuratie — BTCUSDT / ETHUSDT
+Dagelijks model configuratie — BTCUSDT
 Voorspelling 1 dag vooruit op dagelijkse OHLCV candles.
 Aparte configuratie naast het uurmodel (config.py).
 """
@@ -20,6 +20,7 @@ def symbol_path_daily(symbol: str, filename: str) -> Path:
 # ── Binance API ────────────────────────────────────────────────────────────────
 BINANCE_BASE_URL = "https://api.binance.com"
 INTERVAL_DAILY = "1d"
+# ETH blijft als data-only symbool (cross-asset BTC-feature). Geen ETH-model.
 SYMBOLS = ["BTCUSDT", "ETHUSDT"]
 SYMBOL = "BTCUSDT"
 DAYS_HISTORY = 730  # 2 jaar dagelijkse candles

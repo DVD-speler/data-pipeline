@@ -19,6 +19,9 @@ BINANCE_BASE_URL = "https://api.binance.com"
 # ── Multi-symbol & multi-timeframe ─────────────────────────────────────────────
 SYMBOL    = "BTCUSDT"
 INTERVAL  = "1h"
+# ETHUSDT blijft in SYMBOLS zodat download_ohlcv() ETH-data fris houdt
+# voor de cross-asset BTC-feature `eth_btc_ratio`. Er draait geen ETH-model
+# meer (zie cleanup apr 2026 / docs/ROADMAP.md).
 SYMBOLS   = ["BTCUSDT", "ETHUSDT"]
 INTERVALS = ["1h", "4h"]
 DAYS_HISTORY = 1826  # 5 jaar (dekt volledige BTC 4-jaar cyclus incl. 2022 bearmarkt)
