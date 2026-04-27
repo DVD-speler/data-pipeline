@@ -15,13 +15,11 @@ Gebruik:
 """
 
 import json
-import os
 from datetime import timezone
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
-import requests
 
 import config
 import config_daily as cfg_daily
@@ -29,6 +27,9 @@ from src.backtest import generate_live_signal, load_exit_proba
 from src.data_fetcher import load_ohlcv
 from src.levels import precompute_swings, get_recent_levels, compute_structural_sl_tp
 from src.stats import compute_direction_bias, compute_p1_heatmap
+
+from shared.notifier import send_alert
+from shared.paper_state import load_paper_state, save_paper_state
 
 
 # ── P2: Daily model regime gate ───────────────────────────────────────────────
@@ -144,58 +145,9 @@ def _check_corr_guard(symbol: str, df: pd.DataFrame) -> tuple[bool, float, str]:
     return False, 0.0, ""
 
 
-# ── State management ────────────────────────────────────────────────────────────
-
-def load_paper_state(path) -> dict:
-    """Laad paper trading state, of maak een lege state aan bij eerste run."""
-    if path.exists():
-        try:
-            with open(path) as f:
-                content = f.read().strip()
-                if content:
-                    return json.loads(content)
-        except (json.JSONDecodeError, ValueError):
-            print(f"  Waarschuwing: {path.name} onleesbaar — nieuwe state aangemaakt.")
-    return {
-        "open_position": None,
-        "closed_trades": [],
-        "capital": 1000.0,
-        "last_checked": None,
-    }
-
-
-def save_paper_state(state: dict, path) -> None:
-    """Sla paper trading state op als JSON."""
-    with open(path, "w") as f:
-        json.dump(state, f, indent=2, default=str)
-
-
-# ── Discord ─────────────────────────────────────────────────────────────────────
-
-def send_discord_alert(content: str) -> None:
-    """Stuur een bericht naar Discord via webhook URL uit omgevingsvariabele."""
-    webhook_url = os.environ.get("DISCORD_WEBHOOK_URL")
-    if not webhook_url:
-        print("  [Discord] DISCORD_WEBHOOK_URL niet ingesteld — alert overgeslagen.")
-        return
-
-    try:
-        resp = requests.post(
-            webhook_url,
-            json={"content": content},
-            timeout=10,
-        )
-        if resp.status_code in (200, 204):
-            print("  [Discord] Alert verstuurd.")
-        else:
-            print(f"  [Discord] Fout {resp.status_code}: {resp.text[:200]}")
-    except requests.RequestException as e:
-        print(f"  [Discord] Verbindingsfout: {e}")
-
-
-def send_alert(content: str) -> None:
-    """Stuur alert naar Discord."""
-    send_discord_alert(content)
+# Discord notifier + paper state worden geïmporteerd uit `shared/`
+# (zie imports bovenaan). `send_alert` gebruikt de default `DISCORD_WEBHOOK_URL`
+# omgevingsvariabele die het uurmodel oppakt.
 
 
 # ── Positie management ──────────────────────────────────────────────────────────
@@ -561,7 +513,7 @@ def run_live_alert(
                 f"| Risico: €{capital*risk_pct:.2f} ({risk_pct*100:.0f}% kapitaal)"
             )
             opened_new_position = True
-            send_discord_alert(msg)
+            send_alert(msg)
 
     # ── WACHT bericht (geen nieuwe trade geopend deze run) ────────────────────
     # Throttle: stuur max 1x per 4 uur, tenzij proba binnen 5% van drempel (near-miss)

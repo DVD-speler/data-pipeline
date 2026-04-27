@@ -1,7 +1,51 @@
-# Architectuur — Crypto Signal Model
+# Architectuur — Signal Models monorepo
 
 Huidige staat van het systeem. Update wanneer je structurele wijzigingen
 maakt (nieuwe pipeline-fase, ander deploy-platform, ander signal-kanaal).
+
+## Monorepo-overzicht
+
+Sinds M1 (april 2026) is dit een monorepo met twee project-mappen + één
+shared-map. De repo-naam staat nog op `crypto_signal_model` —
+hernoeming naar `signal_models` volgt later.
+
+```
+crypto_signal_model/        # repo root (toekomstige naam: signal_models)
+├── crypto/                 # BTC P1/P2 model + live alerts (actieve productie)
+│   ├── main.py
+│   ├── config.py / config_4h.py / config_daily.py
+│   ├── src/                # data_fetcher, features*, model, live_alert*, etc.
+│   └── data/               # OHLCV cache, model artefacten, signaalstate
+├── sports/                 # placeholder voor sports-model (Sprint S0)
+├── shared/                 # cross-project utilities
+│   ├── notifier.py         # Discord webhook (DISCORD_WEBHOOK_URL[*])
+│   ├── paper_state.py      # paper-trading state load/save
+│   └── kelly.py            # Kelly fractie (compute_kelly_fraction)
+├── docs/
+│   ├── ARCHITECTURE.md     # dit bestand — monorepo overview + crypto details
+│   ├── crypto/
+│   │   ├── ROADMAP.md      # sprint-historie + Sprint 20 plan
+│   │   └── LESSONS.md
+│   └── sports/
+│       └── ROADMAP.md      # placeholder
+├── .github/workflows/
+│   ├── crypto_signal_hourly.yml
+│   ├── crypto_signal_4h.yml
+│   └── crypto_signal_daily.yml
+├── README.md               # top-level introductie
+├── MEMORY.md               # project-level memory/state
+├── requirements.txt        # gedeeld door alle projects
+└── .gitignore
+```
+
+Imports: `crypto/`-code gebruikt `from src.foo import ...` (relatief
+binnen crypto) en `from shared.X import ...` (cross-project). De
+workflows zetten `PYTHONPATH=${{ github.workspace }}` en
+`working-directory: crypto` zodat beide stijlen werken vanuit één
+GitHub Actions step.
+
+Commit-prefix-conventie: `C:` voor crypto, `S:` voor sports, `M:` voor
+shared, `R:` voor repo-tooling. Cron-commits krijgen `C: signal: ...`.
 
 ## Doel
 

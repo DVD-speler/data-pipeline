@@ -524,22 +524,11 @@ def auto_promote_optuna(df: pd.DataFrame, symbol: str = config.SYMBOL,
 
 
 # ── Kelly Criterion positiegrootte (T2-D) ─────────────────────────────────────
+# `compute_kelly_fraction` is verplaatst naar `shared/kelly.py` zodat het
+# straks ook door het sports-project gebruikt kan worden — de wiskunde is
+# domein-onafhankelijk.
 
-def compute_kelly_fraction(win_rate: float, avg_win: float, avg_loss: float) -> float:
-    """
-    Bereken de Kelly-fractie: optimale positiegrootte als fractie van kapitaal.
-
-    f = (p × b − q) / b
-    Waarbij: p = win_rate, q = 1−p, b = avg_win / avg_loss (odds ratio)
-
-    Geeft 0.0 terug als er onvoldoende data is of als de verwachte waarde negatief is.
-    """
-    if avg_loss <= 0 or win_rate <= 0 or win_rate >= 1:
-        return 0.0
-    b = avg_win / avg_loss
-    q = 1.0 - win_rate
-    kelly = (win_rate * b - q) / b
-    return max(0.0, round(kelly, 4))
+from shared.kelly import compute_kelly_fraction  # noqa: E402, F401
 
 
 def save_kelly_sizing(

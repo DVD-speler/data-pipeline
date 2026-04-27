@@ -16,39 +16,23 @@ Gebruik:
 """
 
 import json
-import os
 
 import joblib
 import pandas as pd
-import requests
 
 import config_daily as cfg
 from src.data_fetcher import load_ohlcv
 from src.features_daily import build_features_daily
 
+from shared.notifier import send_alert as _shared_send_alert
 
-# ── Discord ──────────────────────────────────────────────────────────────────
 
-
-def send_discord_alert(content: str) -> None:
-    """Stuur bericht naar het dagelijkse Discord channel (DISCORD_WEBHOOK_URL_DAILY)."""
-    webhook_url = os.environ.get("DISCORD_WEBHOOK_URL_DAILY")
-    if not webhook_url:
-        print("  [Discord] DISCORD_WEBHOOK_URL_DAILY niet ingesteld — alert overgeslagen.")
-        return
-    try:
-        resp = requests.post(webhook_url, json={"content": content}, timeout=10)
-        if resp.status_code in (200, 204):
-            print("  [Discord] Dagelijks alert verstuurd.")
-        else:
-            print(f"  [Discord] Fout {resp.status_code}: {resp.text[:200]}")
-    except requests.RequestException as e:
-        print(f"  [Discord] Verbindingsfout: {e}")
+# ── Discord (dagelijks channel) ──────────────────────────────────────────────
 
 
 def send_alert(content: str) -> None:
-    """Stuur alert naar Discord."""
-    send_discord_alert(content)
+    """Stuur bericht naar het dagelijkse Discord channel via DISCORD_WEBHOOK_URL_DAILY."""
+    _shared_send_alert(content, webhook_env_var="DISCORD_WEBHOOK_URL_DAILY")
 
 
 # ── Signaal generatie ────────────────────────────────────────────────────────

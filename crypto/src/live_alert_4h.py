@@ -13,58 +13,23 @@ Gebruik:
 """
 
 import json
-import os
 from pathlib import Path
 
 import joblib
 import numpy as np
 import pandas as pd
-import requests
 
 import config_4h as cfg
 
+from shared.notifier import send_alert as _shared_send_alert
+from shared.paper_state import load_paper_state, save_paper_state
 
-# ── Discord ───────────────────────────────────────────────────────────────────
+
+# ── Discord (4h channel) ──────────────────────────────────────────────────────
 
 def send_alert(content: str) -> None:
-    """Stuur bericht naar het 4h Discord channel (DISCORD_WEBHOOK_URL_4H)."""
-    webhook_url = os.environ.get("DISCORD_WEBHOOK_URL_4H")
-    if not webhook_url:
-        print("  [Discord] DISCORD_WEBHOOK_URL_4H niet ingesteld — alert overgeslagen.")
-        return
-    try:
-        resp = requests.post(webhook_url, json={"content": content}, timeout=10)
-        if resp.status_code in (200, 204):
-            print("  [Discord] 4h alert verstuurd.")
-        else:
-            print(f"  [Discord] Fout {resp.status_code}: {resp.text[:200]}")
-    except requests.RequestException as e:
-        print(f"  [Discord] Verbindingsfout: {e}")
-
-
-# ── State management (BTC paper trading) ──────────────────────────────────────
-
-def load_paper_state(path: Path) -> dict:
-    """Laad paper trading state, of maak een lege state aan bij eerste run."""
-    if path.exists():
-        try:
-            with open(path) as f:
-                content = f.read().strip()
-                if content:
-                    return json.loads(content)
-        except (json.JSONDecodeError, ValueError):
-            print(f"  Waarschuwing: {path.name} onleesbaar — nieuwe state aangemaakt.")
-    return {
-        "open_position": None,
-        "closed_trades": [],
-        "capital": 1000.0,
-        "last_checked": None,
-    }
-
-
-def save_paper_state(state: dict, path: Path) -> None:
-    with open(path, "w") as f:
-        json.dump(state, f, indent=2, default=str)
+    """Stuur bericht naar het 4h Discord channel via DISCORD_WEBHOOK_URL_4H."""
+    _shared_send_alert(content, webhook_env_var="DISCORD_WEBHOOK_URL_4H")
 
 
 # ── Signaal generatie ─────────────────────────────────────────────────────────
