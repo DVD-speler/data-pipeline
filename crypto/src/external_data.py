@@ -70,22 +70,22 @@ def _cache_is_fresh(name: str) -> bool:
 
 def _save_cache(name: str, df: pd.DataFrame, min_rows: int = 5) -> None:
     """
-    Sla `df` op als cache. Valideert eerst dat de download zinvolle data
-    bevat — bij een lege/te kleine DataFrame raisen we een ValueError zodat
-    de bestaande `try/except`-fallback in de fetchers de oude cache behoudt
-    i.p.v. een lege parquet over de goede historische data te schrijven.
+    Sla `df` op als cache. Bij een lege/te-kleine DataFrame slaan we **niet**
+    op (no-op met waarschuwing) — de bestaande parquet blijft staan zodat
+    een tijdelijke API-uitval niet de historische data overschrijft.
 
-    Achtergrond: fetchers (Bybit OI, Binance funding) vangen vaak HTTP-fouten
-    op door zelf een lege DataFrame te retourneren in plaats van te raisen.
-    Zonder deze guard zou `_save_cache` die leegte overschrijven, waarna
-    `dropna` in features.py alle rijen weghaalt → IndexError downstream.
+    Geen exception: sommige fetchers (bijv. fetch_deribit_skew_live) leveren
+    per design 1 rij (live snapshot), en sommige callers omarmen `_save_cache`
+    niet met try/except. Een raise zou die runs onnodig laten crashen.
+
+    Down-stream gevolg: bij een echt mislukte download retourneert de fetcher
+    een lege of niet-gecachete DataFrame; features.py vangt het op met
+    EXTERNAL_FEATURE_DEFAULTS imputatie (Tier 2).
     """
     if df is None or df.empty or len(df) < min_rows:
         n_rows = 0 if df is None else len(df)
-        raise ValueError(
-            f"{name}: download retourneerde {n_rows} rijen (< {min_rows}) — "
-            f"cache niet overschreven, bestaande parquet behouden"
-        )
+        print(f"  [{name}] {n_rows} rijen (< {min_rows}) — cache niet overschreven")
+        return
     df.to_parquet(_cache_path(name))
 
 
@@ -787,7 +787,10 @@ def fetch_deribit_put_call_ratio() -> pd.DataFrame:
 
         ratio = put_oi / call_oi if call_oi > 0 else 1.0
 
-        now = pd.Timestamp.utcnow().floor("h")
+        # pandas 2+: pd.Timestamp.now(tz="UTC") is direct tz-aware. utcnow()
+        # gedraagde zich verschillend tussen pandas-versies (1.x naive, 2.x aware)
+        # → vervangen door consistent now(tz=...) idioom.
+        now = pd.Timestamp.now(tz="UTC").floor("h")
         # Creëer hourly serie van laatste 30 dagen met huidige waarde (forward-fill)
         idx = pd.date_range(end=now, periods=30 * 24, freq="h", tz="UTC")
         df  = pd.DataFrame({"btc_put_call_ratio": ratio}, index=idx)
@@ -799,7 +802,7 @@ def fetch_deribit_put_call_ratio() -> pd.DataFrame:
         print(f"  Waarschuwing: Deribit P/C ratio download mislukt ({e})")
         if cache_path.exists():
             return pd.read_parquet(cache_path)
-        now = pd.Timestamp.utcnow().floor("h")
+        now = pd.Timestamp.now(tz="UTC").floor("h")
         idx = pd.date_range(end=now, periods=30 * 24, freq="h", tz="UTC")
         return pd.DataFrame({"btc_put_call_ratio": 1.0}, index=idx)
 
@@ -910,7 +913,7 @@ def fetch_deribit_skew_live() -> pd.DataFrame:
     print("  Computing Deribit BTC 25-delta skew...")
     try:
         import math
-        now_ms  = pd.Timestamp.utcnow().timestamp() * 1000
+        now_ms  = pd.Timestamp.now(tz="UTC").timestamp() * 1000
 
         # Spot price
         r_idx = requests.get(
@@ -983,12 +986,13 @@ def fetch_deribit_skew_live() -> pd.DataFrame:
 
         skew = float(put_25d["iv"] - call_25d["iv"])
 
-        now_ts = pd.Timestamp.utcnow().floor("h")
+        # pd.Timestamp.now(tz="UTC") is direct tz-aware (pandas 2+) — voorkomt
+        # de double-tz_localize crash van het utcnow().tz_localize() patroon.
+        now_ts = pd.Timestamp.now(tz="UTC").floor("h")
         df = pd.DataFrame({"btc_skew_25d": [skew]}, index=[now_ts])
         df.index.name = "datetime"
-        df.index = df.index.tz_localize("UTC") if df.index.tzinfo is None else df.index
 
-        _save_cache("btc_skew_25d", df)
+        _save_cache("btc_skew_25d", df, min_rows=1)
         exp_str = pd.Timestamp(target_exp, unit="ms", tz="UTC").strftime("%d-%b")
         print(
             f"  Deribit 25D skew: {skew:+.1f}% (put IV {put_25d['iv']:.1f}% − call IV "
@@ -1000,7 +1004,10 @@ def fetch_deribit_skew_live() -> pd.DataFrame:
         print(f"  Waarschuwing: Deribit skew berekening mislukt ({e})")
         if _cache_path("btc_skew_25d").exists():
             return _load_cache("btc_skew_25d")
-        now_ts = pd.Timestamp.utcnow().floor("h").tz_localize("UTC")
+        # Was: pd.Timestamp.utcnow().floor("h").tz_localize("UTC") — double-tz
+        # crash op pandas 2+ omdat utcnow() al tz-aware is. now(tz="UTC") is
+        # direct tz-aware en idiomatischer.
+        now_ts = pd.Timestamp.now(tz="UTC").floor("h")
         return pd.DataFrame({"btc_skew_25d": [0.0]}, index=[now_ts])
 
 
