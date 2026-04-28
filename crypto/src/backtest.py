@@ -1106,7 +1106,13 @@ def generate_live_signal(df_ohlcv, p1p2, p1_heatmap, direction_bias,
     """
     from src.features import build_features
 
-    features  = build_features(df_ohlcv, p1p2, p1_heatmap, direction_bias, symbol=symbol)
+    # keep_unlabeled=True houdt de laatste PREDICTION_HORIZON_H rijen waar
+    # `target` nog NaN is. Zonder dit zou `features.iloc[-1]` een rij teruggeven
+    # die ~24h oud is (de bekende "24h-stale tijdstip"-bug). De inference-rij
+    # krijgt target-sentinel `-1`; trainings-callers blijven default
+    # `keep_unlabeled=False` gebruiken.
+    features  = build_features(df_ohlcv, p1p2, p1_heatmap, direction_bias,
+                               symbol=symbol, keep_unlabeled=True)
     model     = load_model(symbol=symbol)
     threshold, threshold_short = load_optimal_threshold(symbol=symbol)
 

@@ -68,7 +68,24 @@ def _cache_is_fresh(name: str) -> bool:
     return age_h < max_age
 
 
-def _save_cache(name: str, df: pd.DataFrame) -> None:
+def _save_cache(name: str, df: pd.DataFrame, min_rows: int = 5) -> None:
+    """
+    Sla `df` op als cache. Valideert eerst dat de download zinvolle data
+    bevat — bij een lege/te kleine DataFrame raisen we een ValueError zodat
+    de bestaande `try/except`-fallback in de fetchers de oude cache behoudt
+    i.p.v. een lege parquet over de goede historische data te schrijven.
+
+    Achtergrond: fetchers (Bybit OI, Binance funding) vangen vaak HTTP-fouten
+    op door zelf een lege DataFrame te retourneren in plaats van te raisen.
+    Zonder deze guard zou `_save_cache` die leegte overschrijven, waarna
+    `dropna` in features.py alle rijen weghaalt → IndexError downstream.
+    """
+    if df is None or df.empty or len(df) < min_rows:
+        n_rows = 0 if df is None else len(df)
+        raise ValueError(
+            f"{name}: download retourneerde {n_rows} rijen (< {min_rows}) — "
+            f"cache niet overschreven, bestaande parquet behouden"
+        )
     df.to_parquet(_cache_path(name))
 
 

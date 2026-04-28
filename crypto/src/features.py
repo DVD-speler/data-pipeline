@@ -23,6 +23,49 @@ from src.stats import compute_direction_bias, compute_p1_heatmap
 DOW_LABELS = {0: "Mon", 1: "Tue", 2: "Wed", 3: "Thu", 4: "Fri", 5: "Sat", 6: "Sun"}
 
 
+# ── Graceful degradation: neutrale defaults voor externe features ─────────────
+# Wanneer externe API's (Binance funding, Bybit OI, CoinGecko, Deribit, pytrends)
+# falen op de GH Actions runner door geo-block / rate-limit, blijven kolommen
+# 100% null in de feature matrix. Pure dropna zou dan alle rijen verwijderen
+# en `features.iloc[[-1]]` faalt met IndexError.
+#
+# Strategie: vóór de dropna doet `build_features` een ffill + fillna(default)
+# op deze kolommen. Het model krijgt dan neutraal-conservatieve waarden i.p.v.
+# een crash. Predictions verschuiven richting proba ≈ 0.5 — minder informatief
+# maar pipeline blijft levend tot de API's weer beschikbaar zijn.
+EXTERNAL_FEATURE_DEFAULTS = {
+    # Macro (yfinance — gewoonlijk beschikbaar, maar feestdagen geven gaten)
+    "spx_return_24h":          0.0,
+    "eurusd_return_24h":       0.0,
+    "dxy_return_24h":          0.0,
+    "dxy_return_7d":           0.0,
+    "usdjpy_return_24h":       0.0,
+    "usdjpy_return_7d":        0.0,
+    "vix_level":               20.0,   # historisch mediaan
+    # Sentiment (alternative.me / pytrends)
+    "fear_greed":              0.5,    # neutraal 50/100 genormaliseerd
+    "fear_greed_7d_chg":       0.0,
+    "google_trends_btc":       50.0,   # mediaan zoekvolume
+    "trends_momentum_4w":      0.0,
+    "trends_spike":            0.0,
+    # Cross-asset
+    "eth_btc_ratio":           0.0,
+    # Crypto-specifiek (Binance/Bybit/Deribit — geo-gevoelig)
+    "funding_rate":            0.0,    # neutrale funding
+    "funding_momentum":        0.0,
+    "oi_return_24h":           0.0,
+    "oi_price_divergence":     0.0,
+    "btc_dvol":                0.5,    # mediaan genormaliseerd DVOL
+    # On-chain (blockchain.info)
+    "active_addresses_7d_chg": 0.0,
+    "hash_rate_7d_chg":        0.0,
+}
+
+# Drempel waarboven we een data-quality-waarschuwing printen voor de laatste
+# rij (de inference-rij). 20% = als > 1/5 van de externe features imputed is.
+DATA_QUALITY_WARN_THRESHOLD = 0.20
+
+
 # ── Hulpfuncties ──────────────────────────────────────────────────────────────
 
 def _session(hour: int) -> int:
@@ -558,9 +601,10 @@ def build_features(
     direction_bias: pd.DataFrame,
     df_4h: pd.DataFrame = None,
     symbol: str = config.SYMBOL,
+    keep_unlabeled: bool = False,
 ) -> pd.DataFrame:
     """
-    Bouw de feature matrix voor ML-training.
+    Bouw de feature matrix voor ML-training of live inference.
 
     Parameters
     ----------
@@ -569,10 +613,17 @@ def build_features(
     p1_heatmap     : kans-heatmap P1 (uitvoer van compute_p1_heatmap)
     direction_bias : richtingsbias heatmap (uitvoer van compute_direction_bias)
     df_4h          : 4h OHLCV DataFrame (optioneel; wordt geladen indien None)
+    keep_unlabeled : `False` (default) drop de laatste PREDICTION_HORIZON_H rijen
+                     waar `target` nog NaN is — gewenst voor training. `True`
+                     houdt die rijen, zodat `df_feat.iloc[-1]` de meest recente
+                     candle is (gewenst voor live inference). In `True`-mode
+                     krijgen target-NaN rijen sentinel `-1` zodat astype(int)
+                     niet faalt; consumers die op target trainen moeten zelf
+                     `df[df.target != -1]` filteren.
 
     Returns
     -------
-    pd.DataFrame met kolommen = FEATURE_COLS + ["target", "close"]
+    pd.DataFrame met kolommen = FEATURE_COLS + FILTER_COLS + ["target", "close"]
     """
     df = df_ohlcv.copy()
 
@@ -877,14 +928,54 @@ def build_features(
         np.nan)
     )
 
+    # ── Graceful degradation — vul externe features met neutrale defaults ─────
+    # Wanneer externe API's falen (Binance funding, Bybit OI, CoinGecko,
+    # Deribit, pytrends) blijven kolommen NaN. ffill + fillna(default) zorgt
+    # dat dropna niet alle rijen verwijdert. Tellen voor data-quality-warning
+    # gebeurt op de laatste rij (de inference-candidaat).
+    last_row_imputed = []
+    for col, default in EXTERNAL_FEATURE_DEFAULTS.items():
+        if col not in df.columns:
+            continue
+        last_val_pre = df[col].iloc[-1] if len(df) else None
+        df[col] = df[col].ffill().fillna(default)
+        last_val_post = df[col].iloc[-1] if len(df) else None
+        # Imputed = laatste rij was NaN, nu defaulted (ffill kon de gap niet vullen)
+        if pd.isna(last_val_pre) and last_val_post == default:
+            last_row_imputed.append(col)
+
+    n_external_present = sum(1 for c in EXTERNAL_FEATURE_DEFAULTS if c in df.columns)
+    if n_external_present > 0 and last_row_imputed:
+        imputed_pct = len(last_row_imputed) / n_external_present
+        if imputed_pct >= DATA_QUALITY_WARN_THRESHOLD:
+            preview = ", ".join(last_row_imputed[:5])
+            extra   = f" (+{len(last_row_imputed) - 5} meer)" if len(last_row_imputed) > 5 else ""
+            print(f"  ⚠️  Data quality: {len(last_row_imputed)}/{n_external_present} externe "
+                  f"features imputed voor laatste rij ({imputed_pct:.0%}) — predictions "
+                  f"kunnen minder informatief zijn.")
+            print(f"      Imputed: {preview}{extra}")
+
     # ── Selecteer en schoon op ────────────────────────────────────────────────
     # FILTER_COLS (bijv. market_regime) worden ALTIJD meegenomen voor de backtest-filter,
     # maar staan NIET in FEATURE_COLS — worden dus niet als model-input gebruikt.
     filter_cols = getattr(config, "FILTER_COLS", [])
     keep      = config.FEATURE_COLS + filter_cols + ["target", "close"]
     available = [c for c in keep if c in df.columns]
-    df_feat   = df[available].dropna()
-    df_feat["target"] = df_feat["target"].astype(int)
+
+    # Critical kolommen die ALTIJD non-null moeten zijn (price, market regime).
+    # `target` is voor de laatste PREDICTION_HORIZON_H rijen NaN — we droppen die
+    # standaard (training), maar NIET in inference-mode (`keep_unlabeled=True`)
+    # zodat `df_feat.iloc[-1]` de actuele candle is i.p.v. een 24h-stale rij.
+    critical_cols = [c for c in ["close"] + filter_cols if c in df.columns]
+
+    df_feat = df[available].dropna(subset=critical_cols)
+    if not keep_unlabeled:
+        df_feat = df_feat.dropna(subset=["target"])
+
+    # target naar int (sentinel -1 voor unlabeled rijen in inference-mode);
+    # consumers die op target trainen filteren `df[df.target != -1]`.
+    if "target" in df_feat.columns:
+        df_feat["target"] = df_feat["target"].fillna(-1).astype(int)
 
     n_removed = len(df[available].dropna(subset=config.FEATURE_COLS)) - len(df_feat)
     if n_removed > 0:

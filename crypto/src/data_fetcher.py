@@ -23,6 +23,23 @@ import config
 KLINES_URL = f"{config.BINANCE_BASE_URL}/api/v3/klines"
 LIMIT_PER_REQUEST = 1000  # Binance maximum per call
 
+# ── Cold-start defensieve thresholds ──────────────────────────────────────────
+# De workflow kiest `days=2` (incremental) zodra `crypto/data/ohlcv.db` bestaat.
+# Als de DB bestaat maar slechts een paar rijen bevat (bijv. door een eerdere
+# gefaalde download of een onverwacht-leeg cache restore), retourneert
+# `_last_stored_timestamp` toch een waarde — incremental hervat dan vanaf de
+# allerlaatste rij en haalt alleen de paar uur sinds dan op. Resultaat: DB
+# blijft 14-rijen-klein, ADX(14) en alle rolling features falen.
+#
+# Fix: detecteer ondermaatse DB-state en negeer `last_ts` zodat we vanaf
+# `now - COLD_START_DAYS_BY_INTERVAL[interval]` opnieuw gaan ophalen.
+COLD_START_MIN_ROWS = 200            # < 200 rijen = "DB obviously broken"
+COLD_START_DAYS_BY_INTERVAL = {
+    "1h": 50,                        # 50 × 24 = 1200 candles, dekt return_30d
+    "4h": 50,                        # 50 × 6  =  300 candles
+    "1d": 1000,                      # ~3 jaar daily — match download_ohlcv default
+}
+
 
 # ── Database helpers ──────────────────────────────────────────────────────────
 
@@ -174,13 +191,36 @@ def _download_single(
 ) -> int:
     """
     Download historische candles voor één (symbool, interval)-combinatie.
-    Hervat automatisch vanaf het laatste opgeslagen tijdstip.
+    Hervat automatisch vanaf het laatste opgeslagen tijdstip — tenzij de DB
+    minder dan COLD_START_MIN_ROWS rijen bevat, dan wordt een volledige
+    backfill geforceerd (zie comment bij COLD_START_MIN_ROWS).
     Geeft het aantal nieuw ingevoegde candles terug.
     """
     now_ms = int(datetime.now(timezone.utc).timestamp() * 1000)
+
+    # Defensieve cold-start check: voorkom 14-rijen scenarios door incrementele
+    # fetch van bijna-lege DB. Force volledige backfill als row count te laag is.
+    row_count = conn.execute(
+        "SELECT COUNT(*) FROM ohlcv WHERE symbol=? AND interval=?",
+        (symbol, interval),
+    ).fetchone()[0]
+
+    cold_start = row_count < COLD_START_MIN_ROWS
+    if cold_start:
+        cold_days = COLD_START_DAYS_BY_INTERVAL.get(interval, 35)
+        if days < cold_days:
+            print(f"  [{symbol} {interval}] Cold-start: DB heeft {row_count} rijen "
+                  f"(< {COLD_START_MIN_ROWS}) — force {cold_days}-day backfill "
+                  f"(was {days} dagen)")
+            days = cold_days
+
     default_start_ms = now_ms - days * 24 * 3600 * 1000
 
-    last_ts = _last_stored_timestamp(conn, symbol, interval)
+    # Bij cold-start negeren we last_ts om naar default_start_ms (verder terug)
+    # te gaan; INSERT OR IGNORE zorgt dat bestaande recente rijen niet dubbel
+    # worden ingevoegd.
+    last_ts = None if cold_start else _last_stored_timestamp(conn, symbol, interval)
+
     if last_ts:
         start_ms = last_ts + 1
         print(
@@ -189,8 +229,9 @@ def _download_single(
         )
     else:
         start_ms = default_start_ms
+        label = "Cold-start backfill" if cold_start else "Verse download"
         print(
-            f"  [{symbol} {interval}] Verse download vanaf "
+            f"  [{symbol} {interval}] {label} vanaf "
             f"{datetime.fromtimestamp(start_ms / 1000, tz=timezone.utc).strftime('%Y-%m-%d %H:%M')} UTC"
         )
 
