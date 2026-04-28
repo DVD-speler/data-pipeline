@@ -24,7 +24,7 @@ via cron-getriggerde GitHub Actions workflows naar Discord.
 | Sprint | Doel | Status |
 |---|---|---|
 | **S0** | Scaffold (directory-structuur, fase-runner stubs, config) | ✅ |
-| **S1** | HBL match-data 5 seizoenen (OpenLigaDB + Sofascore) | open |
+| **S1** | HBL match-data 5 seizoenen (~~OpenLigaDB~~ — bron-keuze open) | ⚠️ blocked op data-source-onderzoek |
 | **S1.5** | Odds-historie 5 seizoenen (OddsPortal-scrape) | open |
 | **S2** | Feature engineering (Elo, form, home advantage, rest, H2H) | open |
 | **S3** | Skellam-model + walk-forward backtest met CLV-metric | open |
@@ -36,32 +36,45 @@ via cron-getriggerde GitHub Actions workflows naar Discord.
 
 ## S1 — HBL match-data (5 seizoenen)
 
+> ⚠️ **Data-source onderzoek vereist — open punt vóór implementatie.**
+> OpenLigaDB blijkt alleen HBL-data t/m seizoen 2016 te hebben (plus een
+> losse 2023, geen 2017–2022 of 2024–2025). Geverifieerd 2026-04-28 via
+> directe API-calls op `getmatchdata/hbl/{year}` — zie [LESSONS.md](LESSONS.md).
+> **Realistisch alternatief moet gekozen worden bij laptop-sessie**;
+> zolang dat niet rond is staat geen S1-code in de repo.
+
 **Doel**: Volledige historische match-database (2020-21 t/m 2024-25) +
 huidige seizoen, gecached lokaal in parquet per seizoen.
 
-### Data-sources
+### Realistische bronnen (na OpenLigaDB-misstap)
 
-| Bron | Rol | Beschikbaarheid |
-|---|---|---|
-| **OpenLigaDB API** | Primaire bron — fixtures + uitslagen + speeldata | Gratis, geen key, JSON REST. Stabiel sinds 2010 |
-| **Sofascore-scrape** | Aanvulling — line-ups, shots, saves, possession | Gratis maar reverse-engineered API. Python-lib `sofascore-py` als startpunt |
+| Bron | Rol | Voor | Tegen |
+|---|---|---|---|
+| **Liquimoly HBL official** ([liquimoly-hbl.de](https://www.liquimoly-hbl.de/)) | Primaire kandidaat — officiële site, scrape required | Officiële bron, vermoedelijk stabiele site-structuur, volledige historische data t/m huidig seizoen. ToS-risico het kleinst (eigen site van de competitie). | HTML-scrape vereist (geen public JSON-API gevonden), site-redesign risico. Throttling vereist (politiek). |
+| **handball.net** (app-API reverse engineering) | Backup — moderne app, mogelijk JSON-API achter HTTPS | Modern (mobile-first), dus waarschijnlijker een schone JSON-API achter de schermen dan een HTML-scrape. | Reverse-engineering vereist (Charles/mitmproxy sessie); risico op API-key of signing-headers. Moeite niet eenmalig — kan opnieuw gevraagd worden bij app-update. |
+| **Sofascore** (scrape via `sofascore-py`) | Aanvullende rijke statistieken — line-ups, shots, saves, possession | Sport-overstijgend (ook later voor vrouwenvoetbal Eredivisie / handbal-internationaal nuttig). Python-lib bestaat als startpunt. | Fragiel bij site-updates, reverse-engineered (geen officiële public API), risico op rate-limit / blokkade. Goed als rijke fallback, niet als enige bron. |
+| **Sportmonks** (paid, ~€30/maand) | Last resort — betrouwbare paid API | Stabiel, schaalbaar, multi-sport (incl. handbal). Geen scrape-onderhoud. | Kost geld vóór we edge bewezen hebben — schendt het cheap-first-pad uit het roadmap-overzicht. |
 
-OpenLigaDB endpoint-pattern:
-```
-https://api.openligadb.de/getmatchdata/hbl/{seizoen}
-# {seizoen} = "2020", "2021", ..., "2025"
-```
+**Aanbeveling vóór laptop-sessie**:
+1. Eerst Liquimoly-site inspecteren — officiële bron + politieaanvaardbare
+   scrape, kleinste ToS-risico
+2. Sofascore als rijke fallback (line-ups + statistieken) — al gepland
+   voor S1b zodra hoofdbron werkt
+3. Sportmonks pas overwegen als Liquimoly + Sofascore beide falen, of
+   bij multi-sport-uitbreiding (HBL + Eredivisie + ...) waar het loont
 
-**Risico**: Sofascore-scrape is fragile bij site-updates → fallback naar
-OpenLigaDB-only werkt nog (zonder line-up-features). Bij Sofascore-failure
-gaat S2 gewoon door zonder line-up-strength feature; toevoegen wanneer
-Sofascore weer stabiel is.
-
-**Niet gekozen** (overwogen, verworpen):
-- *handball.net* — geen publieke API, pure HTML-scrape, ToS onduidelijk
-- *kicker.de* — fragiel bij site-redesigns, voegt weinig toe boven OpenLigaDB
+**Niet (meer) gekozen**:
+- ~~OpenLigaDB~~ — alleen 2010-2016 + losse 2023, geen recente coverage
+- *kicker.de* — fragiel bij site-redesigns; voegt weinig toe boven Liquimoly
+- *handball.net publieke website* — minder volledig dan officiële Liquimoly
 
 ### Output S1
+
+**Decision-point bij laptop-sessie**: bron kiezen, daarna data_fetcher
+implementeren. Geen committed code in S1a (alleen API-verkenning gedaan
+op 2026-04-28 — OpenLigaDB-misstap gedocumenteerd in LESSONS).
+
+Verwachte output zodra bron is gekozen:
 
 ```
 sports/hbl/data/matches/
@@ -74,8 +87,8 @@ sports/hbl/data/matches/
 ```
 
 Helpers in `sports/hbl/src/data_fetcher.py` (zelfde stijl als
-`crypto/src/data_fetcher.py` — incremental download, SQLite optioneel
-als de parquet-per-seizoen-aanpak te traag wordt).
+`crypto/src/data_fetcher.py` — incremental download, polite throttling
+op 1 req/sec, retry-with-backoff op 429/5xx).
 
 ---
 
