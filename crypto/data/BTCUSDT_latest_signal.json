@@ -1,5 +1,5 @@
 {
-  "tijdstip": "2026-05-04 12:00:00+00:00",
+  "tijdstip": "2026-05-04 13:00:00+00:00",
   "signaal": "WACHT (daily regime bear \u2014 proba 35.1%)",
   "kans_stijging": "57.2%",
   "proba_raw": 0.572072072072072,
@@ -14,7 +14,7 @@
   "btc_skew_25d": "+3.7%",
   "skew_blocked": false,
   "horizon": "24 uur",
-  "prijs": 78783.65625,
+  "prijs": 78656.6328125,
   "ranging_score": 1.0,
   "crash_mode": 0,
   "macd_size_mult": 0.0
