@@ -1,8 +1,8 @@
 {
-  "tijdstip": "2026-05-09 11:00:00+00:00",
+  "tijdstip": "2026-05-09 12:00:00+00:00",
   "signaal": "WACHT",
-  "kans_stijging": "43.5%",
-  "proba_raw": 0.43478260869565216,
+  "kans_stijging": "35.1%",
+  "proba_raw": 0.3508771929824561,
   "long_threshold": "0.50",
   "long_threshold_base": "0.65",
   "short_threshold": "uitgeschakeld",
@@ -14,8 +14,8 @@
   "btc_skew_25d": "+3.7%",
   "skew_blocked": false,
   "horizon": "24 uur",
-  "prijs": 80285.453125,
+  "prijs": 80347.296875,
   "ranging_score": 2.0,
   "crash_mode": 0,
-  "macd_size_mult": 0.06432132502317653
+  "macd_size_mult": 0.07900305660698777
 }
