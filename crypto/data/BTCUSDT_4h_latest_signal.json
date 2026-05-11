@@ -1,9 +1,9 @@
 {
   "signaal": "WACHT",
-  "richting": "NEUTRAAL",
-  "kans_stijging": 0.4530056007974337,
-  "prijs": 80711.5234375,
-  "tijdstip": "2026-05-10 08:00:00+00:00",
+  "richting": "BEARISH",
+  "kans_stijging": 0.3685761735130933,
+  "prijs": 80784.921875,
+  "tijdstip": "2026-05-10 12:00:00+00:00",
   "market_regime": 0.0,
   "regime_label": "ranging",
   "death_cross": false,
