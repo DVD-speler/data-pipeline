@@ -1,5 +1,15 @@
 {
-  "open_position": null,
+  "open_position": {
+    "direction": "LONG",
+    "entry_price": 81014.0,
+    "sl_price": 79394.0,
+    "tp_price": 85875.0,
+    "open_time": "2026-05-12 04:00:00+00:00",
+    "horizon_end": "2026-05-12 16:00:00+00:00",
+    "position_size": 494.3,
+    "risk_euro": 9.89,
+    "proba": 0.6890306494216129
+  },
   "closed_trades": [
     {
       "direction": "LONG",
@@ -292,5 +302,5 @@
     }
   ],
   "capital": 988.59,
-  "last_checked": "2026-05-12 00:00:00+00:00"
+  "last_checked": "2026-05-12 04:00:00+00:00"
 }
