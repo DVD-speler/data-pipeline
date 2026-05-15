@@ -1,11 +1,11 @@
 {
-  "signaal": "BULLISH",
-  "richting": "BULLISH",
-  "kans_stijging": 0.702484058421055,
-  "prijs": 79068.3515625,
-  "tijdstip": "2026-05-13 16:00:00+00:00",
-  "market_regime": -1.0,
-  "regime_label": "bear (ADX-)",
+  "signaal": "NEUTRAAL",
+  "richting": "NEUTRAAL",
+  "kans_stijging": 0.5455796772383029,
+  "prijs": 81079.390625,
+  "tijdstip": "2026-05-14 23:00:00+00:00",
+  "market_regime": 1.0,
+  "regime_label": "bull (ADX+)",
   "death_cross": false,
-  "boven_ema200": false
+  "boven_ema200": true
 }
