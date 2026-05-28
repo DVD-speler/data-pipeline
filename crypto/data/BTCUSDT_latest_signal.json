@@ -1,8 +1,8 @@
 {
-  "tijdstip": "2026-05-27 23:00:00+00:00",
+  "tijdstip": "2026-05-28 00:00:00+00:00",
   "signaal": "WACHT (onder EMA200 \u2014 long geblokkeerd)",
-  "kans_stijging": "68.8%",
-  "proba_raw": 0.6875,
+  "kans_stijging": "63.2%",
+  "proba_raw": 0.6319444444444444,
   "long_threshold": "0.50",
   "long_threshold_base": "0.65",
   "short_threshold": "uitgeschakeld",
@@ -14,8 +14,8 @@
   "btc_skew_25d": "+4.5%",
   "skew_blocked": false,
   "horizon": "24 uur",
-  "prijs": 74312.1796875,
-  "ranging_score": 2.0,
+  "prijs": 74421.96875,
+  "ranging_score": 1.0,
   "crash_mode": 0,
   "macd_size_mult": 0.0
 }
