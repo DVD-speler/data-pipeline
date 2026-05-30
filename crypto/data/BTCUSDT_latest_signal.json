@@ -1,6 +1,6 @@
 {
-  "tijdstip": "2026-05-30 06:00:00+00:00",
-  "signaal": "WACHT (onder EMA200 \u2014 long geblokkeerd)",
+  "tijdstip": "2026-05-30 07:00:00+00:00",
+  "signaal": "WACHT (25D skew gate \u2014 puts te duur, skew +5.2%)",
   "kans_stijging": "57.2%",
   "proba_raw": 0.572072072072072,
   "long_threshold": "0.50",
@@ -11,11 +11,11 @@
   "death_cross": false,
   "proba_4h": "n/a",
   "confirm_4h": true,
-  "btc_skew_25d": "+3.6%",
-  "skew_blocked": false,
+  "btc_skew_25d": "+5.2%",
+  "skew_blocked": true,
   "horizon": "24 uur",
-  "prijs": 73513.2734375,
+  "prijs": 73454.609375,
   "ranging_score": 2.0,
   "crash_mode": 0,
-  "macd_size_mult": 0.10881498169081771
+  "macd_size_mult": 0.10256398748546701
 }
