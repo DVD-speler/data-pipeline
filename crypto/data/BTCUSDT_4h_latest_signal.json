@@ -1,14 +1,14 @@
 {
-  "signaal": "WACHT",
-  "richting": "NEUTRAAL",
-  "kans_stijging": 0.5125978657612327,
-  "prijs": 72739.7265625,
-  "tijdstip": "2026-06-01 08:00:00+00:00",
-  "market_regime": 0.0,
-  "regime_label": "ranging",
+  "signaal": "WACHT (death cross)",
+  "richting": "BULLISH",
+  "kans_stijging": 0.7433167701695607,
+  "prijs": 72187.0390625,
+  "tijdstip": "2026-06-01 12:00:00+00:00",
+  "market_regime": -1.0,
+  "regime_label": "bear (ADX-)",
   "death_cross": true,
   "boven_ema200": false,
-  "long_threshold": 0.65,
+  "long_threshold": 0.73,
   "long_threshold_base": 0.65,
   "short_threshold": 0.36
 }
