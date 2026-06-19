@@ -1,9 +1,9 @@
 {
   "signaal": "NEUTRAAL",
   "richting": "NEUTRAAL",
-  "kans_stijging": 0.5347775985111429,
-  "prijs": 61677.98046875,
-  "tijdstip": "2026-06-10 01:00:00+00:00",
+  "kans_stijging": 0.4790283994120493,
+  "prijs": 62768.44140625,
+  "tijdstip": "2026-06-19 12:00:00+00:00",
   "market_regime": -1.0,
   "regime_label": "bear (ADX-)",
   "death_cross": true,
