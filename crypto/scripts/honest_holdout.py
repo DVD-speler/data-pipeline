@@ -25,12 +25,18 @@ Gebruik (vanuit crypto/, na 'features'-fase):
 
 import argparse
 import json
+import os
+import sys
 from pathlib import Path
 
 import pandas as pd
 
-import config
-from src.model import time_split  # noqa: F401  (conventie-referentie)
+# Zorg dat crypto/ (de parent van scripts/) op het pad staat, zodat dit script
+# werkt vanuit elke cwd — zowel lokaal (python scripts/honest_holdout.py) als in
+# CI (working-directory: crypto, PYTHONPATH = repo-root).
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+import config  # noqa: E402  (na sys.path-bootstrap)
 
 # Kolommen die de audit als leak-verdacht markeerde (Fase 3 van het plan):
 LEAKY_COLS = [
