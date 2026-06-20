@@ -84,6 +84,19 @@ Volgt `smc_framework.md`, met concrete waarden:
 2. Inducement-laag toevoegen (bevroren causale regel).
 3. Holdout-check #1.
 
+## Amendement v1.1 (2026-06-19, vóór holdout — frequentie-fix)
+De v1 4h-kern gaf maar ~4 trades/jaar → holdout zou ~4 trades opleveren,
+hopeloos onder de 30-floor (council-voorspelling, empirisch bevestigd). Om een
+verdict mogelijk te maken, aangepast (holdout nog onaangeraakt):
+- **Executie naar 1h, bias naar 4h** (i.p.v. 4h/daily). Minder "puur HTF",
+  maar ~3-4× meer setups. Framework staat LTF-executie toe.
+- **Poolen over BTC + ETH** — zelfde setup-definitie, ~2× steekproef.
+- **Guards** tegen ontaarde trades: **max-risk 5%** (skip setup als entry→SL
+  > 5%), **max-hold** (time-exit, mark-to-market in R, als SL/TP niet raakt).
+- **Next-bar fill-conventie**: SL/TP-beheer vanaf de candle ná de fill
+  (same-candle fill+stop-artefact verwijderd; winrate 7%→14% op dev).
+- Holdout-split (datums) ongewijzigd; succescriteria ongewijzigd.
+
 ## v1 implementatie-noten (eerlijk: vereenvoudigingen in de kern)
 De mechaniseerbare kern (build-stap 1) gebruikt bewust simpele proxies; deze
 worden op de **dev-set** verfijnd (iteratie-protocol), niet op de holdout:
