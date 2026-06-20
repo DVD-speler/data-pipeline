@@ -29,6 +29,7 @@ def main():
     ap.add_argument("--symbol", default="BTCUSDT")
     ap.add_argument("--holdout", action="store_true",
                     help="Draai op de VERGRENDELDE holdout (alleen op mijlpalen!)")
+    ap.add_argument("--dump", action="store_true", help="Print elke trade (diagnose)")
     args = ap.parse_args()
 
     df4 = load_ohlcv(symbol=args.symbol, interval="4h").sort_index()
@@ -54,6 +55,18 @@ def main():
     if m["n_trades"] == 0:
         print("Geen trades gedetecteerd.")
         return
+    if args.dump:
+        print(f"  {'entry_time':16} {'dir':3} {'risk%':>6} {'bars':>4} {'reason':>6} {'R':>7}")
+        for t in trades:
+            print(f"  {str(t['entry_time'])[:16]:16} {t['dir']:>3} "
+                  f"{t['risk_pct']*100:6.2f} {t['bars_held']:4d} {t['reason']:>6} {t['r']:+7.2f}")
+        import numpy as _np
+        rp = _np.array([t["risk_pct"] for t in trades]) * 100
+        bh = _np.array([t["bars_held"] for t in trades])
+        ntp = sum(t["reason"] == "TP" for t in trades)
+        print(f"  --- risk% med {_np.median(rp):.2f} (min {rp.min():.2f} / max {rp.max():.2f}) "
+              f"| bars_held med {int(_np.median(bh))} | TP {ntp}/{len(trades)}")
+        print()
     print(f"  Trades        : {m['n_trades']}  (L {m['n_long']} / S {m['n_short']})")
     print(f"  Win rate      : {m['win_rate']*100:.1f}%")
     print(f"  Expectancy    : {m['expectancy_R']:+.3f} R / trade  (ná kosten)")

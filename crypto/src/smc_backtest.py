@@ -117,12 +117,14 @@ def run_smc_backtest(df_4h, df_1d, *, n=5, rr=2.0, sweep_mult=0.1,
                         fill = next((f for f in range(msb + 1, min(msb + fill_window + 1, T))
                                      if l[f] <= entry), None)
                         if fill is not None:
-                            mult, ex = _sim_exit(h, l, sl, tp, 1, fill, T)
+                            mult, ex = _sim_exit(h, l, sl, tp, 1, fill + 1, T)
                             if mult is not None:
                                 r = (rr if mult > 0 else -1.0) - (fee + slip) * 2 * entry / risk
                                 trades.append(dict(dir="L", entry_time=idx[fill],
                                                    exit_time=idx[ex], r=r,
-                                                   win=mult > 0))
+                                                   win=mult > 0, entry=entry, sl=sl, tp=tp,
+                                                   risk_pct=risk / entry, bars_held=ex - fill,
+                                                   reason="TP" if mult > 0 else "SL"))
                                 adv = ex + 1 - i
 
         # ---- SHORT setup ----
@@ -143,12 +145,14 @@ def run_smc_backtest(df_4h, df_1d, *, n=5, rr=2.0, sweep_mult=0.1,
                         fill = next((f for f in range(msb + 1, min(msb + fill_window + 1, T))
                                      if h[f] >= entry), None)
                         if fill is not None:
-                            mult, ex = _sim_exit(h, l, sl, tp, -1, fill, T)
+                            mult, ex = _sim_exit(h, l, sl, tp, -1, fill + 1, T)
                             if mult is not None:
                                 r = (rr if mult > 0 else -1.0) - (fee + slip) * 2 * entry / risk
                                 trades.append(dict(dir="S", entry_time=idx[fill],
                                                    exit_time=idx[ex], r=r,
-                                                   win=mult > 0))
+                                                   win=mult > 0, entry=entry, sl=sl, tp=tp,
+                                                   risk_pct=risk / entry, bars_held=ex - fill,
+                                                   reason="TP" if mult > 0 else "SL"))
                                 adv = ex + 1 - i
 
         i += max(adv, 1)
