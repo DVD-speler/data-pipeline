@@ -1,14 +1,13 @@
 """
-Runner voor de event-driven SMC-backtest (docs/crypto/smc_backtest_spec.md, v1.1).
+Runner SMC event-driven backtest (docs/crypto/smc_backtest_spec.md).
 
-Executie 1h + bias 4h, gepoold over BTC + ETH. Draait standaard op de DEV-set
-(t/m 2025-06-30). Holdout (2025-07-01 → nu) blijft vergrendeld — pas op een
-mijlpaal met --holdout.
+Executie 1h + bias 4h, gepoold over BTC + ETH. Vergelijkt configuraties:
+  inducement → + pool-targets → + SMT → bundel (pool+SMT).
+Standaard DEV-set (t/m 2025-06-30); holdout met --holdout (alleen op mijlpaal).
 
-Gebruik (vanuit crypto/, na OHLCV 1h+4h in ohlcv.db):
-  python scripts/smc_backtest_run.py            # dev, BTC+ETH gepoold
-  python scripts/smc_backtest_run.py --dump     # + per-trade
-  python scripts/smc_backtest_run.py --holdout  # PAS op een mijlpaal
+Gebruik (vanuit crypto/):
+  python scripts/smc_backtest_run.py
+  python scripts/smc_backtest_run.py --holdout
 """
 
 import argparse
@@ -29,52 +28,48 @@ SYMBOLS = ["BTCUSDT", "ETHUSDT"]
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--holdout", action="store_true",
-                    help="Draai op de VERGRENDELDE holdout (alleen op mijlpalen!)")
-    ap.add_argument("--dump", action="store_true", help="Print elke trade (diagnose)")
+    ap.add_argument("--holdout", action="store_true")
     args = ap.parse_args()
+
+    ex = {s: load_ohlcv(symbol=s, interval="1h").sort_index() for s in SYMBOLS}
+    bi = {s: load_ohlcv(symbol=s, interval="4h").sort_index() for s in SYMBOLS}
+    other = {"BTCUSDT": "ETHUSDT", "ETHUSDT": "BTCUSDT"}
+
+    def run(**kw):
+        trades = []
+        for s in SYMBOLS:
+            seg = ex[s][ex[s].index >= HOLDOUT_START] if args.holdout else ex[s][ex[s].index <= DEV_END]
+            bseg = bi[s][bi[s].index <= seg.index[-1]]
+            smt = ex[other[s]][ex[other[s]].index <= seg.index[-1]]
+            trades += run_smc_backtest(seg, bseg, avail_hours=4, df_smt=smt, **kw)
+        return trades
 
     label = (f"HOLDOUT ({HOLDOUT_START.date()} → nu)" if args.holdout
              else f"DEV (begin → {DEV_END.date()})")
-    print("=" * 60)
-    print("SMC EVENT-DRIVEN BACKTEST v2 — BTC+ETH gepoold @ 1h/4h")
-    print(f"Segment: {label}")
-    print("=" * 60)
+    print("=" * 64)
+    print("SMC EVENT-DRIVEN — BTC+ETH gepoold @ 1h/4h  +  pool-targets / SMT")
+    print(f"Segment: {label}   (random-2R baseline ~33.3%)")
+    print("=" * 64)
 
-    def run(use_ind):
-        trades = []
-        for sym in SYMBOLS:
-            ex = load_ohlcv(symbol=sym, interval="1h").sort_index()
-            bi = load_ohlcv(symbol=sym, interval="4h").sort_index()
-            seg = ex[ex.index >= HOLDOUT_START] if args.holdout else ex[ex.index <= DEV_END]
-            bi_seg = bi[bi.index <= seg.index[-1]]
-            ts = run_smc_backtest(seg, bi_seg, avail_hours=4, use_inducement=use_ind)
-            for t in ts:
-                t["sym"] = sym
-            trades += ts
-        return trades
-
-    for use_ind, name in [(False, "1. ZONDER inducement (baseline)"),
-                          (True, "2. MET inducement (stap 2)")]:
-        trades = run(use_ind)
-        m = metrics(trades)
-        print(f"--- {name} ---")
+    configs = [
+        ("1. inducement (ref)", dict(use_inducement=True)),
+        ("2. + pool-targets", dict(use_inducement=True, use_pool_targets=True)),
+        ("3. + SMT", dict(use_inducement=True, use_smt=True)),
+        ("4. bundel (pool + SMT)", dict(use_inducement=True, use_pool_targets=True, use_smt=True)),
+    ]
+    for name, kw in configs:
+        m = metrics(run(**kw))
         if m["n_trades"] == 0:
-            print("  geen trades\n")
+            print(f"--- {name}: geen trades")
             continue
         floor_ok = m["n_trades"] >= 30
         succ = m["expectancy_R"] >= 0.15 and m["profit_factor"] > 1.3 and floor_ok
-        print(f"  Trades        : {m['n_trades']}  (L {m['n_long']} / S {m['n_short']})")
-        print(f"  Win rate      : {m['win_rate']*100:.1f}%   (random-2R baseline ~33.3%)")
-        print(f"  Expectancy    : {m['expectancy_R']:+.3f} R/trade  | PF {m['profit_factor']:.2f}"
-              f"  | totaal {m['total_R']:+.1f} R")
-        verdict = ("INCONCLUSIVE (<30)" if not floor_ok else
-                   ("VOLDOET" if succ else "voldoet NIET"))
-        print(f"  -> {verdict}\n")
-        if args.dump and use_ind:
-            for t in sorted(trades, key=lambda x: x["entry_time"]):
-                print(f"    {t['sym']:8} {str(t['entry_time'])[:16]:16} {t['dir']:>2} "
-                      f"{t['reason']:>4} {t['r']:+6.2f}R")
+        verdict = "INCONCLUSIVE (<30)" if not floor_ok else ("VOLDOET ✓" if succ else "voldoet niet")
+        print(f"--- {name} ---")
+        print(f"    trades {m['n_trades']:3d} (L{m['n_long']}/S{m['n_short']}) | "
+              f"win {m['win_rate']*100:4.1f}% | exp {m['expectancy_R']:+.3f}R | "
+              f"PF {m['profit_factor']:.2f} | avgRR {m['avg_rr']:.2f} | tot {m['total_R']:+.1f}R")
+        print(f"    -> {verdict}")
 
 
 if __name__ == "__main__":
