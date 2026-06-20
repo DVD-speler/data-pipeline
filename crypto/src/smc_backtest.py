@@ -59,6 +59,29 @@ def htf_bias(df_bias, avail_hours, n=5):
     return s[~s.index.duplicated(keep="last")]
 
 
+def _find_fill(low, high, entry, msb, end, direction, use_ind):
+    """Eerste OB-tap. Met inducement: eis eerst een front-run pivot (boven de OB
+    voor long / onder de OB voor short) die op een EERDERE bar dan de tap is
+    bevestigd — d.w.z. een twee-legs pullback (front-run -> bounce -> sweep)."""
+    ind_ok = not use_ind
+    for f in range(msb + 2, end):
+        if use_ind and not ind_ok:
+            if direction == 1:
+                if low[f - 1] < low[f - 2] and low[f - 1] < low[f] and low[f - 1] > entry:
+                    ind_ok = True
+                    continue
+            else:
+                if high[f - 1] > high[f - 2] and high[f - 1] > high[f] and high[f - 1] < entry:
+                    ind_ok = True
+                    continue
+        if ind_ok:
+            if direction == 1 and low[f] <= entry:
+                return f
+            if direction == -1 and high[f] >= entry:
+                return f
+    return None
+
+
 def _sim_exit(h, l, c, entry, sl, tp, risk, rr, direction, start, T, max_hold):
     """Intrabar SL-first vanaf `start`, time-exit na max_hold. Retour (r_gross, idx, reden)."""
     end = min(start + max_hold, T) if max_hold else T
@@ -82,7 +105,8 @@ def _sim_exit(h, l, c, entry, sl, tp, risk, rr, direction, start, T, max_hold):
 
 def run_smc_backtest(df_exec, df_bias, *, avail_hours, n=5, rr=2.0, sweep_mult=0.1,
                      msb_window=24, fill_window=40, sl_buf=0.0005,
-                     fee=0.0006, slip=0.0002, max_risk_pct=0.05, max_hold=240):
+                     fee=0.0006, slip=0.0002, max_risk_pct=0.05, max_hold=240,
+                     use_inducement=True):
     o = df_exec["open"].to_numpy(float)
     h = df_exec["high"].to_numpy(float)
     l = df_exec["low"].to_numpy(float)
@@ -114,8 +138,8 @@ def run_smc_backtest(df_exec, df_bias, *, avail_hours, n=5, rr=2.0, sweep_mult=0
                     if entry > sl and (entry - sl) / entry <= max_risk_pct:
                         risk = entry - sl
                         tp = entry + rr * risk
-                        fill = next((f for f in range(msb + 1, min(msb + fill_window + 1, T))
-                                     if l[f] <= entry), None)
+                        fill = _find_fill(l, h, entry, msb, min(msb + fill_window + 1, T),
+                                          1, use_inducement)
                         if fill is not None:
                             rg, ex, reason = _sim_exit(h, l, c, entry, sl, tp, risk, rr,
                                                        1, fill + 1, T, max_hold)
@@ -141,8 +165,8 @@ def run_smc_backtest(df_exec, df_bias, *, avail_hours, n=5, rr=2.0, sweep_mult=0
                     if sl > entry and (sl - entry) / entry <= max_risk_pct:
                         risk = sl - entry
                         tp = entry - rr * risk
-                        fill = next((f for f in range(msb + 1, min(msb + fill_window + 1, T))
-                                     if h[f] >= entry), None)
+                        fill = _find_fill(l, h, entry, msb, min(msb + fill_window + 1, T),
+                                          -1, use_inducement)
                         if fill is not None:
                             rg, ex, reason = _sim_exit(h, l, c, entry, sl, tp, risk, rr,
                                                        -1, fill + 1, T, max_hold)
