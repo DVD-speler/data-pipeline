@@ -1,0 +1,1605 @@
+season,date,home,away,gh,ga,match_id
+2020-2021,2020-10-01,SC Magdeburg,Bergischer,27,31,zFt4r7qD
+2020-2021,2020-10-01,Lemgo,Coburg 2000,33,26,SnYHYjXo
+2020-2021,2020-10-01,Leipzig,Ludwigshafen,27,19,ldZDZWHu
+2020-2021,2020-10-01,Hannover-Burgdorf,Minden,26,25,nkp8sRbJ
+2020-2021,2020-10-03,Nordhorn-Lingen,Fuchse Berlin,20,25,zDyQWU1b
+2020-2021,2020-10-04,Rhein-Neckar,Stuttgart,30,20,4hTtTn1N
+2020-2021,2020-10-04,Kiel,Erlangen,36,30,WvVYU8WA
+2020-2021,2020-10-04,HSG Wetzlar,Flensburg-H.,27,29,YNo5NQOp
+2020-2021,2020-10-04,HBW Balingen-Weilstetten,MT Melsungen,23,25,0UwioUGi
+2020-2021,2020-10-06,Kiel,Hannover-Burgdorf,34,31,bFAbnawI
+2020-2021,2020-10-06,MT Melsungen,Lemgo,27,21,jBYRUW7p
+2020-2021,2020-10-06,Coburg 2000,Leipzig,22,29,CYKCt6VM
+2020-2021,2020-10-06,Goppingen,HBW Balingen-Weilstetten,28,23,U1XVTjNj
+2020-2021,2020-10-06,Fuchse Berlin,SC Magdeburg,22,32,MqSaq8o4
+2020-2021,2020-10-06,Ludwigshafen,Rhein-Neckar,24,26,Ugw7hz0i
+2020-2021,2020-10-07,Stuttgart,Essen,31,23,ddgVbmoi
+2020-2021,2020-10-07,Minden,HSG Wetzlar,24,29,Qyone5pG
+2020-2021,2020-10-07,Flensburg-H.,Nordhorn-Lingen,33,26,tlBrypgp
+2020-2021,2020-10-07,Bergischer,Erlangen,29,25,U9iwcRF3
+2020-2021,2020-10-08,SC Magdeburg,Goppingen,28,22,8pxBifFc
+2020-2021,2020-10-08,Lemgo,Ludwigshafen,24,22,E1VLl3Nq
+2020-2021,2020-10-08,Hannover-Burgdorf,Coburg 2000,27,23,27yFjEU3
+2020-2021,2020-10-10,HSG Wetzlar,Kiel,31,22,ATOUnshd
+2020-2021,2020-10-10,HBW Balingen-Weilstetten,Stuttgart,28,30,Kb6L94a9
+2020-2021,2020-10-11,Erlangen,MT Melsungen,31,21,p0tfO3E2
+2020-2021,2020-10-11,Nordhorn-Lingen,Bergischer,26,31,hQq2MsqF
+2020-2021,2020-10-11,Leipzig,Fuchse Berlin,24,24,hC4T7rUL
+2020-2021,2020-10-11,Rhein-Neckar,Essen,33,27,443700Me
+2020-2021,2020-10-11,Flensburg-H.,Minden,29,24,dv0a2Miq
+2020-2021,2020-10-15,Rhein-Neckar,Leipzig,23,28,A1OS3ZSm
+2020-2021,2020-10-15,Fuchse Berlin,Hannover-Burgdorf,31,27,rFMz2Dc0
+2020-2021,2020-10-15,Ludwigshafen,SC Magdeburg,22,28,6m8VNfKJ
+2020-2021,2020-10-15,Bergischer,HSG Wetzlar,20,22,vsGq0iSC
+2020-2021,2020-10-17,MT Melsungen,Minden,24,24,2em6Hhcm
+2020-2021,2020-10-18,Coburg 2000,Nordhorn-Lingen,26,29,rF8uWiCt
+2020-2021,2020-10-18,Stuttgart,Lemgo,26,26,v1rVBlRO
+2020-2021,2020-10-18,Goppingen,Erlangen,27,27,WzuNDAdC
+2020-2021,2020-10-18,Essen,HBW Balingen-Weilstetten,33,27,GtMnUVtg
+2020-2021,2020-10-18,Kiel,Flensburg-H.,29,21,z9oEFWRa
+2020-2021,2020-10-22,Hannover-Burgdorf,Bergischer,30,30,C8FeS9B5
+2020-2021,2020-10-22,HBW Balingen-Weilstetten,Ludwigshafen,26,27,UqnMrVen
+2020-2021,2020-10-22,Lemgo,Essen,31,23,tl7CORAU
+2020-2021,2020-10-22,Leipzig,Goppingen,22,25,pMD3QmtI
+2020-2021,2020-10-24,Nordhorn-Lingen,Kiel,29,35,jazVt9Qb
+2020-2021,2020-10-25,SC Magdeburg,Stuttgart,29,30,fiXowRPN
+2020-2021,2020-10-25,Minden,Fuchse Berlin,31,26,KfG9h6PA
+2020-2021,2020-10-25,HSG Wetzlar,MT Melsungen,25,33,jNIHX4mo
+2020-2021,2020-10-25,Flensburg-H.,Coburg 2000,32,22,bPwwumeB
+2020-2021,2020-10-25,Erlangen,Rhein-Neckar,20,26,U5Nde8uh
+2020-2021,2020-10-29,Stuttgart,Leipzig,30,24,Qgrszb9q
+2020-2021,2020-10-29,Goppingen,Lemgo,28,28,bcwyduW2
+2020-2021,2020-10-29,Ludwigshafen,Hannover-Burgdorf,27,27,n9WkYyvd
+2020-2021,2020-10-31,Essen,Erlangen,20,26,fPWqfJ0F
+2020-2021,2020-10-31,Bergischer,Flensburg-H.,25,30,GAuJkYqA
+2020-2021,2020-11-01,Kiel,Minden,41,26,SxVihcVR
+2020-2021,2020-11-01,Fuchse Berlin,HSG Wetzlar,35,28,CU8zpZx8
+2020-2021,2020-11-01,Coburg 2000,SC Magdeburg,26,28,U5wLiodE
+2020-2021,2020-11-01,Rhein-Neckar,HBW Balingen-Weilstetten,36,27,QDASoe8e
+2020-2021,2020-11-01,MT Melsungen,Nordhorn-Lingen,33,28,2JyTkPQQ
+2020-2021,2020-11-11,SC Magdeburg,Rhein-Neckar,31,33,S0L7rsJ0
+2020-2021,2020-11-11,Nordhorn-Lingen,Ludwigshafen,27,24,z7rZb23s
+2020-2021,2020-11-11,Lemgo,HBW Balingen-Weilstetten,26,32,lG9GtLmD
+2020-2021,2020-11-11,Erlangen,Stuttgart,34,25,GM124OuK
+2020-2021,2020-11-12,HSG Wetzlar,Coburg 2000,31,22,fop4CLXt
+2020-2021,2020-11-14,Stuttgart,Hannover-Burgdorf,31,26,bZUNlhaG
+2020-2021,2020-11-14,Ludwigshafen,Erlangen,26,30,MepqDhOi
+2020-2021,2020-11-14,Rhein-Neckar,Lemgo,26,18,IPUT6H1I
+2020-2021,2020-11-15,Essen,Nordhorn-Lingen,26,33,xYgRPV7c
+2020-2021,2020-11-15,Bergischer,Kiel,27,32,QgQ87lhT
+2020-2021,2020-11-19,Nordhorn-Lingen,Goppingen,20,29,MaSmT4Ek
+2020-2021,2020-11-19,HSG Wetzlar,Ludwigshafen,29,11,W8Y3wkxc
+2020-2021,2020-11-19,Erlangen,HBW Balingen-Weilstetten,32,34,U1m9zmMF
+2020-2021,2020-11-21,Kiel,Coburg 2000,41,26,6aYVnWTS
+2020-2021,2020-11-21,Bergischer,Fuchse Berlin,29,31,AaX7x9i3
+2020-2021,2020-11-22,Leipzig,Lemgo,32,32,42tIFopj
+2020-2021,2020-11-22,Goppingen,HSG Wetzlar,33,30,URWa9ANG
+2020-2021,2020-11-22,Flensburg-H.,Stuttgart,34,30,88Kcrjxp
+2020-2021,2020-11-26,Stuttgart,Nordhorn-Lingen,36,24,rTeVurbe
+2020-2021,2020-11-26,HBW Balingen-Weilstetten,Leipzig,20,20,xQTRmCEM
+2020-2021,2020-11-26,Rhein-Neckar,HSG Wetzlar,37,24,UPVeRrq2
+2020-2021,2020-11-26,Essen,Goppingen,28,32,dMxMXAnh
+2020-2021,2020-11-28,Lemgo,Erlangen,24,23,z3hNs4Tr
+2020-2021,2020-11-28,Ludwigshafen,Minden,30,24,IamL2558
+2020-2021,2020-11-29,Goppingen,Kiel,28,31,jX92sAij
+2020-2021,2020-11-29,Coburg 2000,Fuchse Berlin,25,32,xl0gpcks
+2020-2021,2020-11-29,HBW Balingen-Weilstetten,Flensburg-H.,25,32,27D6tU6d
+2020-2021,2020-11-29,Essen,Hannover-Burgdorf,26,26,pE31ryKg
+2020-2021,2020-11-29,MT Melsungen,Bergischer,32,31,r5Drkny9
+2020-2021,2020-11-29,Leipzig,SC Magdeburg,33,29,GIBjmQ5L
+2020-2021,2020-12-03,Hannover-Burgdorf,Goppingen,31,25,8KtsctYg
+2020-2021,2020-12-03,Minden,Essen,30,29,naygiW2O
+2020-2021,2020-12-03,Bergischer,Coburg 2000,28,24,KWHqeE3a
+2020-2021,2020-12-05,Erlangen,Leipzig,30,22,SdLighYB
+2020-2021,2020-12-05,Kiel,Ludwigshafen,29,19,GA1l5Dqc
+2020-2021,2020-12-05,Fuchse Berlin,MT Melsungen,32,30,SYx52dBP
+2020-2021,2020-12-06,Flensburg-H.,Goppingen,30,23,f10h4Xb3
+2020-2021,2020-12-06,Hannover-Burgdorf,HBW Balingen-Weilstetten,25,29,EgeIvgJI
+2020-2021,2020-12-06,HSG Wetzlar,Stuttgart,30,25,bHTzczZn
+2020-2021,2020-12-06,SC Magdeburg,Lemgo,30,28,ttcAtFl6
+2020-2021,2020-12-06,Nordhorn-Lingen,Rhein-Neckar,24,29,GEF6Ag3n
+2020-2021,2020-12-10,Stuttgart,Minden,30,26,Q3FV4kXN
+2020-2021,2020-12-10,MT Melsungen,Coburg 2000,27,32,xU3F8XXb
+2020-2021,2020-12-10,Lemgo,Nordhorn-Lingen,36,29,pf7N6B2B
+2020-2021,2020-12-10,Leipzig,HSG Wetzlar,32,28,638J7im5
+2020-2021,2020-12-12,Erlangen,Hannover-Burgdorf,21,21,KQEZ39nU
+2020-2021,2020-12-12,Ludwigshafen,Fuchse Berlin,23,34,0KWs8Lbo
+2020-2021,2020-12-13,Goppingen,Bergischer,26,26,SIdS5VHH
+2020-2021,2020-12-13,Rhein-Neckar,Flensburg-H.,31,31,Cxec3iE9
+2020-2021,2020-12-13,HBW Balingen-Weilstetten,SC Magdeburg,26,39,MZ01aTfo
+2020-2021,2020-12-15,Fuchse Berlin,Stuttgart,31,25,8jN23cDG
+2020-2021,2020-12-15,Hannover-Burgdorf,Rhein-Neckar,36,30,UaOb4wbA
+2020-2021,2020-12-15,HSG Wetzlar,HBW Balingen-Weilstetten,36,26,GGM62HSM
+2020-2021,2020-12-15,Nordhorn-Lingen,Leipzig,24,28,Ei2sdF5j
+2020-2021,2020-12-15,Minden,Lemgo,28,23,0lbwcejp
+2020-2021,2020-12-16,SC Magdeburg,Erlangen,36,26,nyZg5Jr4
+2020-2021,2020-12-16,Flensburg-H.,Essen,35,28,YXUk6aTc
+2020-2021,2020-12-16,Coburg 2000,Goppingen,21,29,SfjPKbri
+2020-2021,2020-12-16,Bergischer,Ludwigshafen,28,19,f7LA1yrT
+2020-2021,2020-12-17,Leipzig,Hannover-Burgdorf,29,26,4zzxd96q
+2020-2021,2020-12-17,Lemgo,HSG Wetzlar,28,27,rRYueTLk
+2020-2021,2020-12-19,Stuttgart,Kiel,27,34,Ghnmg7j2
+2020-2021,2020-12-19,Essen,Coburg 2000,29,27,4ESsFlDL
+2020-2021,2020-12-19,Erlangen,Minden,21,21,IcQVHjT2
+2020-2021,2020-12-19,Ludwigshafen,Flensburg-H.,20,29,QNTwGUcF
+2020-2021,2020-12-20,Goppingen,MT Melsungen,23,30,x2mqfmyd
+2020-2021,2020-12-20,SC Magdeburg,Nordhorn-Lingen,28,20,pjg51VrM
+2020-2021,2020-12-20,Rhein-Neckar,Bergischer,24,23,bgc90kbS
+2020-2021,2020-12-20,HBW Balingen-Weilstetten,Fuchse Berlin,19,28,W0UZGAr9
+2020-2021,2020-12-22,Coburg 2000,Ludwigshafen,23,23,xUu9Kkl8
+2020-2021,2020-12-22,Flensburg-H.,Erlangen,33,23,OMqYIxD3
+2020-2021,2020-12-22,Minden,Leipzig,23,20,dY2Mdnd1
+2020-2021,2020-12-22,HSG Wetzlar,SC Magdeburg,24,24,l8aEb8Rl
+2020-2021,2020-12-23,Nordhorn-Lingen,HBW Balingen-Weilstetten,29,27,zP1Qe6B7
+2020-2021,2020-12-23,Kiel,Rhein-Neckar,32,23,6okTJIcc
+2020-2021,2020-12-23,Hannover-Burgdorf,Lemgo,31,23,2DrxIdS9
+2020-2021,2020-12-23,Bergischer,Essen,35,29,SbbIcSte
+2020-2021,2020-12-26,Stuttgart,Bergischer,26,30,nw0mBoBf
+2020-2021,2020-12-26,SC Magdeburg,Hannover-Burgdorf,33,25,jXqDJ93E
+2020-2021,2020-12-27,Rhein-Neckar,Coburg 2000,39,24,pfqHITIK
+2020-2021,2020-12-27,Lemgo,Fuchse Berlin,23,29,EP1uD7tr
+2020-2021,2020-12-27,Leipzig,Flensburg-H.,24,29,OprLHmYQ
+2020-2021,2020-12-27,Essen,HSG Wetzlar,29,36,ABorXSXD
+2020-2021,2021-02-06,Minden,HBW Balingen-Weilstetten,20,27,rPLsLMvJ
+2020-2021,2021-02-06,Stuttgart,Coburg 2000,23,29,pUaQq6HJ
+2020-2021,2021-02-07,Goppingen,Ludwigshafen,24,22,zaIZMrA6
+2020-2021,2021-02-07,Fuchse Berlin,Essen,30,23,0tQMPpQm
+2020-2021,2021-02-11,Minden,Bergischer,29,36,G0YCAa2g
+2020-2021,2021-02-11,Stuttgart,Ludwigshafen,26,29,GIZ4xO9g
+2020-2021,2021-02-11,HBW Balingen-Weilstetten,Coburg 2000,34,26,OrwDz2v6
+2020-2021,2021-02-11,Essen,MT Melsungen,28,35,KAWLYu9I
+2020-2021,2021-02-13,Erlangen,Fuchse Berlin,30,27,ULw9yrPa
+2020-2021,2021-02-14,Bergischer,Leipzig,29,30,Ygp0w4fm
+2020-2021,2021-02-14,MT Melsungen,Stuttgart,28,30,6qA9alCr
+2020-2021,2021-02-14,SC Magdeburg,Minden,29,28,OKbUrQWP
+2020-2021,2021-02-14,Hannover-Burgdorf,Flensburg-H.,26,33,MkNnE8SR
+2020-2021,2021-02-14,Goppingen,Rhein-Neckar,34,32,f3odvpus
+2020-2021,2021-02-18,Goppingen,Stuttgart,27,17,GWEwiNOn
+2020-2021,2021-02-18,HSG Wetzlar,Hannover-Burgdorf,26,24,Y7PYi39t
+2020-2021,2021-02-18,Minden,Nordhorn-Lingen,27,27,OdIok1ga
+2020-2021,2021-02-18,Coburg 2000,Erlangen,27,26,pC6fmuOB
+2020-2021,2021-02-18,Fuchse Berlin,Flensburg-H.,29,33,rBYiBWh4
+2020-2021,2021-02-18,MT Melsungen,Leipzig,31,28,C4J7dq1P
+2020-2021,2021-02-21,Hannover-Burgdorf,Nordhorn-Lingen,31,22,6JQIQQAs
+2020-2021,2021-02-21,Kiel,SC Magdeburg,24,24,IL8I8njk
+2020-2021,2021-02-21,Fuchse Berlin,Rhein-Neckar,23,29,b1VPXaOO
+2020-2021,2021-02-21,Flensburg-H.,Lemgo,27,27,UeCM765e
+2020-2021,2021-02-21,Ludwigshafen,Essen,25,26,2mHklL85
+2020-2021,2021-02-21,Bergischer,HBW Balingen-Weilstetten,30,22,fNDsjsvg
+2020-2021,2021-02-25,Coburg 2000,Minden,24,28,MPBv2SFj
+2020-2021,2021-02-25,SC Magdeburg,Essen,34,28,C41wNTiG
+2020-2021,2021-02-25,Hannover-Burgdorf,MT Melsungen,31,23,KU4oL7MS
+2020-2021,2021-02-25,HSG Wetzlar,Erlangen,28,28,d8JVNOf0
+2020-2021,2021-02-28,Erlangen,Nordhorn-Lingen,35,29,0t4iA5Q0
+2020-2021,2021-02-28,Minden,Rhein-Neckar,26,26,xSjHYQjS
+2020-2021,2021-02-28,Bergischer,Lemgo,33,26,ULHwM2PC
+2020-2021,2021-02-28,Kiel,Fuchse Berlin,32,26,EXBseK26
+2020-2021,2021-02-28,MT Melsungen,SC Magdeburg,24,27,McyL8wX5
+2020-2021,2021-03-04,Leipzig,Essen,26,23,O2gYHsAJ
+2020-2021,2021-03-04,MT Melsungen,Erlangen,31,29,jB0V5pz8
+2020-2021,2021-03-04,HBW Balingen-Weilstetten,Lemgo,25,26,EqnQRRdR
+2020-2021,2021-03-04,Ludwigshafen,HSG Wetzlar,27,27,WOYiNo5r
+2020-2021,2021-03-06,Kiel,Nordhorn-Lingen,32,22,2J1FFkvD
+2020-2021,2021-03-06,Bergischer,Hannover-Burgdorf,27,23,0trMS7sL
+2020-2021,2021-03-06,Rhein-Neckar,Goppingen,31,32,IHhHTmSE
+2020-2021,2021-03-07,SC Magdeburg,Coburg 2000,43,22,CK1R6QK1
+2020-2021,2021-03-07,Minden,Flensburg-H.,28,29,GM5JE9gJ
+2020-2021,2021-03-07,Leipzig,Stuttgart,23,25,vRgDUTC8
+2020-2021,2021-03-07,Essen,Fuchse Berlin,23,24,AFXeM5Kl
+2020-2021,2021-03-17,Stuttgart,HBW Balingen-Weilstetten,27,23,nFqJ877n
+2020-2021,2021-03-17,Coburg 2000,Kiel,32,37,6FjV55i5
+2020-2021,2021-03-17,Erlangen,Essen,29,24,Q5rN7RMh
+2020-2021,2021-03-17,HSG Wetzlar,Goppingen,31,32,tGHoRFND
+2020-2021,2021-03-17,Nordhorn-Lingen,MT Melsungen,21,29,8UXR6oxa
+2020-2021,2021-03-18,Hannover-Burgdorf,SC Magdeburg,27,29,UHmcKqk1
+2020-2021,2021-03-18,Lemgo,Leipzig,28,23,IuuF9mht
+2020-2021,2021-03-18,Rhein-Neckar,Ludwigshafen,31,27,Ovm1J347
+2020-2021,2021-03-18,Fuchse Berlin,Minden,28,25,xri5INJD
+2020-2021,2021-03-20,Kiel,HSG Wetzlar,23,19,0xjZ4P6B
+2020-2021,2021-03-20,HBW Balingen-Weilstetten,Erlangen,24,29,nZB4K46b
+2020-2021,2021-03-20,Goppingen,Hannover-Burgdorf,31,24,CGJiN6Mu
+2020-2021,2021-03-20,Essen,Stuttgart,27,20,YkACIryB
+2020-2021,2021-03-20,Bergischer,Nordhorn-Lingen,25,25,QJNeMQyn
+2020-2021,2021-03-21,Ludwigshafen,Lemgo,24,25,faB8JOL4
+2020-2021,2021-03-21,Leipzig,Rhein-Neckar,26,33,zern2NjU
+2020-2021,2021-03-21,SC Magdeburg,Fuchse Berlin,29,24,vTlw4qMH
+2020-2021,2021-03-21,Minden,Coburg 2000,30,21,8rD0Lpih
+2020-2021,2021-03-24,Kiel,Leipzig,31,21,l2pnWnmK
+2020-2021,2021-03-25,Coburg 2000,HSG Wetzlar,30,30,88OfVLKG
+2020-2021,2021-03-25,Goppingen,Minden,33,29,hG0qCRel
+2020-2021,2021-03-25,MT Melsungen,HBW Balingen-Weilstetten,24,25,25YZZq6o
+2020-2021,2021-03-27,Erlangen,Bergischer,20,25,ngznXsj4
+2020-2021,2021-03-27,Flensburg-H.,Kiel,31,28,GEaHH2jH
+2020-2021,2021-03-27,Rhein-Neckar,Minden,29,27,Ov3PFtLT
+2020-2021,2021-03-27,Fuchse Berlin,Leipzig,27,28,QmkiB0Tp
+2020-2021,2021-03-28,Ludwigshafen,MT Melsungen,27,30,Meh08qeD
+2020-2021,2021-03-28,Stuttgart,SC Magdeburg,22,32,zJWsYNzb
+2020-2021,2021-03-28,Nordhorn-Lingen,Essen,22,19,UHPjW15A
+2020-2021,2021-04-01,Essen,Minden,29,20,lEAneOdT
+2020-2021,2021-04-01,MT Melsungen,Rhein-Neckar,25,26,vXOQO4uf
+2020-2021,2021-04-01,HBW Balingen-Weilstetten,Nordhorn-Lingen,35,24,YPQLqLZ9
+2020-2021,2021-04-03,Ludwigshafen,Coburg 2000,22,19,SnQPrukG
+2020-2021,2021-04-03,Kiel,Stuttgart,33,28,xrTbUuzN
+2020-2021,2021-04-04,SC Magdeburg,Flensburg-H.,29,32,GYR2TakT
+2020-2021,2021-04-04,HSG Wetzlar,Rhein-Neckar,34,32,zJ8ZNwDj
+2020-2021,2021-04-04,Goppingen,Fuchse Berlin,25,24,lMdHnNki
+2020-2021,2021-04-08,Rhein-Neckar,Nordhorn-Lingen,30,26,SO9et1o8
+2020-2021,2021-04-08,MT Melsungen,Essen,35,31,Ym98zHdd
+2020-2021,2021-04-08,Fuchse Berlin,Ludwigshafen,28,21,fcA4ycsj
+2020-2021,2021-04-08,HBW Balingen-Weilstetten,Goppingen,30,31,ATOdLa9r
+2020-2021,2021-04-10,Hannover-Burgdorf,Kiel,29,35,QN50xwSq
+2020-2021,2021-04-11,Flensburg-H.,Leipzig,29,23,OEJYtJJS
+2020-2021,2021-04-11,Lemgo,Minden,29,27,zgmia0Zd
+2020-2021,2021-04-11,Coburg 2000,Rhein-Neckar,28,31,Es7yvj3l
+2020-2021,2021-04-11,Stuttgart,HSG Wetzlar,24,31,nTjebKl3
+2020-2021,2021-04-11,Nordhorn-Lingen,SC Magdeburg,26,33,zi8XvWmr
+2020-2021,2021-04-15,Leipzig,HBW Balingen-Weilstetten,26,18,rNbhz82D
+2020-2021,2021-04-15,Kiel,Bergischer,33,30,846uwAIf
+2020-2021,2021-04-15,HSG Wetzlar,Fuchse Berlin,29,27,ATnzaiuE
+2020-2021,2021-04-15,Essen,Flensburg-H.,28,29,tIQIjTnf
+2020-2021,2021-04-15,Ludwigshafen,Stuttgart,28,24,84SAhkIs
+2020-2021,2021-04-17,Rhein-Neckar,Hannover-Burgdorf,33,28,4Walylm7
+2020-2021,2021-04-18,Goppingen,Nordhorn-Lingen,26,26,lKovbBfK
+2020-2021,2021-04-18,SC Magdeburg,MT Melsungen,31,27,M7AqxUX0
+2020-2021,2021-04-18,Flensburg-H.,Bergischer,29,22,jRlgLPZf
+2020-2021,2021-04-18,HBW Balingen-Weilstetten,Kiel,22,33,r5gd9Pu7
+2020-2021,2021-04-22,Nordhorn-Lingen,Minden,20,22,WKb42Qo6
+2020-2021,2021-04-22,MT Melsungen,Kiel,26,32,UixZnonJ
+2020-2021,2021-04-22,HBW Balingen-Weilstetten,Essen,31,28,xba036Wa
+2020-2021,2021-04-22,Hannover-Burgdorf,HSG Wetzlar,25,24,xpKRl7H6
+2020-2021,2021-04-22,Flensburg-H.,Ludwigshafen,35,29,bgLNkm20
+2020-2021,2021-04-24,Stuttgart,Goppingen,28,26,2u7m68ns
+2020-2021,2021-04-24,Lemgo,Rhein-Neckar,28,34,AmFLAlvQ
+2020-2021,2021-04-25,Erlangen,SC Magdeburg,30,28,Ofed4nHg
+2020-2021,2021-04-25,Nordhorn-Lingen,HSG Wetzlar,29,30,2ZyHZLgC
+2020-2021,2021-04-25,MT Melsungen,Flensburg-H.,30,32,d4qr33yO
+2020-2021,2021-04-25,Essen,Kiel,27,31,jTg12BTF
+2020-2021,2021-05-05,HSG Wetzlar,Lemgo,21,27,KxgJJRGt
+2020-2021,2021-05-05,Goppingen,Flensburg-H.,28,28,21rOIoWn
+2020-2021,2021-05-05,Essen,Bergischer,22,32,WtzuF3VB
+2020-2021,2021-05-05,Erlangen,Kiel,25,31,ABc81p1C
+2020-2021,2021-05-05,Coburg 2000,Hannover-Burgdorf,26,33,lIpzGqG5
+2020-2021,2021-05-06,Minden,Stuttgart,27,27,thsSH5og
+2020-2021,2021-05-06,SC Magdeburg,HBW Balingen-Weilstetten,26,28,jNE504GI
+2020-2021,2021-05-06,Rhein-Neckar,Fuchse Berlin,24,27,UDD9aOVO
+2020-2021,2021-05-06,Leipzig,MT Melsungen,29,33,rH1iO78P
+2020-2021,2021-05-08,Bergischer,SC Magdeburg,21,25,2LA9UrVb
+2020-2021,2021-05-08,Essen,Leipzig,24,26,fyykAEqp
+2020-2021,2021-05-08,Flensburg-H.,HSG Wetzlar,32,24,xvwmDs0O
+2020-2021,2021-05-08,Nordhorn-Lingen,Coburg 2000,28,26,IBDLRtFH
+2020-2021,2021-05-08,MT Melsungen,Goppingen,31,23,G48cXpot
+2020-2021,2021-05-09,HBW Balingen-Weilstetten,Minden,29,29,OzaISMaB
+2020-2021,2021-05-09,Erlangen,Ludwigshafen,19,24,pp0ET2p5
+2020-2021,2021-05-09,Stuttgart,Rhein-Neckar,32,28,lI65VOFh
+2020-2021,2021-05-09,Lemgo,Hannover-Burgdorf,24,26,fe71W40n
+2020-2021,2021-05-09,Fuchse Berlin,Kiel,26,28,GUyiC1FU
+2020-2021,2021-05-13,Hannover-Burgdorf,Fuchse Berlin,27,27,46IuXyic
+2020-2021,2021-05-13,Goppingen,Essen,35,27,YoAdTgjM
+2020-2021,2021-05-13,HSG Wetzlar,Nordhorn-Lingen,35,26,0YBlVFL9
+2020-2021,2021-05-13,Ludwigshafen,Bergischer,28,22,j3jTNXDq
+2020-2021,2021-05-13,Minden,MT Melsungen,30,30,pMD0SD5S
+2020-2021,2021-05-13,Lemgo,Stuttgart,35,29,vPAhUZzG
+2020-2021,2021-05-15,Rhein-Neckar,Erlangen,26,30,rcHqWe63
+2020-2021,2021-05-15,Kiel,HBW Balingen-Weilstetten,38,34,x0Qg9Ybj
+2020-2021,2021-05-16,Fuchse Berlin,Goppingen,34,27,dzrtHGsG
+2020-2021,2021-05-16,Ludwigshafen,Nordhorn-Lingen,26,28,ARoWGP0a
+2020-2021,2021-05-16,SC Magdeburg,Leipzig,33,34,j3Uc8hEd
+2020-2021,2021-05-16,Coburg 2000,Flensburg-H.,25,29,UgkXMiTk
+2020-2021,2021-05-18,Lemgo,Goppingen,26,26,tdXwZ3Li
+2020-2021,2021-05-18,Minden,Erlangen,30,29,WryqcV9Q
+2020-2021,2021-05-19,Bergischer,MT Melsungen,23,25,SCeLos5c
+2020-2021,2021-05-20,Hannover-Burgdorf,Ludwigshafen,25,28,UH3LGM5N
+2020-2021,2021-05-20,Leipzig,Erlangen,30,25,MF4VOJcp
+2020-2021,2021-05-20,Essen,Lemgo,37,39,tjUTsa4M
+2020-2021,2021-05-22,Kiel,MT Melsungen,29,28,vBVo7uEi
+2020-2021,2021-05-22,HBW Balingen-Weilstetten,Bergischer,27,25,Ktk3dbJF
+2020-2021,2021-05-23,Minden,Hannover-Burgdorf,28,27,fZRHp1K3
+2020-2021,2021-05-23,Erlangen,Goppingen,31,28,tjjacv49
+2020-2021,2021-05-24,Flensburg-H.,MT Melsungen,36,20,M3Iap3ll
+2020-2021,2021-05-24,Lemgo,Kiel,25,30,Ob9E9Szq
+2020-2021,2021-05-26,Bergischer,Minden,25,24,S8LXQLoL
+2020-2021,2021-05-26,Nordhorn-Lingen,Hannover-Burgdorf,20,22,4jO0KJOl
+2020-2021,2021-05-26,Erlangen,HSG Wetzlar,28,36,8KxVPu1R
+2020-2021,2021-05-26,Coburg 2000,Stuttgart,28,26,lIMTR1WE
+2020-2021,2021-05-27,MT Melsungen,Ludwigshafen,25,23,thJLTN12
+2020-2021,2021-05-27,Leipzig,Kiel,26,33,feNPSsH8
+2020-2021,2021-05-27,Fuchse Berlin,Lemgo,30,24,xKhuLVc2
+2020-2021,2021-05-27,Flensburg-H.,Rhein-Neckar,26,26,bTgyMBrd
+2020-2021,2021-05-27,Essen,SC Magdeburg,26,31,IgS4Jwve
+2020-2021,2021-05-29,HSG Wetzlar,Bergischer,30,22,lvb4vuGK
+2020-2021,2021-05-29,Hannover-Burgdorf,Stuttgart,23,23,v9GDHH87
+2020-2021,2021-05-29,Minden,SC Magdeburg,25,35,re2wYxgl
+2020-2021,2021-05-30,Coburg 2000,MT Melsungen,25,30,vNenWGN0
+2020-2021,2021-05-30,Ludwigshafen,HBW Balingen-Weilstetten,27,22,0WdrXd8f
+2020-2021,2021-05-30,Kiel,Essen,37,25,0IH9Icg1
+2020-2021,2021-05-30,Fuchse Berlin,Erlangen,30,22,6F8auL0E
+2020-2021,2021-05-30,Lemgo,Flensburg-H.,22,33,nPG7waVQ
+2020-2021,2021-05-30,Goppingen,Leipzig,30,33,443ZYIwr
+2020-2021,2021-06-02,Flensburg-H.,SC Magdeburg,33,30,WQZjV62Q
+2020-2021,2021-06-02,Stuttgart,Fuchse Berlin,25,28,z9yoiIaQ
+2020-2021,2021-06-02,Leipzig,Minden,24,21,SrxshbpK
+2020-2021,2021-06-02,HBW Balingen-Weilstetten,Rhein-Neckar,32,30,YqHLpGxf
+2020-2021,2021-06-02,Erlangen,Coburg 2000,33,28,KtDHodNm
+2020-2021,2021-06-02,Bergischer,Goppingen,29,28,xINCnx8s
+2020-2021,2021-06-05,Essen,Ludwigshafen,27,29,6cFTrf76
+2020-2021,2021-06-06,Flensburg-H.,Hannover-Burgdorf,28,24,YqejVzw7
+2020-2021,2021-06-06,Nordhorn-Lingen,Lemgo,25,32,S6GPqzh0
+2020-2021,2021-06-06,Fuchse Berlin,Coburg 2000,32,20,W6JVmRWC
+2020-2021,2021-06-06,MT Melsungen,HSG Wetzlar,30,28,lhwwgvVD
+2020-2021,2021-06-06,Leipzig,Bergischer,27,25,tW5i5S1m
+2020-2021,2021-06-08,SC Magdeburg,Kiel,34,33,nmafUfhD
+2020-2021,2021-06-09,Stuttgart,Flensburg-H.,30,32,GQH0omT4
+2020-2021,2021-06-10,Lemgo,Bergischer,31,23,80Ehm9bh
+2020-2021,2021-06-10,HSG Wetzlar,Essen,26,30,QyPmlkqn
+2020-2021,2021-06-10,Ludwigshafen,Leipzig,27,27,xt69qRcH
+2020-2021,2021-06-10,Coburg 2000,HBW Balingen-Weilstetten,27,27,jqADroDN
+2020-2021,2021-06-12,Minden,Kiel,30,35,fHG4p7rB
+2020-2021,2021-06-13,Coburg 2000,Lemgo,23,27,2RREi9Xm
+2020-2021,2021-06-13,Rhein-Neckar,MT Melsungen,31,22,2P8xsYyJ
+2020-2021,2021-06-13,Hannover-Burgdorf,Erlangen,27,26,OY9YsEMC
+2020-2021,2021-06-13,Goppingen,SC Magdeburg,21,29,niDdnTDb
+2020-2021,2021-06-13,Fuchse Berlin,Nordhorn-Lingen,29,25,E1LqkVTu
+2020-2021,2021-06-16,Bergischer,Rhein-Neckar,26,28,KYIVb6c4
+2020-2021,2021-06-16,Leipzig,Coburg 2000,35,29,6VERanrb
+2020-2021,2021-06-16,Nordhorn-Lingen,Stuttgart,26,29,ANBrd4sN
+2020-2021,2021-06-16,HBW Balingen-Weilstetten,HSG Wetzlar,30,28,tl7vcpSG
+2020-2021,2021-06-16,SC Magdeburg,Ludwigshafen,37,29,YHGJ18Do
+2020-2021,2021-06-17,Erlangen,Lemgo,31,35,2c8zbQCA
+2020-2021,2021-06-17,Kiel,Goppingen,31,23,p69Hs5ST
+2020-2021,2021-06-17,Flensburg-H.,Fuchse Berlin,29,33,nFeqwPzo
+2020-2021,2021-06-17,MT Melsungen,Hannover-Burgdorf,20,28,C8FN0SSi
+2020-2021,2021-06-19,Stuttgart,Erlangen,25,27,fiXDBqsA
+2020-2021,2021-06-19,Rhein-Neckar,SC Magdeburg,22,27,6VjJk2Kj
+2020-2021,2021-06-19,HSG Wetzlar,Leipzig,29,26,bPw5D5Cc
+2020-2021,2021-06-19,Fuchse Berlin,HBW Balingen-Weilstetten,36,30,KYv1Eoci
+2020-2021,2021-06-19,Coburg 2000,Bergischer,24,27,nkCh41Zq
+2020-2021,2021-06-20,Ludwigshafen,Kiel,20,29,2HzM9NBM
+2020-2021,2021-06-20,Hannover-Burgdorf,Essen,30,26,femFjr5p
+2020-2021,2021-06-20,Minden,Goppingen,24,23,lEWHA3dG
+2020-2021,2021-06-20,Nordhorn-Lingen,Flensburg-H.,28,38,ptQQ8sRS
+2020-2021,2021-06-20,Lemgo,MT Melsungen,28,30,G0Y9CPR3
+2020-2021,2021-06-23,Leipzig,Nordhorn-Lingen,24,21,lEhmQrd3
+2020-2021,2021-06-23,HBW Balingen-Weilstetten,Hannover-Burgdorf,30,26,zZWVHK3q
+2020-2021,2021-06-23,Erlangen,Flensburg-H.,26,27,v3o0NttM
+2020-2021,2021-06-23,Bergischer,Stuttgart,30,31,MRjeOMQF
+2020-2021,2021-06-23,MT Melsungen,Fuchse Berlin,32,35,zBlqROtc
+2020-2021,2021-06-24,SC Magdeburg,HSG Wetzlar,27,27,Y5A02u4d
+2020-2021,2021-06-24,Minden,Ludwigshafen,24,24,Igp4M0eS
+2020-2021,2021-06-24,Kiel,Lemgo,33,23,fFBd3Llj
+2020-2021,2021-06-24,Goppingen,Coburg 2000,37,29,ryhiP2B9
+2020-2021,2021-06-24,Essen,Rhein-Neckar,23,33,YJkZGvJk
+2020-2021,2021-06-27,Coburg 2000,Essen,31,32,8d2BGVO6
+2020-2021,2021-06-27,Stuttgart,MT Melsungen,26,26,A3m6JXvl
+2020-2021,2021-06-27,Rhein-Neckar,Kiel,25,25,rkXPw2Q2
+2020-2021,2021-06-27,Nordhorn-Lingen,Erlangen,30,31,U537HB90
+2020-2021,2021-06-27,Lemgo,SC Magdeburg,32,27,Gtl2KDPs
+2020-2021,2021-06-27,HSG Wetzlar,Minden,28,25,44LYyteF
+2020-2021,2021-06-27,Hannover-Burgdorf,Leipzig,31,28,fZwrFIm2
+2020-2021,2021-06-27,Fuchse Berlin,Bergischer,29,27,MuWTxMu9
+2020-2021,2021-06-27,Flensburg-H.,HBW Balingen-Weilstetten,38,26,GruvGbYe
+2020-2021,2021-06-27,Ludwigshafen,Goppingen,25,27,lfnAIiff
+2021-2022,2021-09-08,Minden,Flensburg-H.,18,31,4YKFO7o6
+2021-2022,2021-09-08,Lemgo,MT Melsungen,26,26,IHM7QTGg
+2021-2022,2021-09-08,Kiel,HBW Balingen-Weilstetten,33,24,zgX2R91m
+2021-2022,2021-09-08,Hamburg,Goppingen,27,28,rPJJNR0C
+2021-2022,2021-09-08,Erlangen,Leipzig,19,15,d8LBPmWa
+2021-2022,2021-09-09,Fuchse Berlin,HSG Wetzlar,29,24,hf1Apk8P
+2021-2022,2021-09-09,Hannover-Burgdorf,Rhein-Neckar,24,28,viDSL5VO
+2021-2022,2021-09-09,N-Lubbecke,Bergischer,20,24,f3mxt9Gt
+2021-2022,2021-09-09,SC Magdeburg,Stuttgart,33,29,Qm9OMoGI
+2021-2022,2021-09-11,MT Melsungen,Kiel,26,33,phtkw70a
+2021-2022,2021-09-11,HBW Balingen-Weilstetten,Minden,27,21,jVtovmog
+2021-2022,2021-09-11,Flensburg-H.,Erlangen,27,27,CvrsuTVn
+2021-2022,2021-09-12,Rhein-Neckar,SC Magdeburg,25,28,rwahxRF5
+2021-2022,2021-09-12,Leipzig,Fuchse Berlin,25,30,Q1lcyoVB
+2021-2022,2021-09-12,HSG Wetzlar,Lemgo,27,25,4hm1z5pI
+2021-2022,2021-09-12,Goppingen,N-Lubbecke,27,24,W0GUIxFp
+2021-2022,2021-09-12,Bergischer,Hamburg,31,26,AiFYHdUj
+2021-2022,2021-09-16,Stuttgart,Goppingen,27,34,vPCQxb6G
+2021-2022,2021-09-16,SC Magdeburg,HSG Wetzlar,30,26,QacLu0Mc
+2021-2022,2021-09-16,MT Melsungen,Fuchse Berlin,25,33,KMdPvKy4
+2021-2022,2021-09-16,Lemgo,Leipzig,26,27,bDeTwviA
+2021-2022,2021-09-18,Erlangen,Minden,30,22,IFBUyILM
+2021-2022,2021-09-19,Hannover-Burgdorf,Bergischer,28,20,lb20Weqp
+2021-2022,2021-09-19,Hamburg,Rhein-Neckar,32,27,ADj9UZDd
+2021-2022,2021-09-19,N-Lubbecke,HBW Balingen-Weilstetten,33,27,WMi5VFbj
+2021-2022,2021-09-19,Kiel,Flensburg-H.,33,23,CxBYzxyT
+2021-2022,2021-09-23,Minden,Fuchse Berlin,25,31,KrYaicL9
+2021-2022,2021-09-23,Leipzig,Hamburg,27,27,bTqigJjc
+2021-2022,2021-09-23,HBW Balingen-Weilstetten,SC Magdeburg,17,28,WIy4jHzG
+2021-2022,2021-09-23,Bergischer,Stuttgart,26,25,xKrehw63
+2021-2022,2021-09-25,Erlangen,Kiel,20,30,Quy8kyjM
+2021-2022,2021-09-26,Rhein-Neckar,Goppingen,37,32,4WZBle5S
+2021-2022,2021-09-26,MT Melsungen,N-Lubbecke,23,22,pQHvpFDq
+2021-2022,2021-09-26,HSG Wetzlar,Hannover-Burgdorf,38,16,OGGrqZSk
+2021-2022,2021-09-26,SC Magdeburg,Leipzig,30,28,nXdrm3oL
+2021-2022,2021-09-26,Stuttgart,Hamburg,26,34,Cz8gK7CA
+2021-2022,2021-09-30,MT Melsungen,SC Magdeburg,24,27,d6WRvug1
+2021-2022,2021-09-30,Lemgo,HBW Balingen-Weilstetten,38,28,WtKjsDc2
+2021-2022,2021-09-30,Hamburg,HSG Wetzlar,31,23,E5qykPG8
+2021-2022,2021-09-30,Goppingen,Bergischer,27,24,zFpXk512
+2021-2022,2021-10-02,N-Lubbecke,Flensburg-H.,17,34,8tbvlqWE
+2021-2022,2021-10-03,Stuttgart,Rhein-Neckar,35,30,vVyNuLwe
+2021-2022,2021-10-03,Kiel,Minden,34,25,UenmnN0R
+2021-2022,2021-10-03,Hannover-Burgdorf,MT Melsungen,23,25,6HwFss9r
+2021-2022,2021-10-03,Fuchse Berlin,Erlangen,35,30,0vwJt1Ol
+2021-2022,2021-10-09,Minden,N-Lubbecke,18,23,hY1dfKhl
+2021-2022,2021-10-09,HSG Wetzlar,Goppingen,28,28,raCM0MFK
+2021-2022,2021-10-09,HBW Balingen-Weilstetten,Hannover-Burgdorf,28,26,zci1gv8f
+2021-2022,2021-10-09,Erlangen,Lemgo,24,28,Es3he0wr
+2021-2022,2021-10-10,Leipzig,Stuttgart,33,24,0zNH120E
+2021-2022,2021-10-10,Hamburg,Flensburg-H.,27,33,zcVVwa87
+2021-2022,2021-10-10,Fuchse Berlin,Kiel,28,28,l0JD2ro8
+2021-2022,2021-10-10,Bergischer,Rhein-Neckar,25,25,MkBQatVQ
+2021-2022,2021-10-14,N-Lubbecke,Erlangen,20,21,lKFUfiqa
+2021-2022,2021-10-14,Hannover-Burgdorf,Fuchse Berlin,22,25,rNf9iIx7
+2021-2022,2021-10-14,Goppingen,MT Melsungen,26,26,bVMHcgat
+2021-2022,2021-10-17,Hamburg,Minden,31,27,SAEYgBb5
+2021-2022,2021-10-17,Lemgo,Kiel,21,21,M5alFLUD
+2021-2022,2021-10-17,SC Magdeburg,Flensburg-H.,33,28,l0e5hbN0
+2021-2022,2021-10-17,Stuttgart,HBW Balingen-Weilstetten,27,26,hhMLdDEn
+2021-2022,2021-10-21,MT Melsungen,Bergischer,26,24,GpQljTcU
+2021-2022,2021-10-21,Leipzig,Goppingen,29,20,h61fBCTu
+2021-2022,2021-10-21,HBW Balingen-Weilstetten,Hamburg,23,28,MogB7US4
+2021-2022,2021-10-21,Erlangen,Hannover-Burgdorf,31,35,lYf39jbh
+2021-2022,2021-10-24,Minden,Lemgo,29,32,SOg78ADb
+2021-2022,2021-10-24,Kiel,SC Magdeburg,27,29,dpJxgVDB
+2021-2022,2021-10-24,HSG Wetzlar,Rhein-Neckar,29,30,Wd0bAWrn
+2021-2022,2021-10-24,Fuchse Berlin,N-Lubbecke,30,22,Ia7oi9rO
+2021-2022,2021-10-24,Flensburg-H.,Stuttgart,30,29,zyIthkTH
+2021-2022,2021-10-28,Rhein-Neckar,HBW Balingen-Weilstetten,34,23,8rBxOkDo
+2021-2022,2021-10-28,Hannover-Burgdorf,Minden,30,29,6wXga6zo
+2021-2022,2021-10-30,N-Lubbecke,Kiel,29,25,IDnK58cH
+2021-2022,2021-10-30,Bergischer,Leipzig,30,20,zkcF6lrB
+2021-2022,2021-10-31,Goppingen,Flensburg-H.,30,30,G8EpMTsb
+2021-2022,2021-10-31,HSG Wetzlar,Stuttgart,35,34,faDlLmc4
+2021-2022,2021-10-31,Lemgo,Fuchse Berlin,27,28,MoFtN9Si
+2021-2022,2021-10-31,SC Magdeburg,Erlangen,28,27,4UpS3nST
+2021-2022,2021-11-10,Rhein-Neckar,Lemgo,30,33,pl61IosN
+2021-2022,2021-11-10,MT Melsungen,Minden,25,29,dO95H5dT
+2021-2022,2021-11-10,HSG Wetzlar,N-Lubbecke,29,25,tdoxCqKj
+2021-2022,2021-11-10,Goppingen,SC Magdeburg,24,25,UBvKzTdi
+2021-2022,2021-11-10,Flensburg-H.,Fuchse Berlin,28,23,jR6cJRRG
+2021-2022,2021-11-11,HBW Balingen-Weilstetten,Erlangen,23,25,jRSSY6R3
+2021-2022,2021-11-11,Leipzig,Hannover-Burgdorf,32,25,25nYCP4p
+2021-2022,2021-11-11,Kiel,Bergischer,24,23,82wOZnCc
+2021-2022,2021-11-13,Fuchse Berlin,SC Magdeburg,29,33,xrVvW4BM
+2021-2022,2021-11-13,MT Melsungen,Stuttgart,29,23,441yVOQS
+2021-2022,2021-11-13,Minden,Goppingen,30,33,EwiBOM3d
+2021-2022,2021-11-13,Flensburg-H.,Rhein-Neckar,31,26,biWzXpdG
+2021-2022,2021-11-13,N-Lubbecke,Lemgo,26,28,fZTcnQe3
+2021-2022,2021-11-14,Erlangen,Hamburg,23,22,0zm7P2lj
+2021-2022,2021-11-14,HBW Balingen-Weilstetten,Bergischer,30,28,GrVgm6tc
+2021-2022,2021-11-14,Leipzig,HSG Wetzlar,30,26,6Dm3QrZq
+2021-2022,2021-11-14,Kiel,Hannover-Burgdorf,31,24,4UWWXQtA
+2021-2022,2021-11-18,Rhein-Neckar,Minden,31,27,rcozTyer
+2021-2022,2021-11-18,HSG Wetzlar,HBW Balingen-Weilstetten,33,21,lflrRFPf
+2021-2022,2021-11-18,Bergischer,Erlangen,25,25,OCteOD9D
+2021-2022,2021-11-20,Hamburg,Lemgo,28,28,xGUxmcnE
+2021-2022,2021-11-21,Stuttgart,Fuchse Berlin,32,32,pMsiPgf7
+2021-2022,2021-11-21,Leipzig,MT Melsungen,22,26,fXlvSeAl
+2021-2022,2021-11-21,Goppingen,Kiel,26,38,SpmnQZv1
+2021-2022,2021-11-23,Rhein-Neckar,Leipzig,28,28,MDgDjxhD
+2021-2022,2021-11-23,Bergischer,HSG Wetzlar,17,27,6eQPeXTh
+2021-2022,2021-11-25,MT Melsungen,Rhein-Neckar,25,24,rH9HuFvl
+2021-2022,2021-11-25,Erlangen,Stuttgart,27,32,4WcQwg90
+2021-2022,2021-11-25,HBW Balingen-Weilstetten,Goppingen,26,30,Cd1YyXwD
+2021-2022,2021-11-25,N-Lubbecke,Hamburg,29,27,jm0xyigJ
+2021-2022,2021-11-28,Hamburg,MT Melsungen,26,25,d4oO4SCN
+2021-2022,2021-11-28,Minden,SC Magdeburg,26,31,IZ1UxDO6
+2021-2022,2021-11-28,Lemgo,Hannover-Burgdorf,31,33,M78LvZgf
+2021-2022,2021-11-28,Kiel,Leipzig,32,28,jJYtnH1K
+2021-2022,2021-11-28,Fuchse Berlin,Bergischer,32,17,ziADtePs
+2021-2022,2021-11-28,Flensburg-H.,HSG Wetzlar,27,25,YsOooyHQ
+2021-2022,2021-12-02,Stuttgart,Minden,35,31,CAt7jWh6
+2021-2022,2021-12-02,Leipzig,HBW Balingen-Weilstetten,31,24,MLmfgY8m
+2021-2022,2021-12-02,Erlangen,HSG Wetzlar,24,27,G4OY4V7a
+2021-2022,2021-12-04,Bergischer,Flensburg-H.,24,29,j1uBkj8C
+2021-2022,2021-12-05,Hannover-Burgdorf,N-Lubbecke,22,21,6erPbfoQ
+2021-2022,2021-12-05,Hamburg,Kiel,23,32,YPUFlANI
+2021-2022,2021-12-05,HSG Wetzlar,MT Melsungen,31,28,4pwahhOg
+2021-2022,2021-12-05,Goppingen,Erlangen,34,25,ryx3iCw0
+2021-2022,2021-12-05,SC Magdeburg,Lemgo,29,25,S4qLazWJ
+2021-2022,2021-12-09,Hannover-Burgdorf,SC Magdeburg,27,31,2u9T7XNt
+2021-2022,2021-12-09,N-Lubbecke,Stuttgart,27,23,jNGo2TiI
+2021-2022,2021-12-09,Minden,Bergischer,25,21,U7Sx4kN5
+2021-2022,2021-12-09,HBW Balingen-Weilstetten,MT Melsungen,25,34,CWHs39xC
+2021-2022,2021-12-12,Flensburg-H.,Leipzig,31,21,0WM1CDFP
+2021-2022,2021-12-12,Kiel,Rhein-Neckar,32,29,nTYJmUxP
+2021-2022,2021-12-12,Fuchse Berlin,Hamburg,34,30,riQQ6iwm
+2021-2022,2021-12-12,Stuttgart,Hannover-Burgdorf,22,34,CdgHtt7i
+2021-2022,2021-12-12,Lemgo,Goppingen,34,26,MsPU5Bhg
+2021-2022,2021-12-16,Flensburg-H.,Lemgo,27,19,IwGnrgrd
+2021-2022,2021-12-18,Stuttgart,Lemgo,37,40,ARZ92c3b
+2021-2022,2021-12-18,Rhein-Neckar,N-Lubbecke,35,25,KdLk1m7O
+2021-2022,2021-12-18,Hamburg,Hannover-Burgdorf,25,23,0GSMaemH
+2021-2022,2021-12-18,Bergischer,SC Magdeburg,24,27,S2UE1HI4
+2021-2022,2021-12-19,HBW Balingen-Weilstetten,Flensburg-H.,23,23,6gTI0yYA
+2021-2022,2021-12-19,Goppingen,Fuchse Berlin,24,31,Wzy63wlh
+2021-2022,2021-12-19,Leipzig,Minden,25,26,QwYc5aJu
+2021-2022,2021-12-19,MT Melsungen,Erlangen,30,28,bmKg07MU
+2021-2022,2021-12-19,HSG Wetzlar,Kiel,29,27,xEy24JYo
+2021-2022,2021-12-22,Minden,HSG Wetzlar,23,24,G4vc18OL
+2021-2022,2021-12-22,Hannover-Burgdorf,Goppingen,32,34,nPnt5jPd
+2021-2022,2021-12-22,Flensburg-H.,MT Melsungen,27,24,fHpesmXk
+2021-2022,2021-12-22,Erlangen,Rhein-Neckar,36,26,Msug2l9F
+2021-2022,2021-12-22,Kiel,Stuttgart,35,31,ChejrTHq
+2021-2022,2021-12-23,SC Magdeburg,Hamburg,34,26,Y7qat7nd
+2021-2022,2021-12-23,N-Lubbecke,Leipzig,23,28,few10SwS
+2021-2022,2021-12-23,Lemgo,Bergischer,27,27,8vyk3Ug9
+2021-2022,2021-12-23,Fuchse Berlin,HBW Balingen-Weilstetten,26,26,QFop4Av3
+2021-2022,2021-12-26,Minden,HBW Balingen-Weilstetten,23,23,0YaSGmO8
+2021-2022,2021-12-26,Kiel,Lemgo,32,19,zkLTennq
+2021-2022,2021-12-26,Goppingen,Stuttgart,34,32,Ms1OHT82
+2021-2022,2021-12-26,Flensburg-H.,SC Magdeburg,30,27,EuKXf61k
+2021-2022,2021-12-27,Rhein-Neckar,Hannover-Burgdorf,25,31,82JyfQGe
+2021-2022,2021-12-27,N-Lubbecke,HSG Wetzlar,25,28,U74WF7wF
+2021-2022,2021-12-27,Hamburg,Bergischer,26,27,8b3zFRhL
+2021-2022,2021-12-27,Fuchse Berlin,MT Melsungen,28,29,KxNugpW1
+2021-2022,2021-12-28,Leipzig,Erlangen,24,16,jNhuEo8R
+2021-2022,2022-02-09,SC Magdeburg,Minden,28,19,8KvBR4xR
+2021-2022,2022-02-09,HBW Balingen-Weilstetten,Leipzig,25,29,UTu7SpNK
+2021-2022,2022-02-09,Bergischer,Goppingen,33,27,Y1nbU6h8
+2021-2022,2022-02-10,Stuttgart,Kiel,29,42,KbbG5NF7
+2021-2022,2022-02-10,Lemgo,N-Lubbecke,27,22,t8aC6301
+2021-2022,2022-02-10,HSG Wetzlar,Flensburg-H.,29,29,0drF7qoe
+2021-2022,2022-02-10,Fuchse Berlin,Rhein-Neckar,23,20,M5qB8PVl
+2021-2022,2022-02-12,Flensburg-H.,Hannover-Burgdorf,30,20,v3VtMr0l
+2021-2022,2022-02-12,N-Lubbecke,SC Magdeburg,20,30,8YJqt4iK
+2021-2022,2022-02-12,MT Melsungen,HBW Balingen-Weilstetten,28,21,KCwkKMU0
+2021-2022,2022-02-12,Rhein-Neckar,Erlangen,26,26,MRKoL2Ff
+2021-2022,2022-02-13,Minden,Leipzig,23,23,UsLuspxE
+2021-2022,2022-02-13,Hamburg,Fuchse Berlin,27,30,2eJmuO6Q
+2021-2022,2022-02-13,Goppingen,HSG Wetzlar,33,26,hQycI0aD
+2021-2022,2022-02-13,Bergischer,Kiel,24,26,0CWxNOpr
+2021-2022,2022-02-17,SC Magdeburg,Goppingen,37,26,vHAFzrFs
+2021-2022,2022-02-17,Minden,MT Melsungen,22,26,fi3nwyyt
+2021-2022,2022-02-20,Bergischer,Lemgo,32,27,UBnyWJTC
+2021-2022,2022-02-20,HSG Wetzlar,Hamburg,26,25,nmcWWaE6
+2021-2022,2022-02-20,Hannover-Burgdorf,Kiel,26,29,Mu0KZ1Um
+2021-2022,2022-02-20,Fuchse Berlin,Stuttgart,29,22,0WbOYLqf
+2021-2022,2022-02-20,Erlangen,Flensburg-H.,26,30,rFjuVwqJ
+2021-2022,2022-02-24,MT Melsungen,Leipzig,22,22,z7b7YCkB
+2021-2022,2022-02-26,Stuttgart,Bergischer,27,26,QeiKVAZT
+2021-2022,2022-02-27,Kiel,Erlangen,34,24,jJdeyF5h
+2021-2022,2022-02-27,Rhein-Neckar,HSG Wetzlar,27,30,OWf3Zhz5
+2021-2022,2022-02-27,N-Lubbecke,Fuchse Berlin,26,32,S4wnRUso
+2021-2022,2022-02-27,Lemgo,SC Magdeburg,25,44,IVmCXW4H
+2021-2022,2022-02-27,Flensburg-H.,Minden,31,31,U9eazZKb
+2021-2022,2022-03-03,Stuttgart,HSG Wetzlar,26,26,G0lopAlN
+2021-2022,2022-03-03,MT Melsungen,Hamburg,26,22,rmjwnWJA
+2021-2022,2022-03-03,Minden,Rhein-Neckar,31,33,zoVHvlCp
+2021-2022,2022-03-03,Hannover-Burgdorf,Lemgo,27,31,xzLxlhkb
+2021-2022,2022-03-06,SC Magdeburg,Bergischer,38,25,rDLYlYZi
+2021-2022,2022-03-06,Leipzig,Flensburg-H.,25,24,MwksojZG
+2021-2022,2022-03-06,HBW Balingen-Weilstetten,Kiel,25,31,EyULw8Rj
+2021-2022,2022-03-06,Erlangen,N-Lubbecke,29,22,U3hkqU3T
+2021-2022,2022-03-10,Bergischer,Hannover-Burgdorf,25,23,QV7TdmYS
+2021-2022,2022-03-10,N-Lubbecke,Minden,19,21,Svfeh7tp
+2021-2022,2022-03-10,Hamburg,Erlangen,30,29,M1gaiRej
+2021-2022,2022-03-12,Goppingen,Leipzig,29,28,U3EKb93G
+2021-2022,2022-03-13,Stuttgart,SC Magdeburg,27,30,8fDOcTIM
+2021-2022,2022-03-13,Rhein-Neckar,MT Melsungen,29,26,O6BC0VY3
+2021-2022,2022-03-13,Lemgo,HSG Wetzlar,29,27,zsFGaklA
+2021-2022,2022-03-13,Kiel,Fuchse Berlin,27,31,2iN32i4i
+2021-2022,2022-03-13,Flensburg-H.,HBW Balingen-Weilstetten,35,21,trM71BJc
+2021-2022,2022-03-24,Fuchse Berlin,Lemgo,29,24,G0zjEl33
+2021-2022,2022-03-24,HBW Balingen-Weilstetten,Rhein-Neckar,22,31,fFDx5pQk
+2021-2022,2022-03-24,Hannover-Burgdorf,Stuttgart,33,23,xAynFUmc
+2021-2022,2022-03-24,Erlangen,Goppingen,23,25,bqS6A62S
+2021-2022,2022-03-26,SC Magdeburg,Kiel,25,30,z5c3joBd
+2021-2022,2022-03-26,HSG Wetzlar,Bergischer,23,27,ptO2BnmM
+2021-2022,2022-03-27,Minden,Hamburg,23,27,GOEY5QAq
+2021-2022,2022-03-27,MT Melsungen,Flensburg-H.,26,32,OQZgD8I9
+2021-2022,2022-03-27,Leipzig,N-Lubbecke,25,21,2HYcCSXF
+2021-2022,2022-03-27,Rhein-Neckar,Fuchse Berlin,24,29,OzVjfEgs
+2021-2022,2022-03-31,Bergischer,Fuchse Berlin,23,28,jgV87wnl
+2021-2022,2022-03-31,SC Magdeburg,Hannover-Burgdorf,30,22,js7o3Of2
+2021-2022,2022-03-31,Stuttgart,Erlangen,34,29,MJQ48JWs
+2021-2022,2022-04-02,Rhein-Neckar,Flensburg-H.,29,29,4peTR7X2
+2021-2022,2022-04-03,N-Lubbecke,MT Melsungen,23,31,UqUC6c1f
+2021-2022,2022-04-03,Lemgo,Minden,20,32,2VDWQRn9
+2021-2022,2022-04-03,Hamburg,Leipzig,24,33,C8JH5HG0
+2021-2022,2022-04-03,Goppingen,HBW Balingen-Weilstetten,27,28,pf3yQo2F
+2021-2022,2022-04-07,Rhein-Neckar,Hamburg,28,34,KYMP3eoD
+2021-2022,2022-04-07,MT Melsungen,Goppingen,24,26,fmPE3w1J
+2021-2022,2022-04-07,Leipzig,Lemgo,29,25,YwOI2cGP
+2021-2022,2022-04-07,HBW Balingen-Weilstetten,Stuttgart,25,28,Qy3ceF8a
+2021-2022,2022-04-07,Erlangen,Bergischer,30,23,4MElcyvm
+2021-2022,2022-04-10,Flensburg-H.,N-Lubbecke,30,19,QBNL4yW6
+2021-2022,2022-04-10,Fuchse Berlin,Hannover-Burgdorf,32,32,bPLT2F0J
+2021-2022,2022-04-10,HSG Wetzlar,SC Magdeburg,26,29,jJApbHOt
+2021-2022,2022-04-10,Hamburg,HBW Balingen-Weilstetten,29,34,U9HUkEKo
+2021-2022,2022-04-10,Minden,Kiel,27,30,no4gdegg
+2021-2022,2022-04-21,Hannover-Burgdorf,Hamburg,29,27,Srp795Gr
+2021-2022,2022-04-21,HBW Balingen-Weilstetten,N-Lubbecke,26,21,Ys2jxejn
+2021-2022,2022-04-21,Rhein-Neckar,Stuttgart,28,23,dIKaYl6A
+2021-2022,2022-04-24,Goppingen,Hannover-Burgdorf,31,25,dMnGWjKN
+2021-2022,2022-04-28,Erlangen,MT Melsungen,32,31,n5j2TQ7E
+2021-2022,2022-04-28,Leipzig,Rhein-Neckar,28,31,8dbSXua0
+2021-2022,2022-04-28,Kiel,HSG Wetzlar,27,24,Cj8s44ud
+2021-2022,2022-04-28,Goppingen,Minden,33,22,vuTW9ENh
+2021-2022,2022-04-28,Bergischer,HBW Balingen-Weilstetten,29,21,fB71fZN5
+2021-2022,2022-04-30,Lemgo,Erlangen,27,33,0lUSAf8n
+2021-2022,2022-04-30,Flensburg-H.,Hamburg,33,23,GQeAhDhI
+2021-2022,2022-05-01,SC Magdeburg,Fuchse Berlin,28,27,t4mdGGpP
+2021-2022,2022-05-01,Hannover-Burgdorf,HSG Wetzlar,22,28,rDZNBzgt
+2021-2022,2022-05-01,Kiel,MT Melsungen,27,25,S0aEiX7O
+2021-2022,2022-05-01,Stuttgart,Leipzig,29,25,Y1Sz9Yxa
+2021-2022,2022-05-01,N-Lubbecke,Rhein-Neckar,22,29,Y165ggwC
+2021-2022,2022-05-05,MT Melsungen,Hannover-Burgdorf,22,29,8KKm6WMH
+2021-2022,2022-05-05,Leipzig,Kiel,20,31,2eZj5jxO
+2021-2022,2022-05-05,Flensburg-H.,Goppingen,26,21,n5Wv8hh5
+2021-2022,2022-05-07,HSG Wetzlar,Fuchse Berlin,28,30,tnYf4AiU
+2021-2022,2022-05-07,Erlangen,SC Magdeburg,36,38,69a1PgNu
+2021-2022,2022-05-08,Hannover-Burgdorf,Flensburg-H.,26,31,2aX5p4QF
+2021-2022,2022-05-08,Rhein-Neckar,Bergischer,24,22,UTLq7C7B
+2021-2022,2022-05-08,Minden,Stuttgart,25,26,KC35ODxn
+2021-2022,2022-05-08,Hamburg,N-Lubbecke,32,24,hQ1DMi7b
+2021-2022,2022-05-08,HBW Balingen-Weilstetten,Lemgo,29,32,EZ29NXih
+2021-2022,2022-05-12,Lemgo,Rhein-Neckar,24,23,vNZ0DmUp
+2021-2022,2022-05-12,HSG Wetzlar,Erlangen,26,30,xEmZHTLT
+2021-2022,2022-05-12,Hannover-Burgdorf,HBW Balingen-Weilstetten,31,27,rFfQJkiH
+2021-2022,2022-05-12,Goppingen,Hamburg,24,28,SxTrxX6o
+2021-2022,2022-05-14,Bergischer,Minden,25,26,lhHizByb
+2021-2022,2022-05-14,Fuchse Berlin,Leipzig,34,25,fkbUI96N
+2021-2022,2022-05-15,Lemgo,Stuttgart,33,30,EZxgJtp7
+2021-2022,2022-05-15,SC Magdeburg,MT Melsungen,33,26,lheMKVyB
+2021-2022,2022-05-19,SC Magdeburg,N-Lubbecke,38,20,O8Y1opB9
+2021-2022,2022-05-19,Fuchse Berlin,Goppingen,37,31,GQJtmC44
+2021-2022,2022-05-19,MT Melsungen,Lemgo,18,23,z9J3X8LG
+2021-2022,2022-05-19,Minden,Hannover-Burgdorf,26,26,n7cYDKKe
+2021-2022,2022-05-19,HBW Balingen-Weilstetten,HSG Wetzlar,24,28,0A1xDvz2
+2021-2022,2022-05-22,N-Lubbecke,Goppingen,22,27,2FuLyOC2
+2021-2022,2022-05-22,Leipzig,Bergischer,22,26,EgaQFtjq
+2021-2022,2022-05-22,Hamburg,SC Magdeburg,22,32,t6vPzrS8
+2021-2022,2022-05-22,Flensburg-H.,Kiel,27,28,2eLeZUj4
+2021-2022,2022-05-22,Erlangen,Fuchse Berlin,25,31,hpbUE05k
+2021-2022,2022-05-26,Kiel,N-Lubbecke,32,23,A1dILBM4
+2021-2022,2022-05-26,Stuttgart,Flensburg-H.,26,28,6TRnyiMi
+2021-2022,2022-06-02,Goppingen,Rhein-Neckar,30,28,rmWFQc41
+2021-2022,2022-06-02,Stuttgart,N-Lubbecke,29,31,MwVJPHJ7
+2021-2022,2022-06-02,SC Magdeburg,HBW Balingen-Weilstetten,31,26,lWsXYLdL
+2021-2022,2022-06-04,HSG Wetzlar,Leipzig,24,27,nLx7SJZl
+2021-2022,2022-06-04,Bergischer,MT Melsungen,24,31,zsJ1l1d8
+2021-2022,2022-06-05,Lemgo,Flensburg-H.,30,25,QByBRwke
+2021-2022,2022-06-05,Kiel,Hamburg,29,22,AuqTZ1sF
+2021-2022,2022-06-05,Hannover-Burgdorf,Erlangen,28,27,WfXyYuCR
+2021-2022,2022-06-05,Fuchse Berlin,Minden,35,25,hbw3TaKr
+2021-2022,2022-06-08,Rhein-Neckar,Kiel,26,33,W8CAnuRK
+2021-2022,2022-06-08,MT Melsungen,HSG Wetzlar,27,22,AaBEoatR
+2021-2022,2022-06-08,HBW Balingen-Weilstetten,Fuchse Berlin,23,23,G0jgvHY0
+2021-2022,2022-06-08,Goppingen,Lemgo,33,33,KYdptw4l
+2021-2022,2022-06-08,Flensburg-H.,Bergischer,21,24,lpN5mLBE
+2021-2022,2022-06-09,Leipzig,SC Magdeburg,31,36,trbtsJlr
+2021-2022,2022-06-09,Hamburg,Stuttgart,27,32,lEl1xe3D
+2021-2022,2022-06-09,N-Lubbecke,Hannover-Burgdorf,21,20,ANkcwyl7
+2021-2022,2022-06-09,Minden,Erlangen,22,21,2cnkucJf
+2021-2022,2022-06-12,Bergischer,N-Lubbecke,26,22,2HEzifI6
+2021-2022,2022-06-12,Stuttgart,MT Melsungen,28,25,OQFWiz30
+2021-2022,2022-06-12,SC Magdeburg,Rhein-Neckar,37,34,4MWm0beK
+2021-2022,2022-06-12,Lemgo,Hamburg,28,24,fiBShGmf
+2021-2022,2022-06-12,Kiel,Goppingen,42,35,QVXq1vtE
+2021-2022,2022-06-12,HSG Wetzlar,Minden,30,28,G0COgdYm
+2021-2022,2022-06-12,Hannover-Burgdorf,Leipzig,26,26,bqWiaIAQ
+2021-2022,2022-06-12,Fuchse Berlin,Flensburg-H.,22,28,YyNJfxJs
+2021-2022,2022-06-12,Erlangen,HBW Balingen-Weilstetten,33,26,pt4ujEXC
+2022-2023,2022-09-01,Hamburg,Flensburg-H.,30,31,CbY4OevH
+2022-2023,2022-09-01,Hannover-Burgdorf,Leipzig,25,22,86ylSwuh
+2022-2023,2022-09-01,Lemgo,Gummersbach,26,30,xtthRcfb
+2022-2023,2022-09-01,Erlangen,HSG Wetzlar,31,27,beU0PyPA
+2022-2023,2022-09-03,Rhein-Neckar,MT Melsungen,36,25,6LX8NFgN
+2022-2023,2022-09-04,SC Magdeburg,Hamm-Westfalen,31,23,pCWCMZ8T
+2022-2023,2022-09-04,Minden,Bergischer,25,28,SpwJuc9i
+2022-2023,2022-09-04,Kiel,Stuttgart,36,23,zijXHgHp
+2022-2023,2022-09-04,Fuchse Berlin,Goppingen,34,27,EskyHDWj
+2022-2023,2022-09-07,Leipzig,Kiel,22,32,OCWRwyv4
+2022-2023,2022-09-07,HSG Wetzlar,Fuchse Berlin,25,37,23VVxegA
+2022-2023,2022-09-07,Goppingen,Lemgo,34,31,WxzzxF8G
+2022-2023,2022-09-07,Flensburg-H.,Minden,36,23,tlsNvHOc
+2022-2023,2022-09-07,Bergischer,Hannover-Burgdorf,22,23,ATYwyZNM
+2022-2023,2022-09-08,Stuttgart,Erlangen,27,29,SpFAVCop
+2022-2023,2022-09-08,MT Melsungen,Hamburg,30,27,hhOrzgwT
+2022-2023,2022-09-08,Hamm-Westfalen,Rhein-Neckar,30,35,M7EEUW0j
+2022-2023,2022-09-08,Gummersbach,SC Magdeburg,28,30,0bDITjGd
+2022-2023,2022-09-10,Fuchse Berlin,Stuttgart,31,21,IZs3y3Z2
+2022-2023,2022-09-10,Lemgo,MT Melsungen,28,28,Cds7zNl9
+2022-2023,2022-09-10,Hannover-Burgdorf,Flensburg-H.,25,35,vqqaxqKd
+2022-2023,2022-09-11,SC Magdeburg,HSG Wetzlar,32,28,6cauIEYs
+2022-2023,2022-09-11,Kiel,Bergischer,35,29,QaoBZt4F
+2022-2023,2022-09-11,Hamburg,Minden,27,21,W4diFCI0
+2022-2023,2022-09-11,Gummersbach,Hamm-Westfalen,29,28,hEcmGh3f
+2022-2023,2022-09-11,Erlangen,Goppingen,34,28,plbqHYml
+2022-2023,2022-09-15,Rhein-Neckar,Leipzig,30,24,SWk0DjmD
+2022-2023,2022-09-15,Flensburg-H.,Fuchse Berlin,31,31,tzvrxzQD
+2022-2023,2022-09-15,Bergischer,Lemgo,32,28,KQxnyfuK
+2022-2023,2022-09-17,Stuttgart,Rhein-Neckar,30,43,vBJIVX2s
+2022-2023,2022-09-17,Hamm-Westfalen,Erlangen,29,32,x2XjzEfQ
+2022-2023,2022-09-18,Goppingen,SC Magdeburg,26,31,YXIMUiIm
+2022-2023,2022-09-18,Leipzig,Hamburg,22,23,EsRUSVn0
+2022-2023,2022-09-18,HSG Wetzlar,Gummersbach,29,30,hYPYRk26
+2022-2023,2022-09-18,MT Melsungen,Hannover-Burgdorf,28,31,WIyQTBXg
+2022-2023,2022-09-18,Minden,Kiel,18,34,M7UxR9HC
+2022-2023,2022-09-22,Hamburg,Bergischer,33,23,G6BTmXOP
+2022-2023,2022-09-22,Gummersbach,Stuttgart,29,24,237PlD9J
+2022-2023,2022-09-22,Fuchse Berlin,Hamm-Westfalen,37,26,0bTtQTWI
+2022-2023,2022-09-22,Leipzig,Erlangen,32,29,0K4Hx7GO
+2022-2023,2022-09-24,Rhein-Neckar,Flensburg-H.,28,27,CxcarBnm
+2022-2023,2022-09-24,HSG Wetzlar,Goppingen,25,25,hlEdsV1g
+2022-2023,2022-09-25,SC Magdeburg,Minden,39,25,Q1C4u9W5
+2022-2023,2022-09-25,Lemgo,Leipzig,29,29,v5G8vToC
+2022-2023,2022-09-25,Hannover-Burgdorf,Kiel,27,29,WvD0tkHa
+2022-2023,2022-09-25,Erlangen,MT Melsungen,34,34,MT5Dwm1I
+2022-2023,2022-09-29,Bergischer,Rhein-Neckar,26,27,jqpRdA1t
+2022-2023,2022-09-29,Hamm-Westfalen,HSG Wetzlar,23,29,prwzelWh
+2022-2023,2022-09-29,Minden,Hannover-Burgdorf,34,35,Y7ZVeUGn
+2022-2023,2022-09-29,Stuttgart,Lemgo,32,28,lzba1jgP
+2022-2023,2022-10-01,Flensburg-H.,SC Magdeburg,35,34,v5xvf8oa
+2022-2023,2022-10-02,MT Melsungen,Fuchse Berlin,29,32,IeyrgS05
+2022-2023,2022-10-02,Kiel,Hamburg,40,28,ENUji6VH
+2022-2023,2022-10-02,Goppingen,Gummersbach,29,28,zXVnhnGB
+2022-2023,2022-10-02,Stuttgart,Bergischer,27,26,noCmRCCl
+2022-2023,2022-10-06,Rhein-Neckar,Minden,37,25,MmYbkp0U
+2022-2023,2022-10-06,HSG Wetzlar,Stuttgart,32,24,nBa5ATVu
+2022-2023,2022-10-06,Hannover-Burgdorf,Hamburg,28,27,8pUfjQpO
+2022-2023,2022-10-06,Erlangen,Bergischer,30,27,Q1b99mon
+2022-2023,2022-10-08,Hamm-Westfalen,Goppingen,32,28,KxDC870h
+2022-2023,2022-10-09,Gummersbach,Leipzig,36,36,lI4T4PaH
+2022-2023,2022-10-09,Fuchse Berlin,Kiel,34,26,bTBG7RFb
+2022-2023,2022-10-09,SC Magdeburg,MT Melsungen,27,23,th1L6oV4
+2022-2023,2022-10-09,Lemgo,Flensburg-H.,26,21,fe5P55pB
+2022-2023,2022-10-22,Flensburg-H.,Goppingen,27,24,rJM1nHqj
+2022-2023,2022-10-22,Hannover-Burgdorf,Lemgo,29,25,M9L5oyad
+2022-2023,2022-10-22,Minden,Erlangen,25,32,xx646xyM
+2022-2023,2022-10-23,Stuttgart,Hamm-Westfalen,29,20,UB2d8b69
+2022-2023,2022-10-23,MT Melsungen,HSG Wetzlar,21,19,zD9mAKyc
+2022-2023,2022-10-23,Leipzig,Fuchse Berlin,26,31,nmDi9vi3
+2022-2023,2022-10-23,Kiel,Rhein-Neckar,32,29,QsSdmcUq
+2022-2023,2022-10-23,Hamburg,Gummersbach,34,31,GS485djS
+2022-2023,2022-10-27,Hamm-Westfalen,MT Melsungen,18,28,fZizKe5L
+2022-2023,2022-10-27,Gummersbach,Minden,26,22,xbsuJFKR
+2022-2023,2022-10-27,Goppingen,Stuttgart,24,25,n9lSLHz9
+2022-2023,2022-10-29,Fuchse Berlin,Bergischer,29,27,UZpqafTe
+2022-2023,2022-10-30,Lemgo,Hamburg,28,32,8IkOMcL2
+2022-2023,2022-10-30,HSG Wetzlar,Flensburg-H.,22,27,8QqmbEr2
+2022-2023,2022-10-30,SC Magdeburg,Leipzig,32,24,M9sy1Gbq
+2022-2023,2022-10-30,Rhein-Neckar,Hannover-Burgdorf,32,31,zDou0zEk
+2022-2023,2022-11-03,MT Melsungen,Gummersbach,28,22,UeMJBXC1
+2022-2023,2022-11-03,Hannover-Burgdorf,Erlangen,29,28,nXWECDce
+2022-2023,2022-11-03,Flensburg-H.,Hamm-Westfalen,37,23,8tYADgrk
+2022-2023,2022-11-05,Kiel,Lemgo,32,33,v7T6EZSr
+2022-2023,2022-11-06,Minden,Fuchse Berlin,32,27,xCMDXEZK
+2022-2023,2022-11-06,Leipzig,Goppingen,25,26,StuNAiS7
+2022-2023,2022-11-06,Hamburg,Rhein-Neckar,40,37,G2LHWYlR
+2022-2023,2022-11-06,Bergischer,HSG Wetzlar,24,23,KzS8YfKE
+2022-2023,2022-11-08,Hamm-Westfalen,Kiel,24,37,4ntephJQ
+2022-2023,2022-11-09,SC Magdeburg,Rhein-Neckar,32,32,U91hQWRf
+2022-2023,2022-11-09,Goppingen,MT Melsungen,23,29,dMxmnElE
+2022-2023,2022-11-10,Erlangen,Hamburg,35,29,APtioY3K
+2022-2023,2022-11-10,Fuchse Berlin,Hannover-Burgdorf,32,30,800dPjs1
+2022-2023,2022-11-10,Gummersbach,Flensburg-H.,31,29,6eSMuCRs
+2022-2023,2022-11-10,HSG Wetzlar,Leipzig,24,25,GQa0OAd7
+2022-2023,2022-11-10,Lemgo,Minden,30,27,fHb4NUBD
+2022-2023,2022-11-12,Flensburg-H.,Erlangen,31,29,dpLZxAB0
+2022-2023,2022-11-13,Rhein-Neckar,Lemgo,37,28,jqEryltD
+2022-2023,2022-11-13,MT Melsungen,Stuttgart,33,26,UZCnz8eJ
+2022-2023,2022-11-13,Minden,HSG Wetzlar,26,29,xvJ2tqIh
+2022-2023,2022-11-13,Leipzig,Hamm-Westfalen,33,23,GOUgr5mt
+2022-2023,2022-11-13,Kiel,Goppingen,30,26,OWMRvWtl
+2022-2023,2022-11-13,Hamburg,Fuchse Berlin,28,37,jsN6u3Xb
+2022-2023,2022-11-13,Bergischer,Gummersbach,30,30,fFTcsP2n
+2022-2023,2022-11-16,Erlangen,Kiel,27,34,tWmWKyjF
+2022-2023,2022-11-16,Stuttgart,SC Magdeburg,28,32,tpT4Zz58
+2022-2023,2022-11-17,Goppingen,Minden,26,29,OUkJzunU
+2022-2023,2022-11-19,Erlangen,Rhein-Neckar,30,33,rF6VwBDi
+2022-2023,2022-11-19,Hamm-Westfalen,Bergischer,27,31,ClBZxVSc
+2022-2023,2022-11-19,SC Magdeburg,Kiel,33,34,p4MAvNn5
+2022-2023,2022-11-19,HSG Wetzlar,Hamburg,28,30,U7jFyLWN
+2022-2023,2022-11-20,Stuttgart,Leipzig,26,33,4O7Rvibo
+2022-2023,2022-11-20,MT Melsungen,Flensburg-H.,25,25,jHiBx1HH
+2022-2023,2022-11-20,Fuchse Berlin,Lemgo,32,26,OfLEws2B
+2022-2023,2022-11-24,Rhein-Neckar,Fuchse Berlin,32,34,Ii1fY6sT
+2022-2023,2022-11-24,Minden,Hamm-Westfalen,32,23,4rzDjlcc
+2022-2023,2022-11-24,Leipzig,MT Melsungen,40,33,boqNTQkp
+2022-2023,2022-11-24,Hannover-Burgdorf,HSG Wetzlar,23,26,v12jZnSM
+2022-2023,2022-11-27,Bergischer,Goppingen,28,26,juW8iUsi
+2022-2023,2022-11-27,Flensburg-H.,Stuttgart,29,25,pv3nzTCG
+2022-2023,2022-11-27,Hamburg,SC Magdeburg,28,30,n7PHk8C3
+2022-2023,2022-11-27,Kiel,Gummersbach,31,28,Y3ary9cA
+2022-2023,2022-11-27,Lemgo,Erlangen,34,27,xxrRSp5j
+2022-2023,2022-12-01,Stuttgart,Minden,27,23,4C18uOld
+2022-2023,2022-12-01,Gummersbach,Rhein-Neckar,29,32,Esqa2od9
+2022-2023,2022-12-01,Goppingen,Hamburg,26,26,Wb30spKq
+2022-2023,2022-12-03,Erlangen,Fuchse Berlin,28,30,tUpi47Rd
+2022-2023,2022-12-04,SC Magdeburg,Lemgo,37,33,QcOLlSR9
+2022-2023,2022-12-04,Leipzig,Flensburg-H.,31,30,CEMTn6dM
+2022-2023,2022-12-04,HSG Wetzlar,Kiel,25,31,fwCYoQBS
+2022-2023,2022-12-04,Hamm-Westfalen,Hannover-Burgdorf,29,29,KKqe3Rt3
+2022-2023,2022-12-04,MT Melsungen,Bergischer,22,22,YNNPmnsG
+2022-2023,2022-12-08,Lemgo,HSG Wetzlar,34,29,4QtsfN3k
+2022-2023,2022-12-08,Hamburg,Hamm-Westfalen,32,25,hnNyG4Q8
+2022-2023,2022-12-08,Erlangen,Gummersbach,31,37,0hzjh1Y1
+2022-2023,2022-12-10,Minden,Leipzig,28,29,EeOXGpB2
+2022-2023,2022-12-11,Bergischer,Flensburg-H.,18,31,nkWogsJe
+2022-2023,2022-12-11,Hannover-Burgdorf,Stuttgart,27,22,fii70PQL
+2022-2023,2022-12-11,Kiel,MT Melsungen,24,22,CS1215BF
+2022-2023,2022-12-11,Rhein-Neckar,Goppingen,36,33,YsjBaqtS
+2022-2023,2022-12-11,Fuchse Berlin,SC Magdeburg,31,32,QZswe3lq
+2022-2023,2022-12-15,Gummersbach,Hannover-Burgdorf,27,34,juAwxkr4
+2022-2023,2022-12-15,Stuttgart,Hamburg,22,28,nTdRihvJ
+2022-2023,2022-12-15,MT Melsungen,Minden,31,28,4p16dGPm
+2022-2023,2022-12-15,Hamm-Westfalen,Lemgo,25,30,lYzAGyHJ
+2022-2023,2022-12-17,SC Magdeburg,Erlangen,31,28,AN12cdAs
+2022-2023,2022-12-18,Leipzig,Bergischer,27,32,0CfFfff0
+2022-2023,2022-12-18,HSG Wetzlar,Rhein-Neckar,23,29,v3gJgE96
+2022-2023,2022-12-18,Gummersbach,Fuchse Berlin,28,30,08vEFeWP
+2022-2023,2022-12-18,Goppingen,Hannover-Burgdorf,33,29,8xbNhYOC
+2022-2023,2022-12-18,Flensburg-H.,Kiel,36,23,YcvZEOuF
+2022-2023,2022-12-26,Rhein-Neckar,Hamm-Westfalen,37,27,0WM06igC
+2022-2023,2022-12-26,SC Magdeburg,Goppingen,33,29,EFKl9g9g
+2022-2023,2022-12-26,Kiel,Minden,36,29,ImRuBFvs
+2022-2023,2022-12-26,MT Melsungen,Lemgo,20,19,MoB94VNO
+2022-2023,2022-12-27,Erlangen,Stuttgart,31,28,z3EjTE0P
+2022-2023,2022-12-27,Hannover-Burgdorf,Bergischer,30,32,nTId7Xw6
+2022-2023,2022-12-27,Fuchse Berlin,Leipzig,28,22,reC55B8I
+2022-2023,2022-12-27,Flensburg-H.,HSG Wetzlar,34,24,dvQqAZgm
+2022-2023,2022-12-27,Gummersbach,Hamburg,31,30,xC0IOY8t
+2022-2023,2023-02-09,Minden,Rhein-Neckar,29,40,dtonIlhO
+2022-2023,2023-02-09,HSG Wetzlar,Hannover-Burgdorf,24,31,YwfRMCwg
+2022-2023,2023-02-09,Goppingen,Erlangen,31,25,6ihZKj85
+2022-2023,2023-02-09,Gummersbach,Lemgo,28,29,WfDlQopo
+2022-2023,2023-02-12,Bergischer,MT Melsungen,28,27,2JorJUxI
+2022-2023,2023-02-12,Lemgo,SC Magdeburg,28,34,S0gVLWha
+2022-2023,2023-02-12,Stuttgart,Flensburg-H.,30,32,OSnvKANB
+2022-2023,2023-02-12,Hamm-Westfalen,Fuchse Berlin,29,32,8GljH87U
+2022-2023,2023-02-16,MT Melsungen,Leipzig,28,29,lzAPV7MN
+2022-2023,2023-02-18,Fuchse Berlin,HSG Wetzlar,29,25,AqBLWm7H
+2022-2023,2023-02-18,Kiel,Hamm-Westfalen,40,29,CUE0yChn
+2022-2023,2023-02-19,SC Magdeburg,Hamburg,32,28,KfI8ZkNb
+2022-2023,2023-02-19,Rhein-Neckar,Stuttgart,41,27,GMBHXTiB
+2022-2023,2023-02-19,Hannover-Burgdorf,Goppingen,28,24,2J7DY9x5
+2022-2023,2023-02-19,Flensburg-H.,Bergischer,30,17,t4J4zW7h
+2022-2023,2023-02-23,Hamburg,Hannover-Burgdorf,32,26,0nTSQIzd
+2022-2023,2023-02-23,HSG Wetzlar,Erlangen,28,35,tQfum9ib
+2022-2023,2023-02-23,Hamm-Westfalen,Gummersbach,22,21,6PTORbLk
+2022-2023,2023-02-25,Goppingen,Rhein-Neckar,25,27,ljbmomMA
+2022-2023,2023-02-26,Lemgo,Kiel,22,28,KGgqnT64
+2022-2023,2023-02-26,Leipzig,SC Magdeburg,33,32,b15zlkxh
+2022-2023,2023-02-26,Fuchse Berlin,MT Melsungen,35,25,pb1WlVMo
+2022-2023,2023-02-26,Bergischer,Stuttgart,25,26,Stcip7yH
+2022-2023,2023-03-02,Gummersbach,MT Melsungen,31,23,ImN9bcdR
+2022-2023,2023-03-02,Bergischer,Minden,34,32,MLT00JRE
+2022-2023,2023-03-02,Rhein-Neckar,HSG Wetzlar,34,24,URtFxGZ7
+2022-2023,2023-03-02,Stuttgart,Goppingen,24,24,rVUd1aC8
+2022-2023,2023-03-05,Flensburg-H.,Hamburg,34,32,f9l2uIkk
+2022-2023,2023-03-05,Kiel,Leipzig,31,34,nqkbtbzq
+2022-2023,2023-03-05,Erlangen,Lemgo,31,31,vcO5awsL
+2022-2023,2023-03-05,SC Magdeburg,Fuchse Berlin,34,29,Yam6vx5e
+2022-2023,2023-03-05,Hannover-Burgdorf,Hamm-Westfalen,30,26,GOxBwdK1
+2022-2023,2023-03-16,Hannover-Burgdorf,SC Magdeburg,34,31,8KOwxUQ6
+2022-2023,2023-03-16,Minden,Stuttgart,23,29,KGVxboND
+2022-2023,2023-03-16,Leipzig,Rhein-Neckar,37,29,UR2pheZf
+2022-2023,2023-03-16,Fuchse Berlin,Gummersbach,38,33,zT9yfH4r
+2022-2023,2023-03-18,Goppingen,Flensburg-H.,27,27,Gr5dkgJD
+2022-2023,2023-03-19,Hamm-Westfalen,SC Magdeburg,27,36,YJZtc5xK
+2022-2023,2023-03-19,HSG Wetzlar,Bergischer,22,28,8I1liFl1
+2022-2023,2023-03-19,Hamburg,Erlangen,33,29,StZpdPiQ
+2022-2023,2023-03-19,Lemgo,Hannover-Burgdorf,35,30,xh6hjZ37
+2022-2023,2023-03-19,MT Melsungen,Kiel,19,23,n3DugyKl
+2022-2023,2023-03-23,Rhein-Neckar,Hamburg,32,35,rTgLm1a6
+2022-2023,2023-03-23,Erlangen,Leipzig,36,32,hbyCAO6J
+2022-2023,2023-03-23,Bergischer,Hamm-Westfalen,34,24,4rrUouUI
+2022-2023,2023-03-25,Minden,Goppingen,27,27,WlzG9rMP
+2022-2023,2023-03-26,Hannover-Burgdorf,MT Melsungen,26,26,UPkHlsp0
+2022-2023,2023-03-26,Kiel,Fuchse Berlin,36,29,UkLCiq0s
+2022-2023,2023-03-26,Flensburg-H.,Lemgo,34,27,dCi9j3Fm
+2022-2023,2023-03-26,Stuttgart,HSG Wetzlar,28,30,QiqQnLEC
+2022-2023,2023-03-26,SC Magdeburg,Gummersbach,41,29,z3jDkNUg
+2022-2023,2023-03-30,Leipzig,Gummersbach,30,34,KzjNNhOn
+2022-2023,2023-03-30,Lemgo,Rhein-Neckar,33,30,ve9a1KT5
+2022-2023,2023-03-30,Stuttgart,MT Melsungen,23,26,tn4r1BZM
+2022-2023,2023-04-01,HSG Wetzlar,Minden,25,27,MJEf20Ea
+2022-2023,2023-04-01,Hamm-Westfalen,Flensburg-H.,29,37,C877abbI
+2022-2023,2023-04-02,Goppingen,Bergischer,37,28,Io830vqC
+2022-2023,2023-04-02,Hamburg,Stuttgart,27,27,QkEJ6F5o
+2022-2023,2023-04-02,Gummersbach,Kiel,26,30,OpzyrWSp
+2022-2023,2023-04-02,MT Melsungen,SC Magdeburg,27,27,l6Gn4Mqm
+2022-2023,2023-04-02,Leipzig,Hannover-Burgdorf,29,31,rTFj3tag
+2022-2023,2023-04-06,Bergischer,SC Magdeburg,34,38,82107ILF
+2022-2023,2023-04-06,Hannover-Burgdorf,Fuchse Berlin,32,33,jcBV3Dk4
+2022-2023,2023-04-06,Goppingen,HSG Wetzlar,26,28,nP4v2iKG
+2022-2023,2023-04-06,Flensburg-H.,Leipzig,30,27,C6CR4gzb
+2022-2023,2023-04-09,Bergischer,Hamburg,37,34,Kx3n0VlT
+2022-2023,2023-04-09,Rhein-Neckar,Gummersbach,37,42,YL0z3X4A
+2022-2023,2023-04-09,Minden,Lemgo,36,35,vNqJf9Cj
+2022-2023,2023-04-09,Kiel,SC Magdeburg,34,34,4tDN5ZKi
+2022-2023,2023-04-09,Erlangen,Hamm-Westfalen,37,27,0WpFekcp
+2022-2023,2023-04-20,Hamburg,Goppingen,31,28,YcOe8Stj
+2022-2023,2023-04-20,Hamm-Westfalen,Minden,31,26,2FXPDlJS
+2022-2023,2023-04-20,MT Melsungen,Erlangen,31,18,CQvDGjZ9
+2022-2023,2023-04-20,Leipzig,Stuttgart,25,30,t0qHFAlG
+2022-2023,2023-04-22,Lemgo,Bergischer,38,28,KjrLEU3M
+2022-2023,2023-04-23,Erlangen,Minden,29,28,UoRMURyU
+2022-2023,2023-04-23,SC Magdeburg,Hannover-Burgdorf,31,30,jBj4IC4c
+2022-2023,2023-04-23,Kiel,Flensburg-H.,29,19,hQX0Jhki
+2022-2023,2023-04-23,Gummersbach,HSG Wetzlar,37,30,vyPi98Rq
+2022-2023,2023-04-23,Fuchse Berlin,Rhein-Neckar,38,24,YZu9HWJ3
+2022-2023,2023-05-03,Erlangen,SC Magdeburg,23,38,C4BNMReq
+2022-2023,2023-05-03,Goppingen,Hamm-Westfalen,39,32,bcVnTTIF
+2022-2023,2023-05-03,Hannover-Burgdorf,Gummersbach,28,27,CtTzWVYd
+2022-2023,2023-05-03,Rhein-Neckar,Kiel,27,31,jXRvVkl3
+2022-2023,2023-05-03,Stuttgart,Fuchse Berlin,32,28,tMKiSmYL
+2022-2023,2023-05-03,Minden,Hamburg,31,35,jeARLoBk
+2022-2023,2023-05-04,HSG Wetzlar,Lemgo,26,24,pfRrU939
+2022-2023,2023-05-04,Flensburg-H.,MT Melsungen,37,25,ClNa7ndd
+2022-2023,2023-05-04,Bergischer,Leipzig,32,28,KCJeR7mS
+2022-2023,2023-05-06,Lemgo,Goppingen,36,33,YFqVu72L
+2022-2023,2023-05-06,Hamm-Westfalen,Stuttgart,27,27,SxqZvRHR
+2022-2023,2023-05-07,Fuchse Berlin,Flensburg-H.,37,33,bciIr9I2
+2022-2023,2023-05-07,Gummersbach,Erlangen,32,31,4bz1zoQr
+2022-2023,2023-05-07,Hamburg,HSG Wetzlar,24,21,nNP5Z4uk
+2022-2023,2023-05-07,Kiel,Hannover-Burgdorf,33,23,YJaWK5Qe
+2022-2023,2023-05-07,SC Magdeburg,Bergischer,23,21,pf3zKPu2
+2022-2023,2023-05-07,Leipzig,Minden,31,31,fPpRtmmF
+2022-2023,2023-05-11,Minden,Flensburg-H.,27,41,8vBLSv6q
+2022-2023,2023-05-11,Fuchse Berlin,Erlangen,39,30,xWCr52Ut
+2022-2023,2023-05-11,HSG Wetzlar,Hamm-Westfalen,29,24,buxHW2P7
+2022-2023,2023-05-11,Goppingen,Leipzig,34,30,0pGaen28
+2022-2023,2023-05-13,Stuttgart,Kiel,30,37,EmK3f6HE
+2022-2023,2023-05-13,Hamburg,Lemgo,28,32,t2zpzxWa
+2022-2023,2023-05-14,Bergischer,Fuchse Berlin,34,30,6qrXxvns
+2022-2023,2023-05-14,Erlangen,Hannover-Burgdorf,33,29,pzsyxb1m
+2022-2023,2023-05-14,Flensburg-H.,Gummersbach,31,26,QDO9YOfe
+2022-2023,2023-05-14,Rhein-Neckar,SC Magdeburg,35,37,KlwDXrA1
+2022-2023,2023-05-14,Minden,MT Melsungen,21,28,2BytyIGg
+2022-2023,2023-05-18,Leipzig,HSG Wetzlar,38,29,bw7AjcGt
+2022-2023,2023-05-18,Hamm-Westfalen,Hamburg,27,34,f50Jlyog
+2022-2023,2023-05-18,Gummersbach,Bergischer,37,34,lSaNme0a
+2022-2023,2023-05-20,Fuchse Berlin,Minden,42,35,8ER0WgVO
+2022-2023,2023-05-21,Kiel,Erlangen,35,26,zPZmZeo6
+2022-2023,2023-05-21,SC Magdeburg,Flensburg-H.,30,28,nawhYF0C
+2022-2023,2023-05-21,Lemgo,Stuttgart,29,24,t2dFkHVn
+2022-2023,2023-05-21,Hannover-Burgdorf,Rhein-Neckar,30,31,UNSdXZFI
+2022-2023,2023-05-25,MT Melsungen,Rhein-Neckar,25,34,xljMsTX8
+2022-2023,2023-05-27,Hamburg,Kiel,30,34,YwGdxhwt
+2022-2023,2023-06-01,MT Melsungen,Goppingen,26,23,dUKrew8P
+2022-2023,2023-06-01,Minden,SC Magdeburg,30,44,SYnk2fFh
+2022-2023,2023-06-01,Lemgo,Hamm-Westfalen,30,25,trEWqDaO
+2022-2023,2023-06-01,Hamburg,Leipzig,28,31,6Pog1EUb
+2022-2023,2023-06-01,Rhein-Neckar,Bergischer,39,29,Knh9cWTN
+2022-2023,2023-06-04,Stuttgart,Gummersbach,31,30,K8qs4Gpt
+2022-2023,2023-06-04,Rhein-Neckar,Erlangen,40,23,8UFOoZUB
+2022-2023,2023-06-04,HSG Wetzlar,MT Melsungen,25,27,nLESpgpI
+2022-2023,2023-06-04,Goppingen,Fuchse Berlin,25,19,foIzqXEU
+2022-2023,2023-06-04,Flensburg-H.,Hannover-Burgdorf,30,35,SIbRnFF5
+2022-2023,2023-06-04,Bergischer,Kiel,26,29,baro3z0n
+2022-2023,2023-06-07,Fuchse Berlin,Hamburg,36,32,xOnEdjqU
+2022-2023,2023-06-07,Kiel,HSG Wetzlar,38,23,llyb0Yq5
+2022-2023,2023-06-07,MT Melsungen,Hamm-Westfalen,30,29,vXYuhAio
+2022-2023,2023-06-07,Leipzig,Lemgo,30,33,hzNNGgUo
+2022-2023,2023-06-08,SC Magdeburg,Stuttgart,31,27,nZg1ahaB
+2022-2023,2023-06-08,Hannover-Burgdorf,Minden,32,19,tdg5bCEH
+2022-2023,2023-06-08,Gummersbach,Goppingen,35,32,l2GWEXbb
+2022-2023,2023-06-08,Erlangen,Flensburg-H.,28,33,6wRRFDqh
+2022-2023,2023-06-11,Flensburg-H.,Rhein-Neckar,34,31,ShFzEiE4
+2022-2023,2023-06-11,Stuttgart,Hannover-Burgdorf,31,34,Ay7iA9DT
+2022-2023,2023-06-11,Minden,Gummersbach,38,38,67hN4myi
+2022-2023,2023-06-11,Lemgo,Fuchse Berlin,35,32,E9DrCVrH
+2022-2023,2023-06-11,Hamburg,MT Melsungen,33,28,OrN7Cafc
+2022-2023,2023-06-11,HSG Wetzlar,SC Magdeburg,30,35,zJEvDBTA
+2022-2023,2023-06-11,Hamm-Westfalen,Leipzig,28,33,phO3Duui
+2022-2023,2023-06-11,Goppingen,Kiel,27,34,dY2mBkbN
+2022-2023,2023-06-11,Bergischer,Erlangen,29,30,SGgJ5TLp
+2023-2024,2023-08-24,Flensburg-H.,Hamburg,37,32,pfeTKYHs
+2023-2024,2023-08-24,Erlangen,Hannover-Burgdorf,25,27,8Y31PE9Q
+2023-2024,2023-08-25,HSG Wetzlar,SC Magdeburg,15,31,vHfXJhXm
+2023-2024,2023-08-26,Eisenach,Bergischer,31,30,I7gyJCnf
+2023-2024,2023-08-27,MT Melsungen,Goppingen,29,19,EZnpHjH6
+2023-2024,2023-08-27,HBW Balingen-Weilstetten,Kiel,25,36,zqltIW10
+2023-2024,2023-08-27,Gummersbach,Lemgo,30,27,8dnlGAWC
+2023-2024,2023-08-28,Leipzig,Fuchse Berlin,29,31,KWkhFUoJ
+2023-2024,2023-08-31,Kiel,Gummersbach,41,30,WAJAXB1m
+2023-2024,2023-08-31,Hannover-Burgdorf,Eisenach,31,30,hKK6Yins
+2023-2024,2023-08-31,Goppingen,Rhein-Neckar,27,27,0SSvwYwQ
+2023-2024,2023-09-01,Stuttgart,Fuchse Berlin,29,30,SxDJVkWa
+2023-2024,2023-09-01,Bergischer,HBW Balingen-Weilstetten,27,28,EZ8FWVGg
+2023-2024,2023-09-02,MT Melsungen,Leipzig,28,27,MaCNU9o6
+2023-2024,2023-09-03,Kiel,HSG Wetzlar,33,22,OMDT2FEn
+2023-2024,2023-09-03,Lemgo,Erlangen,28,27,t2SOSmGI
+2023-2024,2023-09-03,SC Magdeburg,Flensburg-H.,31,29,0jBRTT0C
+2023-2024,2023-09-05,HBW Balingen-Weilstetten,Stuttgart,29,28,htdsoVVn
+2023-2024,2023-09-06,Gummersbach,Hannover-Burgdorf,33,33,06akq90a
+2023-2024,2023-09-06,Fuchse Berlin,SC Magdeburg,31,26,MLmbsmVB
+2023-2024,2023-09-06,Erlangen,Bergischer,28,27,WWfopkog
+2023-2024,2023-09-06,Eisenach,Goppingen,27,24,vcbgrTF5
+2023-2024,2023-09-07,MT Melsungen,Hamburg,33,26,K661t7pI
+2023-2024,2023-09-07,HSG Wetzlar,Lemgo,24,27,C2UUOvFp
+2023-2024,2023-09-07,Flensburg-H.,Kiel,28,27,pA5mhP0R
+2023-2024,2023-09-09,HBW Balingen-Weilstetten,Erlangen,25,27,pGl8xbqp
+2023-2024,2023-09-09,Goppingen,Gummersbach,32,29,SvvDyIbj
+2023-2024,2023-09-10,Bergischer,Fuchse Berlin,30,34,U3OBdJzG
+2023-2024,2023-09-10,Hannover-Burgdorf,Rhein-Neckar,34,29,YyV2bu63
+2023-2024,2023-09-10,Kiel,MT Melsungen,30,35,trrHzxEd
+2023-2024,2023-09-10,SC Magdeburg,Hamburg,35,24,foWbaLjc
+2023-2024,2023-09-10,Stuttgart,Eisenach,28,22,OQNFewjM
+2023-2024,2023-09-10,Leipzig,HSG Wetzlar,36,30,jDP7caL9
+2023-2024,2023-09-11,Lemgo,Flensburg-H.,31,31,z1RJfc5S
+2023-2024,2023-09-14,Gummersbach,Bergischer,27,33,ttiJn3Ol
+2023-2024,2023-09-15,MT Melsungen,Stuttgart,35,27,fqeNoNwe
+2023-2024,2023-09-15,Eisenach,HBW Balingen-Weilstetten,28,28,x8pSpsg1
+2023-2024,2023-09-16,Hamburg,Leipzig,35,34,GbqWq187
+2023-2024,2023-09-17,Fuchse Berlin,Hannover-Burgdorf,34,33,4ExE8po8
+2023-2024,2023-09-17,SC Magdeburg,Lemgo,35,28,nJiFmq9r
+2023-2024,2023-09-17,HSG Wetzlar,Goppingen,29,24,r5yI740E
+2023-2024,2023-09-18,Rhein-Neckar,Erlangen,34,24,QTQM6OFK
+2023-2024,2023-09-21,Goppingen,Hamburg,27,32,x4UQ5rVQ
+2023-2024,2023-09-22,HBW Balingen-Weilstetten,Fuchse Berlin,26,37,YZFd0Mhl
+2023-2024,2023-09-22,Hannover-Burgdorf,Flensburg-H.,26,26,fqHh12wr
+2023-2024,2023-09-23,Erlangen,Eisenach,28,23,jBA1at8f
+2023-2024,2023-09-23,Bergischer,Rhein-Neckar,29,31,U195b0N0
+2023-2024,2023-09-24,Hamburg,HSG Wetzlar,30,25,KhRSR7VO
+2023-2024,2023-09-24,Lemgo,MT Melsungen,25,28,OO89cKx7
+2023-2024,2023-09-24,Leipzig,SC Magdeburg,27,27,2DCX1ZTh
+2023-2024,2023-09-25,Stuttgart,Gummersbach,29,31,xSCDdvhD
+2023-2024,2023-09-28,Rhein-Neckar,HBW Balingen-Weilstetten,25,21,OttFECDb
+2023-2024,2023-09-28,Gummersbach,Erlangen,33,28,hGpJDWS4
+2023-2024,2023-09-28,Flensburg-H.,Bergischer,33,28,pjsBFhbh
+2023-2024,2023-09-29,MT Melsungen,Hannover-Burgdorf,34,26,EVYRBAcH
+2023-2024,2023-09-29,Hamburg,Lemgo,37,33,W6qNCjrB
+2023-2024,2023-09-30,SC Magdeburg,Kiel,34,31,OdUxUiDo
+2023-2024,2023-10-01,Leipzig,Goppingen,33,35,SYxWAUCN
+2023-2024,2023-10-01,Rhein-Neckar,Stuttgart,32,24,MyUzvEOJ
+2023-2024,2023-10-01,Fuchse Berlin,Eisenach,37,29,MexzAlST
+2023-2024,2023-10-07,HBW Balingen-Weilstetten,Gummersbach,31,34,ADWlRkc4
+2023-2024,2023-10-07,Goppingen,SC Magdeburg,26,27,WSKcPTRG
+2023-2024,2023-10-07,Erlangen,Fuchse Berlin,27,35,dASpSVsb
+2023-2024,2023-10-07,Bergischer,MT Melsungen,32,31,hxMgQ9CA
+2023-2024,2023-10-08,Stuttgart,Flensburg-H.,34,31,dA4xIoKj
+2023-2024,2023-10-08,Lemgo,Leipzig,22,28,pz1YIR4p
+2023-2024,2023-10-08,Hannover-Burgdorf,HSG Wetzlar,30,33,vgO5N7dT
+2023-2024,2023-10-08,Kiel,Hamburg,34,23,02P1OmsN
+2023-2024,2023-10-09,Eisenach,Rhein-Neckar,29,26,ADhKtVdi
+2023-2024,2023-10-11,Flensburg-H.,Leipzig,34,24,jgTYNbUj
+2023-2024,2023-10-12,Fuchse Berlin,Rhein-Neckar,38,32,6unTv9R3
+2023-2024,2023-10-12,Hamburg,Stuttgart,31,36,l4iOukCc
+2023-2024,2023-10-13,HSG Wetzlar,Bergischer,28,32,vgpywmdG
+2023-2024,2023-10-13,Gummersbach,Eisenach,37,31,pWpXwTtA
+2023-2024,2023-10-14,Leipzig,Kiel,35,34,W4vFV4lj
+2023-2024,2023-10-15,SC Magdeburg,Hannover-Burgdorf,31,29,AewJUO3d
+2023-2024,2023-10-15,Lemgo,Goppingen,21,26,hdlux7BM
+2023-2024,2023-10-15,Flensburg-H.,HBW Balingen-Weilstetten,32,28,zLwpyRQS
+2023-2024,2023-10-16,MT Melsungen,Erlangen,32,25,xUPBWpZq
+2023-2024,2023-10-19,Fuchse Berlin,MT Melsungen,37,31,nyLlhJ1K
+2023-2024,2023-10-20,Eisenach,Hamburg,28,32,0r1PoHvl
+2023-2024,2023-10-20,Hannover-Burgdorf,Leipzig,25,25,tvUbVef7
+2023-2024,2023-10-20,HBW Balingen-Weilstetten,HSG Wetzlar,27,30,KUS2UF9D
+2023-2024,2023-10-21,Erlangen,Flensburg-H.,22,27,8pMpganE
+2023-2024,2023-10-21,Bergischer,Goppingen,33,30,UaAgiwHQ
+2023-2024,2023-10-22,Stuttgart,SC Magdeburg,25,31,jPk2DH2m
+2023-2024,2023-10-22,Rhein-Neckar,Gummersbach,28,26,6L1LncPs
+2023-2024,2023-10-22,Kiel,Lemgo,33,29,p045CyIg
+2023-2024,2023-10-26,Lemgo,Stuttgart,31,25,hbFYsZwD
+2023-2024,2023-10-26,HSG Wetzlar,Erlangen,26,31,86cL5xWJ
+2023-2024,2023-10-27,Hamburg,Hannover-Burgdorf,28,30,KpHQqe90
+2023-2024,2023-10-27,Gummersbach,Fuchse Berlin,30,30,ncdP4doQ
+2023-2024,2023-10-28,Flensburg-H.,Eisenach,35,28,61JxsggJ
+2023-2024,2023-10-28,MT Melsungen,Rhein-Neckar,30,23,vZaTpyff
+2023-2024,2023-10-29,SC Magdeburg,Bergischer,40,28,6FhEAFn6
+2023-2024,2023-10-29,HSG Wetzlar,Stuttgart,31,31,O4O158zo
+2023-2024,2023-10-29,Leipzig,HBW Balingen-Weilstetten,26,25,byGUrFO6
+2023-2024,2023-10-29,Goppingen,Kiel,27,34,Oj39BeXa
+2023-2024,2023-11-09,Hannover-Burgdorf,Kiel,36,33,vkli0Ggs
+2023-2024,2023-11-09,Rhein-Neckar,Leipzig,32,28,W2gBeh8C
+2023-2024,2023-11-10,Stuttgart,Goppingen,31,29,lvlGfCNI
+2023-2024,2023-11-10,Eisenach,HSG Wetzlar,23,27,tYz2IFFP
+2023-2024,2023-11-11,Bergischer,Hamburg,29,28,8CCHvslt
+2023-2024,2023-11-12,Rhein-Neckar,Kiel,25,31,SACHnr7i
+2023-2024,2023-11-12,Gummersbach,MT Melsungen,37,31,SUnKgWxP
+2023-2024,2023-11-13,HBW Balingen-Weilstetten,Lemgo,26,30,Iumeaz9m
+2023-2024,2023-11-16,Lemgo,Bergischer,31,28,QPEpAiN5
+2023-2024,2023-11-16,Leipzig,Stuttgart,36,30,v9GxCDhg
+2023-2024,2023-11-17,Goppingen,Hannover-Burgdorf,32,25,nZFtBX7a
+2023-2024,2023-11-17,Hamburg,Erlangen,31,23,0IHYCgwm
+2023-2024,2023-11-18,Flensburg-H.,Rhein-Neckar,33,25,8l4k9BxC
+2023-2024,2023-11-19,MT Melsungen,HBW Balingen-Weilstetten,26,24,IgSTDZNt
+2023-2024,2023-11-19,Kiel,Fuchse Berlin,30,26,EudM8gHI
+2023-2024,2023-11-19,SC Magdeburg,Eisenach,38,31,KIdI9Z1C
+2023-2024,2023-11-20,HSG Wetzlar,Gummersbach,33,31,Mi8g8ViI
+2023-2024,2023-11-23,Bergischer,Leipzig,31,31,zaO9ALYo
+2023-2024,2023-11-24,Erlangen,Goppingen,28,26,f56169MU
+2023-2024,2023-11-24,Eisenach,MT Melsungen,24,27,OKGM7JI4
+2023-2024,2023-11-25,Hannover-Burgdorf,Lemgo,34,32,GE7c7k7O
+2023-2024,2023-11-25,Gummersbach,Flensburg-H.,32,42,tdRH8a3b
+2023-2024,2023-11-26,Stuttgart,Kiel,31,36,SM2YFAOo
+2023-2024,2023-11-26,Rhein-Neckar,HSG Wetzlar,26,21,ULND9ulh
+2023-2024,2023-11-26,Fuchse Berlin,Hamburg,37,31,d8P5B1Ju
+2023-2024,2023-11-26,HBW Balingen-Weilstetten,SC Magdeburg,28,34,j5JkiRoo
+2023-2024,2023-11-30,Lemgo,Eisenach,26,24,jZW2mkXk
+2023-2024,2023-11-30,Goppingen,HBW Balingen-Weilstetten,32,28,8AsblVHq
+2023-2024,2023-12-01,HSG Wetzlar,Fuchse Berlin,30,36,IuPlBhPd
+2023-2024,2023-12-01,Flensburg-H.,MT Melsungen,34,24,4xy7n9nd
+2023-2024,2023-12-02,Stuttgart,Hannover-Burgdorf,32,28,dWNhACv3
+2023-2024,2023-12-02,Hamburg,Rhein-Neckar,32,36,2BFQ6wYA
+2023-2024,2023-12-03,SC Magdeburg,Gummersbach,32,30,6D1xFUwh
+2023-2024,2023-12-03,Kiel,Bergischer,39,30,0z1tElgb
+2023-2024,2023-12-03,Leipzig,Erlangen,20,19,WpKU5cmH
+2023-2024,2023-12-07,Gummersbach,Hamburg,24,23,fsYX081k
+2023-2024,2023-12-08,Flensburg-H.,HSG Wetzlar,33,26,A9d16UwS
+2023-2024,2023-12-08,Eisenach,Leipzig,25,24,OGxx0SGe
+2023-2024,2023-12-09,Rhein-Neckar,Lemgo,34,34,GjZT1lnq
+2023-2024,2023-12-09,Erlangen,Kiel,27,31,fZgkCSNA
+2023-2024,2023-12-10,Bergischer,Stuttgart,33,28,S28JI6PE
+2023-2024,2023-12-10,HBW Balingen-Weilstetten,Hannover-Burgdorf,25,29,Ohfk9Wg9
+2023-2024,2023-12-10,MT Melsungen,SC Magdeburg,29,29,CA4pD884
+2023-2024,2023-12-10,Fuchse Berlin,Goppingen,29,29,2qgg8j9F
+2023-2024,2023-12-15,Stuttgart,Erlangen,29,30,27cBERVl
+2023-2024,2023-12-15,Eisenach,Kiel,32,40,GA1FDooe
+2023-2024,2023-12-16,SC Magdeburg,Rhein-Neckar,38,24,l0HzLThL
+2023-2024,2023-12-16,Lemgo,Fuchse Berlin,29,32,6yCuKm8R
+2023-2024,2023-12-16,Hamburg,HBW Balingen-Weilstetten,28,28,27ytanW1
+2023-2024,2023-12-16,HSG Wetzlar,MT Melsungen,28,27,8pb7F7Gr
+2023-2024,2023-12-16,Goppingen,Flensburg-H.,32,31,A9IWL9wF
+2023-2024,2023-12-17,Leipzig,Gummersbach,32,35,GnJSMkO8
+2023-2024,2023-12-17,Hannover-Burgdorf,Bergischer,37,28,4CFONV82
+2023-2024,2023-12-19,Fuchse Berlin,Stuttgart,32,27,QoSEYnNK
+2023-2024,2023-12-19,Erlangen,HBW Balingen-Weilstetten,22,22,rNxAZS7E
+2023-2024,2023-12-19,Flensburg-H.,Lemgo,34,29,vkWIX6xR
+2023-2024,2023-12-19,Hamburg,SC Magdeburg,28,43,xQkOBPF7
+2023-2024,2023-12-20,Rhein-Neckar,Eisenach,26,27,zLHlSp0l
+2023-2024,2023-12-20,HSG Wetzlar,Leipzig,30,27,dUIpTQpr
+2023-2024,2023-12-20,Kiel,Hannover-Burgdorf,34,20,hdCgR4Ff
+2023-2024,2023-12-20,MT Melsungen,Gummersbach,26,25,bZjKC501
+2023-2024,2023-12-20,Goppingen,Bergischer,31,28,4Ww6z9h8
+2023-2024,2023-12-22,HBW Balingen-Weilstetten,Flensburg-H.,32,34,OfT4O2aD
+2023-2024,2023-12-22,Hannover-Burgdorf,MT Melsungen,30,34,WnBcQOU0
+2023-2024,2023-12-22,Fuchse Berlin,Leipzig,37,28,Q9A1Prp7
+2023-2024,2023-12-22,SC Magdeburg,Goppingen,31,27,Qa7mmnxE
+2023-2024,2023-12-23,Bergischer,HSG Wetzlar,23,28,CfQWf3X7
+2023-2024,2023-12-23,Lemgo,Hamburg,34,34,4j6in6iK
+2023-2024,2023-12-23,Stuttgart,Rhein-Neckar,32,31,zZdNtpFs
+2023-2024,2023-12-23,Eisenach,Erlangen,28,26,W0jWvOqf
+2023-2024,2024-02-07,Kiel,SC Magdeburg,26,33,voE3uez5
+2023-2024,2024-02-07,Hannover-Burgdorf,Gummersbach,32,29,pQ5yxMTC
+2023-2024,2024-02-07,Goppingen,Stuttgart,25,25,OG4uytqJ
+2023-2024,2024-02-07,HSG Wetzlar,Eisenach,31,30,WKAesH5h
+2023-2024,2024-02-08,Fuchse Berlin,Flensburg-H.,32,31,bke3cEw0
+2023-2024,2024-02-08,Erlangen,Lemgo,26,25,zgHnqwyt
+2023-2024,2024-02-10,HBW Balingen-Weilstetten,Goppingen,30,29,Cz6GxgKN
+2023-2024,2024-02-10,Eisenach,Gummersbach,24,26,WvwsgE44
+2023-2024,2024-02-11,Bergischer,Kiel,25,29,jZQpQ2jp
+2023-2024,2024-02-11,Stuttgart,HSG Wetzlar,30,25,IyZxffkb
+2023-2024,2024-02-11,SC Magdeburg,MT Melsungen,39,24,6c5KyDZT
+2023-2024,2024-02-11,Lemgo,Rhein-Neckar,33,25,86inXWso
+2023-2024,2024-02-11,Hamburg,Fuchse Berlin,30,32,IyD7vFkB
+2023-2024,2024-02-11,Flensburg-H.,Erlangen,32,25,OEZYfzzh
+2023-2024,2024-02-15,HSG Wetzlar,HBW Balingen-Weilstetten,16,21,W2HPpjCp
+2023-2024,2024-02-15,Goppingen,Eisenach,35,31,hfRkihZG
+2023-2024,2024-02-16,MT Melsungen,Bergischer,31,26,E3SohYJA
+2023-2024,2024-02-16,Erlangen,Hamburg,30,28,nVugjClN
+2023-2024,2024-02-17,Fuchse Berlin,Lemgo,30,26,QLvckW3T
+2023-2024,2024-02-18,Rhein-Neckar,Flensburg-H.,26,35,p6LTqARj
+2023-2024,2024-02-18,Kiel,Stuttgart,39,36,2accA6hN
+2023-2024,2024-02-18,Hannover-Burgdorf,SC Magdeburg,28,27,YPhgBnwH
+2023-2024,2024-02-19,Gummersbach,Leipzig,30,29,b99B8g4i
+2023-2024,2024-02-22,Stuttgart,MT Melsungen,33,31,Odt3b9tp
+2023-2024,2024-02-23,Lemgo,Gummersbach,23,26,Sl1S4B3G
+2023-2024,2024-02-24,HBW Balingen-Weilstetten,Rhein-Neckar,31,33,fy3K6XY3
+2023-2024,2024-02-24,Erlangen,HSG Wetzlar,26,27,YR1O5ilA
+2023-2024,2024-02-24,Bergischer,Hannover-Burgdorf,26,29,MNS3cdg6
+2023-2024,2024-02-25,Kiel,Eisenach,31,27,nXYT4pGp
+2023-2024,2024-02-25,Hamburg,Goppingen,33,31,x08F7DJc
+2023-2024,2024-02-25,Flensburg-H.,Fuchse Berlin,31,31,Mmfy3kYS
+2023-2024,2024-02-29,Hannover-Burgdorf,Stuttgart,33,30,WMqBdmBd
+2023-2024,2024-02-29,Leipzig,Bergischer,33,22,YRNgLWmc
+2023-2024,2024-02-29,MT Melsungen,Eisenach,27,26,hWp7cTej
+2023-2024,2024-02-29,Rhein-Neckar,Hamburg,34,36,0fs3HlmM
+2023-2024,2024-03-02,Kiel,HBW Balingen-Weilstetten,36,29,0zwY34Vj
+2023-2024,2024-03-02,HSG Wetzlar,Flensburg-H.,30,31,KrQ5IUXF
+2023-2024,2024-03-02,Gummersbach,SC Magdeburg,30,38,EwRFSm8i
+2023-2024,2024-03-03,Leipzig,MT Melsungen,32,27,QNkzvra0
+2023-2024,2024-03-03,Fuchse Berlin,Erlangen,39,32,thR1JAI9
+2023-2024,2024-03-04,Goppingen,Lemgo,26,32,nVRcKj33
+2023-2024,2024-03-07,Stuttgart,Leipzig,25,27,KbETX9X2
+2023-2024,2024-03-07,Lemgo,HSG Wetzlar,31,23,ATWxBnQk
+2023-2024,2024-03-08,HBW Balingen-Weilstetten,MT Melsungen,22,25,vot7G82S
+2023-2024,2024-03-08,Eisenach,Hannover-Burgdorf,31,31,bkDXWTn9
+2023-2024,2024-03-09,Erlangen,Rhein-Neckar,28,23,dQSYBSAq
+2023-2024,2024-03-10,SC Magdeburg,Fuchse Berlin,31,28,YusHQRx4
+2023-2024,2024-03-10,Flensburg-H.,Goppingen,35,30,WrLo9Qf2
+2023-2024,2024-03-10,Bergischer,Gummersbach,24,31,t4gxBBTr
+2023-2024,2024-03-21,Hannover-Burgdorf,HBW Balingen-Weilstetten,35,26,xYq5ELWs
+2023-2024,2024-03-21,SC Magdeburg,Erlangen,27,22,IeHRVJJ7
+2023-2024,2024-03-21,Rhein-Neckar,Fuchse Berlin,28,36,0zyQ9coD
+2023-2024,2024-03-22,MT Melsungen,Lemgo,26,25,tE2xWm2F
+2023-2024,2024-03-23,Kiel,Flensburg-H.,26,33,EwuU8H0J
+2023-2024,2024-03-23,HSG Wetzlar,Hamburg,25,27,6DyMAwW6
+2023-2024,2024-03-24,Fuchse Berlin,HBW Balingen-Weilstetten,35,34,ldLjrcjn
+2023-2024,2024-03-24,Leipzig,Eisenach,29,31,Wfq9Dunl
+2023-2024,2024-03-24,Gummersbach,Stuttgart,35,27,CEGM9u1J
+2023-2024,2024-03-24,Goppingen,Erlangen,32,29,AorDCa1f
+2023-2024,2024-03-24,Bergischer,SC Magdeburg,27,30,x8MXgYAs
+2023-2024,2024-03-28,Stuttgart,Bergischer,27,26,nemIbFhI
+2023-2024,2024-03-30,HBW Balingen-Weilstetten,Leipzig,17,25,Mm2h4JOt
+2023-2024,2024-03-30,Flensburg-H.,Hannover-Burgdorf,31,28,jTg90yO5
+2023-2024,2024-03-31,Rhein-Neckar,Goppingen,33,29,UJhDaewC
+2023-2024,2024-03-31,Lemgo,Kiel,27,28,r3j12cgg
+2023-2024,2024-03-31,Fuchse Berlin,HSG Wetzlar,32,30,d6f51H8a
+2023-2024,2024-03-31,Erlangen,Gummersbach,31,34,0v1d3wvm
+2023-2024,2024-03-31,Eisenach,SC Magdeburg,25,35,QonMcZ7O
+2023-2024,2024-04-01,Hamburg,MT Melsungen,29,22,j5FQ8aGP
+2023-2024,2024-04-04,Goppingen,Fuchse Berlin,27,32,zcFvGGNh
+2023-2024,2024-04-05,Hannover-Burgdorf,Hamburg,25,26,EsRVHxgt
+2023-2024,2024-04-05,Gummersbach,HBW Balingen-Weilstetten,33,25,YBBaBhxO
+2023-2024,2024-04-06,MT Melsungen,Flensburg-H.,25,25,vkz4MIpP
+2023-2024,2024-04-06,Kiel,Erlangen,31,27,vkCeCYMH
+2023-2024,2024-04-07,Bergischer,Eisenach,27,30,WYZj0b9m
+2023-2024,2024-04-07,SC Magdeburg,Stuttgart,40,31,4WJrFzwa
+2023-2024,2024-04-07,Leipzig,Lemgo,29,28,d6GzHd8n
+2023-2024,2024-04-07,HSG Wetzlar,Rhein-Neckar,30,27,Qo8iDE7B
+2023-2024,2024-04-12,Hamburg,Kiel,28,28,hUPJR7Nc
+2023-2024,2024-04-12,Rhein-Neckar,Bergischer,35,29,AB9atyLb
+2023-2024,2024-04-12,Leipzig,Hannover-Burgdorf,26,27,002CwZ4H
+2023-2024,2024-04-18,Goppingen,HSG Wetzlar,32,27,0EH5UFxn
+2023-2024,2024-04-18,Rhein-Neckar,MT Melsungen,23,28,bTDQPiiH
+2023-2024,2024-04-18,Lemgo,Hannover-Burgdorf,28,23,8vLDSg7b
+2023-2024,2024-04-19,HBW Balingen-Weilstetten,Bergischer,21,25,MNI1VeNu
+2023-2024,2024-04-19,Flensburg-H.,SC Magdeburg,29,32,Ug9MQXyB
+2023-2024,2024-04-20,Eisenach,Stuttgart,33,28,xKCUOB6N
+2023-2024,2024-04-21,Hamburg,Gummersbach,33,33,C2A3ACiU
+2023-2024,2024-04-21,Fuchse Berlin,Kiel,32,32,j3AIRDM4
+2023-2024,2024-04-21,Erlangen,Leipzig,26,29,fyH9TZih
+2023-2024,2024-04-26,Leipzig,Flensburg-H.,32,35,8vsqrZ6o
+2023-2024,2024-04-26,Hannover-Burgdorf,Goppingen,33,26,fyg1JkUp
+2023-2024,2024-04-26,Eisenach,Lemgo,25,30,WKjYLrjq
+2023-2024,2024-04-27,Gummersbach,HSG Wetzlar,35,28,jNx4wBLG
+2023-2024,2024-04-27,MT Melsungen,Fuchse Berlin,30,28,Kr2ZNVLT
+2023-2024,2024-04-28,Bergischer,Erlangen,28,25,S0T2dCEk
+2023-2024,2024-04-28,Stuttgart,Hamburg,35,26,rcZeuXj4
+2023-2024,2024-05-01,Erlangen,MT Melsungen,31,31,bXRSsQC2
+2023-2024,2024-05-02,Hamburg,Bergischer,32,30,ABkxL25k
+2023-2024,2024-05-03,HBW Balingen-Weilstetten,Eisenach,21,34,IyktKMKe
+2023-2024,2024-05-03,Goppingen,Leipzig,27,30,dSmpJtz2
+2023-2024,2024-05-04,Rhein-Neckar,Hannover-Burgdorf,27,29,4YABZ1Kr
+2023-2024,2024-05-04,Flensburg-H.,Stuttgart,39,31,plUvuOdL
+2023-2024,2024-05-05,Lemgo,SC Magdeburg,28,34,CzWWtpS8
+2023-2024,2024-05-05,HSG Wetzlar,Kiel,27,29,2POqvrCR
+2023-2024,2024-05-05,Fuchse Berlin,Gummersbach,29,26,6cVzt4sF
+2023-2024,2024-05-15,Hamburg,Flensburg-H.,30,41,4Elvw2E6
+2023-2024,2024-05-16,Kiel,Rhein-Neckar,26,30,xKYavi6A
+2023-2024,2024-05-17,MT Melsungen,HSG Wetzlar,21,23,beAFYLZl
+2023-2024,2024-05-17,Stuttgart,HBW Balingen-Weilstetten,30,27,p29DgNBE
+2023-2024,2024-05-18,Eisenach,Flensburg-H.,28,27,b9klmLlr
+2023-2024,2024-05-18,Erlangen,SC Magdeburg,27,32,04x0bfOg
+2023-2024,2024-05-18,Leipzig,Hamburg,39,27,v5INWa41
+2023-2024,2024-05-18,Hannover-Burgdorf,Fuchse Berlin,25,28,dtTIXuke
+2023-2024,2024-05-19,Gummersbach,Rhein-Neckar,31,26,tU2Mi1tR
+2023-2024,2024-05-19,Bergischer,Lemgo,31,31,WUa6wDQ0
+2023-2024,2024-05-20,Kiel,Goppingen,32,27,SQbIhsRK
+2023-2024,2024-05-23,SC Magdeburg,HBW Balingen-Weilstetten,43,29,nVumsgMi
+2023-2024,2024-05-26,Gummersbach,Kiel,40,29,IcnSu4Um
+2023-2024,2024-05-26,SC Magdeburg,Leipzig,30,28,tjd19Q7T
+2023-2024,2024-05-29,Erlangen,Stuttgart,26,23,d24gpJY0
+2023-2024,2024-05-29,HSG Wetzlar,Hannover-Burgdorf,32,32,pOpl60eK
+2023-2024,2024-05-29,Goppingen,MT Melsungen,22,32,IB5koaJf
+2023-2024,2024-05-29,Kiel,Leipzig,37,28,G6yK0vJs
+2023-2024,2024-05-29,Lemgo,HBW Balingen-Weilstetten,37,27,jP3cqwl7
+2023-2024,2024-05-29,Hamburg,Eisenach,33,29,x0lhnu4l
+2023-2024,2024-05-30,Fuchse Berlin,Bergischer,29,30,4S71rc3D
+2023-2024,2024-05-30,Flensburg-H.,Gummersbach,28,34,6Xop7ttE
+2023-2024,2024-05-30,Rhein-Neckar,SC Magdeburg,21,34,Eckh5KAQ
+2023-2024,2024-06-02,Stuttgart,Lemgo,29,27,hlARJJPJ
+2023-2024,2024-06-02,SC Magdeburg,HSG Wetzlar,37,34,0fNudGXC
+2023-2024,2024-06-02,MT Melsungen,Kiel,23,23,bVQOabYm
+2023-2024,2024-06-02,Leipzig,Rhein-Neckar,29,24,4STWcx30
+2023-2024,2024-06-02,HBW Balingen-Weilstetten,Hamburg,37,30,rJSzcdI6
+2023-2024,2024-06-02,Hannover-Burgdorf,Erlangen,27,23,A5USbImf
+2023-2024,2024-06-02,Gummersbach,Goppingen,33,32,6iEVIwuQ
+2023-2024,2024-06-02,Eisenach,Fuchse Berlin,27,31,CYjbEcms
+2023-2024,2024-06-02,Bergischer,Flensburg-H.,30,40,KSivRNJt
+2024-2025,2024-09-05,Hannover-Burgdorf,Gummersbach,28,32,KMvk5pmD
+2024-2025,2024-09-05,Rhein-Neckar,Kiel,32,27,Gt0pUmSI
+2024-2025,2024-09-05,Lemgo,MT Melsungen,20,28,p2e0C1ft
+2024-2025,2024-09-06,Goppingen,Hamburg,25,25,KCBey5Zo
+2024-2025,2024-09-06,Flensburg-H.,Erlangen,42,28,Gv54Zr4b
+2024-2025,2024-09-07,SC Magdeburg,HSG Wetzlar,35,28,lh3CXMYA
+2024-2025,2024-09-07,Eisenach,Fuchse Berlin,35,41,pKdLV03N
+2024-2025,2024-09-08,Potsdam,Bietigheim-Metterzimmern,26,28,fVPwlrJi
+2024-2025,2024-09-08,Leipzig,Stuttgart,33,24,EZniQvRp
+2024-2025,2024-09-12,MT Melsungen,Potsdam,31,23,2eTonMm4
+2024-2025,2024-09-12,Kiel,Goppingen,33,24,bNMfp0IG
+2024-2025,2024-09-13,Erlangen,Eisenach,24,28,WzL2rvmT
+2024-2025,2024-09-14,Bietigheim-Metterzimmern,Rhein-Neckar,25,33,06wRxIAj
+2024-2025,2024-09-15,Gummersbach,Lemgo,27,29,lSJLbaX9
+2024-2025,2024-09-15,Fuchse Berlin,Leipzig,37,32,nN18kefd
+2024-2025,2024-09-15,HSG Wetzlar,Hannover-Burgdorf,25,36,dhNTdw2M
+2024-2025,2024-09-15,Stuttgart,Flensburg-H.,25,39,E930iHPq
+2024-2025,2024-09-15,Hamburg,SC Magdeburg,26,32,SCVC0L2c
+2024-2025,2024-09-19,Lemgo,HSG Wetzlar,28,25,2VqeDbn3
+2024-2025,2024-09-19,Eisenach,Bietigheim-Metterzimmern,32,35,Aem3BxHF
+2024-2025,2024-09-20,Potsdam,Hamburg,30,31,tpNs4f9k
+2024-2025,2024-09-20,Erlangen,Stuttgart,25,26,WAyC9GoS
+2024-2025,2024-09-21,Rhein-Neckar,MT Melsungen,31,26,xCGj2Yw2
+2024-2025,2024-09-21,Flensburg-H.,Goppingen,37,32,U53xQyW8
+2024-2025,2024-09-22,SC Magdeburg,Kiel,24,29,xURQ3oF6
+2024-2025,2024-09-22,Leipzig,Gummersbach,34,29,GEwI57pf
+2024-2025,2024-09-22,Hannover-Burgdorf,Fuchse Berlin,38,35,O6LA7TFs
+2024-2025,2024-09-25,Stuttgart,Gummersbach,28,35,pfVY1PqJ
+2024-2025,2024-09-26,Kiel,MT Melsungen,21,25,dYbiK6am
+2024-2025,2024-09-26,Leipzig,Rhein-Neckar,28,27,02DLPSyQ
+2024-2025,2024-09-27,Eisenach,Flensburg-H.,25,30,O0I0GObC
+2024-2025,2024-09-27,Goppingen,Hannover-Burgdorf,31,33,GzFhIpUa
+2024-2025,2024-09-28,Hamburg,Lemgo,30,26,pG69E2TO
+2024-2025,2024-09-29,Bietigheim-Metterzimmern,Gummersbach,30,32,zunJY5Et
+2024-2025,2024-09-29,Fuchse Berlin,Erlangen,30,27,2iwzVND5
+2024-2025,2024-09-29,Stuttgart,HSG Wetzlar,23,26,UwuSWqqg
+2024-2025,2024-10-05,Kiel,Stuttgart,29,24,Ac01oqbn
+2024-2025,2024-10-05,MT Melsungen,Bietigheim-Metterzimmern,26,24,rPD8qNSb
+2024-2025,2024-10-05,Hannover-Burgdorf,Eisenach,28,26,6qziRuDU
+2024-2025,2024-10-06,HSG Wetzlar,Fuchse Berlin,25,34,WlndzJko
+2024-2025,2024-10-06,Gummersbach,Flensburg-H.,29,29,dSwrbMsh
+2024-2025,2024-10-06,Erlangen,Potsdam,23,19,vi7Hs1cB
+2024-2025,2024-10-06,Lemgo,Leipzig,33,28,C45PuuSN
+2024-2025,2024-10-07,SC Magdeburg,Goppingen,31,24,tUl9AuPh
+2024-2025,2024-10-07,Rhein-Neckar,Hamburg,30,27,IsSjd0C4
+2024-2025,2024-10-10,Stuttgart,MT Melsungen,27,36,K8mXyWQk
+2024-2025,2024-10-10,Bietigheim-Metterzimmern,Lemgo,23,28,Q7VbfvsH
+2024-2025,2024-10-11,Eisenach,HSG Wetzlar,30,22,hMouzAe2
+2024-2025,2024-10-11,Hamburg,Kiel,25,31,YXxIsME8
+2024-2025,2024-10-12,Flensburg-H.,SC Magdeburg,27,29,tbtQu0qL
+2024-2025,2024-10-12,Goppingen,Gummersbach,24,24,QVHdzv7r
+2024-2025,2024-10-13,Potsdam,Hannover-Burgdorf,22,27,E5TCWe67
+2024-2025,2024-10-13,Fuchse Berlin,Rhein-Neckar,34,27,YeL4YHye
+2024-2025,2024-10-14,Leipzig,Erlangen,32,25,6aGbfabE
+2024-2025,2024-10-17,Rhein-Neckar,Erlangen,38,33,Y90wmHjl
+2024-2025,2024-10-17,HSG Wetzlar,Hamburg,31,26,2R97hwTQ
+2024-2025,2024-10-18,Gummersbach,Eisenach,34,32,fPlnoeL0
+2024-2025,2024-10-18,Goppingen,Bietigheim-Metterzimmern,30,25,ttmfqZkD
+2024-2025,2024-10-19,MT Melsungen,Fuchse Berlin,33,31,dlVt7xrK
+2024-2025,2024-10-19,Kiel,Potsdam,27,23,hKGC1G5s
+2024-2025,2024-10-20,Lemgo,Stuttgart,28,24,Gb1xdCZI
+2024-2025,2024-10-20,Hannover-Burgdorf,Flensburg-H.,31,30,lnALafzf
+2024-2025,2024-10-20,SC Magdeburg,Leipzig,35,29,fqDTcY46
+2024-2025,2024-10-24,Leipzig,MT Melsungen,27,28,r5gOJFRP
+2024-2025,2024-10-24,Hamburg,Hannover-Burgdorf,32,32,2kzeEgkm
+2024-2025,2024-10-25,Flensburg-H.,HSG Wetzlar,36,22,z3Y2CXJa
+2024-2025,2024-10-25,Erlangen,Kiel,28,37,tG33ABlC
+2024-2025,2024-10-26,Potsdam,Gummersbach,26,28,nFVzh3Yp
+2024-2025,2024-10-27,Bietigheim-Metterzimmern,Fuchse Berlin,24,38,UZ4vCOPG
+2024-2025,2024-10-27,Stuttgart,SC Magdeburg,25,36,SA8NF6Qi
+2024-2025,2024-10-27,Lemgo,Rhein-Neckar,34,31,zyCVDpe4
+2024-2025,2024-10-28,Eisenach,Goppingen,35,25,2m3nA2fT
+2024-2025,2024-10-31,HSG Wetzlar,Bietigheim-Metterzimmern,21,26,lvx5SqAc
+2024-2025,2024-10-31,Hannover-Burgdorf,Stuttgart,33,20,MXqJ4tIj
+2024-2025,2024-11-01,Rhein-Neckar,Eisenach,32,36,dAOLO19M
+2024-2025,2024-11-01,Goppingen,Potsdam,30,25,AgQDQNvA
+2024-2025,2024-11-02,MT Melsungen,Erlangen,32,27,Gf5hJuXq
+2024-2025,2024-11-03,Flensburg-H.,Leipzig,35,29,4GomuNg3
+2024-2025,2024-11-03,Gummersbach,Hamburg,33,29,dO3fw1OF
+2024-2025,2024-11-03,SC Magdeburg,Lemgo,30,27,Iwh3yugS
+2024-2025,2024-11-03,Fuchse Berlin,Kiel,35,26,l830HJ1d
+2024-2025,2024-11-16,MT Melsungen,SC Magdeburg,31,23,plxrUdo2
+2024-2025,2024-11-16,Lemgo,Eisenach,31,28,dpuVkv8L
+2024-2025,2024-11-16,Bietigheim-Metterzimmern,Hannover-Burgdorf,28,28,SSV0pIVr
+2024-2025,2024-11-17,Potsdam,Rhein-Neckar,18,25,lrK9rd0e
+2024-2025,2024-11-17,Leipzig,Goppingen,27,25,lMrZVIGk
+2024-2025,2024-11-17,Kiel,Flensburg-H.,33,37,Am544wNE
+2024-2025,2024-11-17,Erlangen,HSG Wetzlar,22,25,xrPTi0w9
+2024-2025,2024-11-18,Hamburg,Fuchse Berlin,29,29,d8NHtzV7
+2024-2025,2024-11-21,Bietigheim-Metterzimmern,Leipzig,28,29,6sD1tRzP
+2024-2025,2024-11-22,Gummersbach,Kiel,24,30,jmfRdnL5
+2024-2025,2024-11-22,Eisenach,MT Melsungen,32,31,nFmzeQkI
+2024-2025,2024-11-23,Hannover-Burgdorf,SC Magdeburg,28,27,tzSynV6m
+2024-2025,2024-11-23,Goppingen,Rhein-Neckar,30,36,x2Lpp9y0
+2024-2025,2024-11-23,Flensburg-H.,Lemgo,36,27,M72A0ULt
+2024-2025,2024-11-24,Hamburg,Erlangen,28,27,hCjrg4KU
+2024-2025,2024-11-24,Fuchse Berlin,Stuttgart,33,29,pSOhrm6C
+2024-2025,2024-11-25,HSG Wetzlar,Potsdam,26,18,IZeJb8jg
+2024-2025,2024-11-28,Stuttgart,Hamburg,27,28,6urZ7Xp4
+2024-2025,2024-11-28,Leipzig,Eisenach,31,36,bg3jcGWo
+2024-2025,2024-11-29,MT Melsungen,Flensburg-H.,33,24,6J6bef1b
+2024-2025,2024-11-29,Erlangen,Goppingen,28,24,zabFiC0N
+2024-2025,2024-11-30,Kiel,HSG Wetzlar,35,24,fFgk4kpT
+2024-2025,2024-12-01,SC Magdeburg,Bietigheim-Metterzimmern,35,26,2o07gYVA
+2024-2025,2024-12-01,Potsdam,Fuchse Berlin,26,36,E5os6BFG
+2024-2025,2024-12-01,Lemgo,Hannover-Burgdorf,22,31,IJ1vnjOp
+2024-2025,2024-12-05,Stuttgart,Goppingen,30,26,lvpMNzsJ
+2024-2025,2024-12-05,Erlangen,Bietigheim-Metterzimmern,25,25,IFyZY0kK
+2024-2025,2024-12-06,Hannover-Burgdorf,Rhein-Neckar,35,30,jouLbT7j
+2024-2025,2024-12-06,Flensburg-H.,Potsdam,39,22,KOyd0tqe
+2024-2025,2024-12-07,HSG Wetzlar,MT Melsungen,27,29,GjV4bKD7
+2024-2025,2024-12-08,Hamburg,Leipzig,33,32,YR1VEubl
+2024-2025,2024-12-08,Gummersbach,Erlangen,28,24,8pIjMN5E
+2024-2025,2024-12-08,Goppingen,Lemgo,29,22,6gN7MWac
+2024-2025,2024-12-08,Fuchse Berlin,SC Magdeburg,31,31,EJQFKAU9
+2024-2025,2024-12-08,Eisenach,Kiel,33,37,4CBaK1zR
+2024-2025,2024-12-09,Bietigheim-Metterzimmern,Stuttgart,29,30,Y7wl22Er
+2024-2025,2024-12-11,HSG Wetzlar,Leipzig,31,30,Kbh5RIsf
+2024-2025,2024-12-11,SC Magdeburg,Gummersbach,37,28,27gnBccD
+2024-2025,2024-12-11,MT Melsungen,Hamburg,35,28,fsjvDJS0
+2024-2025,2024-12-11,Kiel,Hannover-Burgdorf,28,24,Y1IvtIdm
+2024-2025,2024-12-11,Potsdam,Eisenach,26,31,Gpx8ovZP
+2024-2025,2024-12-12,Rhein-Neckar,Flensburg-H.,31,29,SOeDPdC6
+2024-2025,2024-12-12,Fuchse Berlin,Lemgo,33,21,EoN4TvDs
+2024-2025,2024-12-14,Eisenach,Stuttgart,25,29,z7hdf8Hc
+2024-2025,2024-12-14,Leipzig,Kiel,28,32,2sAexzdC
+2024-2025,2024-12-14,Bietigheim-Metterzimmern,Hamburg,29,35,0xxMhetg
+2024-2025,2024-12-15,Rhein-Neckar,SC Magdeburg,25,36,UHTxkDuI
+2024-2025,2024-12-15,Hannover-Burgdorf,Erlangen,31,25,6FGnvdRa
+2024-2025,2024-12-15,Goppingen,HSG Wetzlar,27,24,A7D3zEQO
+2024-2025,2024-12-16,Gummersbach,MT Melsungen,24,29,OIoBW4Pj
+2024-2025,2024-12-16,Flensburg-H.,Fuchse Berlin,38,37,d4VUjZA5
+2024-2025,2024-12-22,Kiel,Bietigheim-Metterzimmern,38,29,Uk5SeLh2
+2024-2025,2024-12-22,Hamburg,Flensburg-H.,32,32,ziCJcsOk
+2024-2025,2024-12-22,HSG Wetzlar,Gummersbach,32,29,zTTW6o13
+2024-2025,2024-12-22,Fuchse Berlin,Goppingen,35,23,dpPiqr9d
+2024-2025,2024-12-22,Erlangen,Lemgo,19,28,OWQqo4vp
+2024-2025,2024-12-23,MT Melsungen,Hannover-Burgdorf,31,23,dMt5hnnA
+2024-2025,2024-12-23,Potsdam,Leipzig,26,35,48Lm330S
+2024-2025,2024-12-23,Stuttgart,Rhein-Neckar,25,28,rgXv5PVF
+2024-2025,2024-12-26,Rhein-Neckar,HSG Wetzlar,32,27,0C8gGAeE
+2024-2025,2024-12-26,Lemgo,Kiel,22,23,A9Q1AK7e
+2024-2025,2024-12-26,Gummersbach,Fuchse Berlin,22,29,hAmY8Sml
+2024-2025,2024-12-26,Eisenach,Hamburg,32,31,b7jt76I0
+2024-2025,2024-12-27,Stuttgart,Potsdam,29,24,YP61ElQQ
+2024-2025,2024-12-27,Leipzig,Hannover-Burgdorf,30,32,MqhEJOp9
+2024-2025,2024-12-27,Goppingen,MT Melsungen,25,29,IBoNH2FL
+2024-2025,2024-12-27,Flensburg-H.,Bietigheim-Metterzimmern,39,27,ryv98bx8
+2024-2025,2025-02-08,MT Melsungen,Goppingen,30,23,Yq3I6cOH
+2024-2025,2025-02-08,Kiel,SC Magdeburg,31,25,h2FHyINi
+2024-2025,2025-02-08,Gummersbach,Stuttgart,36,29,YcriLdwB
+2024-2025,2025-02-09,Hamburg,Rhein-Neckar,30,30,QeNVDEVp
+2024-2025,2025-02-09,Hannover-Burgdorf,Leipzig,24,23,EsmH8Jg5
+2024-2025,2025-02-09,Erlangen,Flensburg-H.,26,32,tA6Q4ygU
+2024-2025,2025-02-09,Bietigheim-Metterzimmern,HSG Wetzlar,27,28,hlzqNI8b
+2024-2025,2025-02-09,Fuchse Berlin,Potsdam,36,19,pOWzPvvn
+2024-2025,2025-02-10,Eisenach,Lemgo,34,31,6BtaJz8N
+2024-2025,2025-02-13,Stuttgart,Hannover-Burgdorf,27,35,210ewVbd
+2024-2025,2025-02-13,Rhein-Neckar,Bietigheim-Metterzimmern,36,30,6Z6nuiUq
+2024-2025,2025-02-15,Flensburg-H.,Gummersbach,35,30,EyS7nZyA
+2024-2025,2025-02-16,SC Magdeburg,MT Melsungen,29,28,d0esWDiT
+2024-2025,2025-02-16,Lemgo,Fuchse Berlin,25,25,8vPale7c
+2024-2025,2025-02-16,HSG Wetzlar,Kiel,27,25,ziGGpD6M
+2024-2025,2025-02-16,Erlangen,Hamburg,29,35,hWtDQiFj
+2024-2025,2025-02-17,Goppingen,Eisenach,31,27,0Y1YXZMG
+2024-2025,2025-02-20,Kiel,Erlangen,28,24,lj25iLJ6
+2024-2025,2025-02-20,Hamburg,Bietigheim-Metterzimmern,37,36,tQbcgskf
+2024-2025,2025-02-21,Potsdam,Lemgo,21,22,pb5le3Ks
+2024-2025,2025-02-21,Eisenach,Leipzig,34,34,lSJI0PdK
+2024-2025,2025-02-22,MT Melsungen,Stuttgart,35,29,67pFt45l
+2024-2025,2025-02-22,Gummersbach,Rhein-Neckar,36,25,zmxWxM4D
+2024-2025,2025-02-22,Hannover-Burgdorf,HSG Wetzlar,34,32,fems1Yj3
+2024-2025,2025-02-23,Goppingen,SC Magdeburg,25,28,08IsaCLF
+2024-2025,2025-02-23,Fuchse Berlin,Flensburg-H.,36,31,SMYNvrz1
+2024-2025,2025-02-26,Rhein-Neckar,Goppingen,29,28,0lf5MuJt
+2024-2025,2025-02-27,Leipzig,Potsdam,32,19,EH3QZeh4
+2024-2025,2025-02-27,Stuttgart,Lemgo,23,26,8EcDKJmg
+2024-2025,2025-02-27,Hamburg,Gummersbach,30,37,4tiMIcI5
+2024-2025,2025-02-27,HSG Wetzlar,Eisenach,30,31,dzUf2xYO
+2024-2025,2025-02-28,Bietigheim-Metterzimmern,Kiel,24,39,80Iv6KYa
+2024-2025,2025-03-01,Flensburg-H.,MT Melsungen,35,33,4SBm4b3C
+2024-2025,2025-03-02,Erlangen,Hannover-Burgdorf,33,33,zmKW7t4m
+2024-2025,2025-03-02,SC Magdeburg,Potsdam,25,15,G2w0D2tQ
+2024-2025,2025-03-02,Leipzig,Fuchse Berlin,30,33,A5jEkalJ
+2024-2025,2025-03-06,Lemgo,Erlangen,30,24,8zZmXdXb
+2024-2025,2025-03-06,Potsdam,Stuttgart,28,25,bNMMIIZ2
+2024-2025,2025-03-07,MT Melsungen,Leipzig,34,25,nLpuZI2n
+2024-2025,2025-03-07,Gummersbach,Bietigheim-Metterzimmern,37,27,8YgUCSop
+2024-2025,2025-03-08,Goppingen,Flensburg-H.,27,27,dd5VEFHU
+2024-2025,2025-03-08,Eisenach,SC Magdeburg,26,36,tnhxB6Gd
+2024-2025,2025-03-09,Kiel,Rhein-Neckar,29,24,6mQUGd4F
+2024-2025,2025-03-09,Hannover-Burgdorf,Hamburg,33,32,xfkUGymI
+2024-2025,2025-03-09,Fuchse Berlin,HSG Wetzlar,38,29,G0xdVz2B
+2024-2025,2025-03-20,Rhein-Neckar,Hannover-Burgdorf,35,36,b5TjMite
+2024-2025,2025-03-20,Hamburg,MT Melsungen,42,32,MwForZ2E
+2024-2025,2025-03-21,SC Magdeburg,Fuchse Berlin,30,33,OnF89Edk
+2024-2025,2025-03-22,Flensburg-H.,Kiel,36,33,8zkCTZmL
+2024-2025,2025-03-22,Erlangen,Gummersbach,24,31,KE8H7hR1
+2024-2025,2025-03-22,Bietigheim-Metterzimmern,Potsdam,30,28,C8e3VeJ8
+2024-2025,2025-03-23,Stuttgart,Eisenach,31,30,6VWbKVA7
+2024-2025,2025-03-23,Leipzig,Lemgo,26,35,S2EwFzZR
+2024-2025,2025-03-23,HSG Wetzlar,Goppingen,30,26,xjurODBr
+2024-2025,2025-03-27,Hannover-Burgdorf,Bietigheim-Metterzimmern,32,18,fiDgtDXQ
+2024-2025,2025-03-27,Gummersbach,HSG Wetzlar,33,24,AwfamUvf
+2024-2025,2025-03-28,Eisenach,Rhein-Neckar,30,35,65m8o896
+2024-2025,2025-03-28,Goppingen,Leipzig,29,27,xCGIziel
+2024-2025,2025-03-29,MT Melsungen,Kiel,27,22,pxKQYUP0
+2024-2025,2025-03-29,Lemgo,Flensburg-H.,34,29,Yc0LfCnK
+2024-2025,2025-03-29,Potsdam,Erlangen,23,26,EVjGqnvJ
+2024-2025,2025-03-30,Fuchse Berlin,Hamburg,40,35,xQeikjAs
+2024-2025,2025-04-03,Hamburg,Potsdam,28,23,Ma8QabUG
+2024-2025,2025-04-04,HSG Wetzlar,Stuttgart,26,28,hKG93tVi
+2024-2025,2025-04-05,Bietigheim-Metterzimmern,MT Melsungen,28,32,8drioaFN
+2024-2025,2025-04-05,Kiel,Gummersbach,31,25,IR1ZcxaT
+2024-2025,2025-04-05,Erlangen,Fuchse Berlin,31,31,zqpqmLpB
+2024-2025,2025-04-05,Rhein-Neckar,Lemgo,33,26,EZ4I1Ka4
+2024-2025,2025-04-06,Leipzig,SC Magdeburg,30,31,vHjzksGb
+2024-2025,2025-04-06,Hannover-Burgdorf,Goppingen,30,36,h0hSj3on
+2024-2025,2025-04-06,Flensburg-H.,Eisenach,39,39,StPNuwwo
+2024-2025,2025-04-10,Lemgo,Potsdam,32,23,ELwEfHBt
+2024-2025,2025-04-10,SC Magdeburg,Erlangen,30,19,lfxgCtwq
+2024-2025,2025-04-16,Kiel,Fuchse Berlin,34,36,rPuOZ4Bm
+2024-2025,2025-04-16,SC Magdeburg,Stuttgart,31,20,6i8ZW8fD
+2024-2025,2025-04-17,Lemgo,Hamburg,41,29,vFkW6Fyp
+2024-2025,2025-04-17,Leipzig,Flensburg-H.,31,33,Ecm5hGMj
+2024-2025,2025-04-17,Eisenach,Erlangen,26,26,MZOZQzTF
+2024-2025,2025-04-17,Potsdam,HSG Wetzlar,32,28,UaSsPEcS
+2024-2025,2025-04-19,SC Magdeburg,Rhein-Neckar,30,27,8Wb0CyEM
+2024-2025,2025-04-19,MT Melsungen,Gummersbach,26,25,nHAiEcqA
+2024-2025,2025-04-19,Goppingen,Kiel,29,36,vi7qGJEc
+2024-2025,2025-04-20,Fuchse Berlin,Hannover-Burgdorf,37,33,YDru5g6d
+2024-2025,2025-04-24,Rhein-Neckar,Leipzig,35,34,zJIdJqR6
+2024-2025,2025-04-25,Hannover-Burgdorf,Lemgo,30,29,EX3EJhLk
+2024-2025,2025-04-25,Gummersbach,Potsdam,31,27,dY65HNeJ
+2024-2025,2025-04-26,Erlangen,MT Melsungen,25,31,0l2MHWk2
+2024-2025,2025-04-26,Flensburg-H.,Stuttgart,32,27,nq7tNRRs
+2024-2025,2025-04-26,Bietigheim-Metterzimmern,Eisenach,26,34,Gdp9uzr9
+2024-2025,2025-04-27,Hamburg,Goppingen,31,30,OvaiuRmQ
+2024-2025,2025-04-27,HSG Wetzlar,SC Magdeburg,29,32,rB0kL5df
+2024-2025,2025-05-01,Leipzig,HSG Wetzlar,30,18,GxvWXrt0
+2024-2025,2025-05-01,Erlangen,Rhein-Neckar,34,25,GSrZjw5S
+2024-2025,2025-05-02,Lemgo,Gummersbach,35,26,dCDeWjMh
+2024-2025,2025-05-02,Eisenach,Hannover-Burgdorf,26,31,KjbLQnjU
+2024-2025,2025-05-03,Potsdam,Flensburg-H.,26,34,AFwVpjyn
+2024-2025,2025-05-04,Goppingen,Erlangen,25,24,zufXVMAC
+2024-2025,2025-05-04,Fuchse Berlin,Bietigheim-Metterzimmern,42,30,jB64UUj5
+2024-2025,2025-05-04,SC Magdeburg,Hamburg,37,28,lnAmYCit
+2024-2025,2025-05-04,MT Melsungen,Rhein-Neckar,25,22,r5cuU0uP
+2024-2025,2025-05-04,Stuttgart,Kiel,32,35,OO4CS8LH
+2024-2025,2025-05-15,Hamburg,Stuttgart,41,28,pEL0yw4k
+2024-2025,2025-05-15,HSG Wetzlar,Flensburg-H.,28,34,C22CcTKi
+2024-2025,2025-05-15,Gummersbach,SC Magdeburg,31,32,vFgTgoKG
+2024-2025,2025-05-15,Fuchse Berlin,Eisenach,34,26,0OYgun5N
+2024-2025,2025-05-15,Erlangen,Leipzig,23,25,4duos8zB
+2024-2025,2025-05-15,Kiel,Lemgo,35,29,ttF9ZGY1
+2024-2025,2025-05-15,Rhein-Neckar,Potsdam,29,26,Ia5Ke7k4
+2024-2025,2025-05-16,Hannover-Burgdorf,MT Melsungen,23,29,WURwqU5b
+2024-2025,2025-05-16,Bietigheim-Metterzimmern,Goppingen,31,30,dfKPZPSp
+2024-2025,2025-05-18,Eisenach,Gummersbach,30,34,plxA2F2l
+2024-2025,2025-05-18,Stuttgart,Erlangen,27,30,Q3ew8yuR
+2024-2025,2025-05-18,Potsdam,Kiel,22,25,hEuI0gX0
+2024-2025,2025-05-18,Flensburg-H.,Rhein-Neckar,28,33,hjcV9cAE
+2024-2025,2025-05-19,SC Magdeburg,Hannover-Burgdorf,34,28,pzcylGme
+2024-2025,2025-05-19,MT Melsungen,HSG Wetzlar,33,27,OK8SkxJr
+2024-2025,2025-05-19,Lemgo,Bietigheim-Metterzimmern,33,21,h00qnfI7
+2024-2025,2025-05-19,Leipzig,Hamburg,25,29,YZ1ecKQ8
+2024-2025,2025-05-19,Goppingen,Fuchse Berlin,28,43,hxIdebeL
+2024-2025,2025-05-21,Rhein-Neckar,Gummersbach,32,34,pQgQ9gGi
+2024-2025,2025-05-22,SC Magdeburg,Eisenach,33,32,4npDjQGM
+2024-2025,2025-05-24,Stuttgart,Bietigheim-Metterzimmern,26,30,Q7VQSdb3
+2024-2025,2025-05-25,Potsdam,SC Magdeburg,23,37,bJWrT1rI
+2024-2025,2025-05-28,Erlangen,SC Magdeburg,23,34,KQGCMzfK
+2024-2025,2025-05-28,Kiel,Leipzig,39,24,MgFZRVVa
+2024-2025,2025-05-28,Hamburg,Eisenach,31,29,QRLQTi1m
+2024-2025,2025-05-28,HSG Wetzlar,Lemgo,20,26,8jk0DWG6
+2024-2025,2025-05-28,Hannover-Burgdorf,Potsdam,26,27,ETTQbX1D
+2024-2025,2025-05-28,Gummersbach,Goppingen,41,25,fqVfZDwQ
+2024-2025,2025-05-29,Rhein-Neckar,Stuttgart,26,33,Emh8BAoJ
+2024-2025,2025-05-29,Fuchse Berlin,MT Melsungen,37,29,vBcqHEHs
+2024-2025,2025-05-29,Bietigheim-Metterzimmern,Flensburg-H.,29,29,COeiFhnf
+2024-2025,2025-05-31,Potsdam,Goppingen,21,25,0IDyrrMc
+2024-2025,2025-05-31,Kiel,Hamburg,38,37,8rHqtMjA
+2024-2025,2025-05-31,Gummersbach,Leipzig,32,31,pAVlKvUj
+2024-2025,2025-06-01,Bietigheim-Metterzimmern,Erlangen,23,29,QaagV4xh
+2024-2025,2025-06-01,HSG Wetzlar,Rhein-Neckar,30,30,fuiARMyH
+2024-2025,2025-06-01,Lemgo,SC Magdeburg,29,31,bg7771po
+2024-2025,2025-06-01,Flensburg-H.,Hannover-Burgdorf,34,32,nFm2Tr74
+2024-2025,2025-06-01,Stuttgart,Fuchse Berlin,20,35,lvpJP06T
+2024-2025,2025-06-01,MT Melsungen,Eisenach,26,25,f7DsQ90C
+2024-2025,2025-06-04,SC Magdeburg,Flensburg-H.,35,27,OKQRhazG
+2024-2025,2025-06-04,MT Melsungen,Lemgo,26,26,ShXIfL53
+2024-2025,2025-06-04,Leipzig,Bietigheim-Metterzimmern,25,34,vXjOYwqp
+2024-2025,2025-06-04,Hannover-Burgdorf,Kiel,29,29,Uc5hv0LM
+2024-2025,2025-06-04,Eisenach,Potsdam,37,19,8QNDqec2
+2024-2025,2025-06-05,Fuchse Berlin,Gummersbach,45,35,00K5oHSk
+2024-2025,2025-06-05,Goppingen,Stuttgart,28,27,zapXWHDd
+2024-2025,2025-06-05,Hamburg,HSG Wetzlar,33,29,Q1hbi7G8
+2024-2025,2025-06-08,Bietigheim-Metterzimmern,SC Magdeburg,25,35,tzfVqP8r
+2024-2025,2025-06-08,Flensburg-H.,Hamburg,40,37,l0cwr3we
+2024-2025,2025-06-08,Stuttgart,Leipzig,29,28,Uge6oxpm
+2024-2025,2025-06-08,Rhein-Neckar,Fuchse Berlin,33,38,xMwY3p0E
+2024-2025,2025-06-08,Potsdam,MT Melsungen,26,31,bZnNsfqC
+2024-2025,2025-06-08,Lemgo,Goppingen,29,29,bFj6kooL
+2024-2025,2025-06-08,Kiel,Eisenach,36,35,6ajVuYDO
+2024-2025,2025-06-08,HSG Wetzlar,Erlangen,21,25,AFonts87
+2024-2025,2025-06-08,Gummersbach,Hannover-Burgdorf,39,29,27gEqGEa
