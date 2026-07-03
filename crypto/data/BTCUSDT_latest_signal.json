@@ -1,8 +1,8 @@
 {
-  "tijdstip": "2026-07-03 15:00:00+00:00",
-  "signaal": "WACHT (25D skew gate \u2014 puts te duur, skew +6.9%)",
-  "kans_stijging": "57.2%",
-  "proba_raw": 0.572072072072072,
+  "tijdstip": "2026-07-03 16:00:00+00:00",
+  "signaal": "WACHT",
+  "kans_stijging": "43.6%",
+  "proba_raw": 0.4358974358974359,
   "long_threshold": "0.50",
   "long_threshold_base": "0.65",
   "short_threshold": "uitgeschakeld",
@@ -14,8 +14,8 @@
   "btc_skew_25d": "+6.9%",
   "skew_blocked": true,
   "horizon": "24 uur",
-  "prijs": 62127.96875,
-  "ranging_score": 2.0,
-  "crash_mode": 0,
-  "macd_size_mult": 0.07580544715670899
+  "prijs": 61874.0,
+  "ranging_score": 1.0,
+  "crash_mode": 1,
+  "macd_size_mult": 0.0
 }
