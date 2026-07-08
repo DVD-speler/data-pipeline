@@ -1,11 +1,11 @@
 {
-  "signaal": "BEARISH",
-  "richting": "BEARISH",
-  "kans_stijging": 0.4036273467314201,
-  "prijs": 63796.44140625,
-  "tijdstip": "2026-07-07 01:00:00+00:00",
-  "market_regime": 1.0,
-  "regime_label": "bull (ADX+)",
+  "signaal": "BULLISH",
+  "richting": "BULLISH",
+  "kans_stijging": 0.6847349885255717,
+  "prijs": 63571.75,
+  "tijdstip": "2026-07-08 00:00:00+00:00",
+  "market_regime": 0.0,
+  "regime_label": "ranging",
   "death_cross": false,
   "boven_ema200": true
 }
