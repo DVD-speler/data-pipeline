@@ -59,10 +59,14 @@ def scan_horizons(
         print(f"  Horizon {h}h")
         print(f"{'─'*50}")
 
-        # Herbereken target voor deze horizon
+        # Herbereken target voor deze horizon.
+        # NB: laatste h rijen hebben geen future close — NaN houden i.p.v.
+        # (NaN > x) = False → target 0, anders lekken er verzonnen labels in de set.
         df = df_features.copy()
-        df["target"] = (df["close"].shift(-h) > df["close"]).astype(int)
+        future_close = df["close"].shift(-h)
+        df["target"] = (future_close > df["close"]).astype(float).where(future_close.notna())
         df = df.dropna(subset=available_features + ["target", "close"])
+        df["target"] = df["target"].astype(int)
 
         if len(df) < 2000:
             print(f"  Te weinig data ({len(df)} rijen) — sla over")

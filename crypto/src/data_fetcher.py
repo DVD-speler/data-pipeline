@@ -240,6 +240,8 @@ def _download_single(
 
     total_inserted = 0
     current_start = start_ms
+    max_retries = 5   # cap: voorkomt oneindige loop bij persistente API-fouten
+    retries = 0
 
     with tqdm(
         total=estimated_batches,
@@ -254,13 +256,24 @@ def _download_single(
                 if exc.response is not None and exc.response.status_code == 451:
                     print(f"\n  Binance 451 (geo-blokkering) — overschakelen naar yfinance...")
                     return _download_single_yfinance(symbol, interval, days, conn)
-                print(f"\n  API-fout: {exc}  — opnieuw proberen over 10s...")
+                retries += 1
+                if retries > max_retries:
+                    raise RuntimeError(
+                        f"Binance API blijft falen na {max_retries} pogingen: {exc}"
+                    ) from exc
+                print(f"\n  API-fout: {exc}  — opnieuw proberen over 10s ({retries}/{max_retries})...")
                 time.sleep(10)
                 continue
             except requests.RequestException as exc:
-                print(f"\n  API-fout: {exc}  — opnieuw proberen over 10s...")
+                retries += 1
+                if retries > max_retries:
+                    raise RuntimeError(
+                        f"Binance API blijft falen na {max_retries} pogingen: {exc}"
+                    ) from exc
+                print(f"\n  API-fout: {exc}  — opnieuw proberen over 10s ({retries}/{max_retries})...")
                 time.sleep(10)
                 continue
+            retries = 0   # succesvolle fetch → teller resetten
 
             if not klines:
                 break
