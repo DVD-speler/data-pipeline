@@ -462,7 +462,7 @@ def auto_promote_optuna(df: pd.DataFrame, symbol: str = config.SYMBOL,
     Geeft True terug als promotie heeft plaatsgevonden.
     """
     import json, csv
-    from datetime import datetime
+    from datetime import datetime, timezone
 
     candidate_path = config.symbol_path(symbol, "lgb_optuna_params.json")
     stable_path    = config.symbol_path(symbol, "lgb_best_params.json")
@@ -512,7 +512,7 @@ def auto_promote_optuna(df: pd.DataFrame, symbol: str = config.SYMBOL,
         if write_header:
             writer.writeheader()
         writer.writerow({
-            "timestamp":        datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "timestamp":        datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
             "symbol":           symbol,
             "current_sharpe":   round(current_sharpe, 4),
             "candidate_sharpe": round(candidate_sharpe, 4),
