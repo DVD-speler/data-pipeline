@@ -18,6 +18,9 @@ build/
 # Jupyter
 .ipynb_checkpoints/
 
+# Graphify (lokale knowledge-graph output)
+graphify-out/
+
 # OS
 .DS_Store
 Thumbs.db
