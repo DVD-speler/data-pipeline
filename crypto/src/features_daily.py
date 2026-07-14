@@ -18,14 +18,20 @@ from src.data_fetcher import load_ohlcv
 def build_features_daily(
     df_ohlcv: pd.DataFrame,
     symbol: str = cfg.SYMBOL,
+    keep_unlabeled: bool = False,
 ) -> pd.DataFrame:
     """
-    Bouw de dagelijkse feature matrix voor ML-training.
+    Bouw de dagelijkse feature matrix voor ML-training of live inference.
 
     Parameters
     ----------
-    df_ohlcv : UTC-geïndexeerde 1d OHLCV DataFrame (uitvoer van load_ohlcv interval="1d")
-    symbol   : handelssymbool (BTCUSDT of ETHUSDT)
+    df_ohlcv       : UTC-geïndexeerde 1d OHLCV DataFrame (uitvoer van load_ohlcv interval="1d")
+    symbol         : handelssymbool (BTCUSDT of ETHUSDT)
+    keep_unlabeled : False (training) = rijen zonder target droppen;
+                     True (inference) = nieuwste dagcandle behouden (target nog
+                     onbekend, sentinel -1) zodat df_feat.iloc[-1] de actuele
+                     candle is i.p.v. een 1-dag-stale rij. Zelfde conventie als
+                     het 1h-model (build_features).
 
     Returns
     -------
@@ -192,9 +198,16 @@ def build_features_daily(
     # ── Selecteer en schoon op ────────────────────────────────────────────────
     keep      = cfg.FEATURE_COLS_DAILY + cfg.FILTER_COLS_DAILY + ["target", "close"]
     available = [c for c in keep if c in df.columns]
-    df_feat   = df[available].dropna()
-    df_feat   = df_feat.copy()
-    df_feat["target"] = df_feat["target"].astype(int)
+    if keep_unlabeled:
+        # Inference-mode: drop alleen op feature/filter/close-kolommen zodat de
+        # nieuwste dagcandle (target nog NaN) behouden blijft; sentinel -1.
+        non_target = [c for c in available if c != "target"]
+        df_feat = df[available].dropna(subset=non_target).copy()
+        df_feat["target"] = df_feat["target"].fillna(-1).astype(int)
+    else:
+        df_feat   = df[available].dropna()
+        df_feat   = df_feat.copy()
+        df_feat["target"] = df_feat["target"].astype(int)
 
     n_total   = len(df)
     n_removed = n_total - len(df_feat)

@@ -18,14 +18,20 @@ from src.data_fetcher import load_ohlcv
 def build_features_4h(
     df_ohlcv: pd.DataFrame,
     symbol: str = cfg.SYMBOL,
+    keep_unlabeled: bool = False,
 ) -> pd.DataFrame:
     """
-    Bouw de 4h feature matrix voor ML-training.
+    Bouw de 4h feature matrix voor ML-training of live inference.
 
     Parameters
     ----------
-    df_ohlcv : UTC-geïndexeerde 4h OHLCV DataFrame (uitvoer van load_ohlcv interval="4h")
-    symbol   : handelssymbool (BTCUSDT of ETHUSDT)
+    df_ohlcv       : UTC-geïndexeerde 4h OHLCV DataFrame (uitvoer van load_ohlcv interval="4h")
+    symbol         : handelssymbool (BTCUSDT of ETHUSDT)
+    keep_unlabeled : False (training) = rijen zonder target droppen;
+                     True (inference) = nieuwste candles behouden (target nog
+                     onbekend, sentinel -1) zodat df_feat.iloc[-1] de actuele
+                     candle is i.p.v. een 12h-stale rij. Zelfde conventie als
+                     het 1h-model (build_features).
 
     Returns
     -------
@@ -175,10 +181,17 @@ def build_features_4h(
                  if c in df.columns]
     available += ["target", "close", "future_close"]
 
-    n_before = len(df[available].dropna(subset=cfg.FEATURE_COLS_4H_MODEL))
-    df_feat = df[available].dropna()
-    n_removed = n_before - len(df_feat)
-    print(f"  Dead zone: {n_removed} neutrale rijen verwijderd "
-          f"({n_removed / max(len(df), 1):.1%} van totaal)")
+    if keep_unlabeled:
+        # Inference-mode: drop alleen op feature/filter/close-kolommen zodat de
+        # nieuwste candles (target/future_close nog NaN) behouden blijven.
+        non_target = [c for c in available if c not in ("target", "future_close")]
+        df_feat = df[available].dropna(subset=non_target).copy()
+        df_feat["target"] = df_feat["target"].fillna(-1)
+    else:
+        n_before = len(df[available].dropna(subset=cfg.FEATURE_COLS_4H_MODEL))
+        df_feat = df[available].dropna()
+        n_removed = n_before - len(df_feat)
+        print(f"  Dead zone: {n_removed} neutrale rijen verwijderd "
+              f"({n_removed / max(len(df), 1):.1%} van totaal)")
 
     return df_feat

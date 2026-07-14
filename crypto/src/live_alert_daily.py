@@ -42,12 +42,18 @@ def _generate_daily_signal(df_feat: pd.DataFrame, symbol: str) -> dict:
     """Genereer dagelijks richtingssignaal op basis van de meest recente dagcandle."""
     model_path = cfg.symbol_path_daily(symbol, "model.pkl")
     if not model_path.exists():
+        # Zelfde keys als het normale pad — run_live_alert_daily leest
+        # regime_label/death_cross/boven_ema200 en mag niet KeyError'en.
         return {
             "signaal":       "GEEN MODEL",
             "richting":      "NEUTRAAL",
             "kans_stijging": 0.5,
             "prijs":         0.0,
             "tijdstip":      "n/a",
+            "market_regime": 0.0,
+            "regime_label":  "onbekend",
+            "death_cross":   False,
+            "boven_ema200":  False,
         }
 
     model = joblib.load(model_path)
@@ -105,7 +111,9 @@ def run_live_alert_daily(symbol: str = cfg.SYMBOL) -> None:
 
     # ── Laad data en bouw features ────────────────────────────────────────────
     df      = load_ohlcv(symbol=symbol, interval="1d")
-    df_feat = build_features_daily(df, symbol=symbol)
+    # keep_unlabeled=True: nieuwste dagcandle behouden (target nog onbekend) zodat
+    # het signaal op de actuele candle wordt berekend i.p.v. een 1-dag-stale rij.
+    df_feat = build_features_daily(df, symbol=symbol, keep_unlabeled=True)
 
     # ── Genereer signaal ──────────────────────────────────────────────────────
     signaal = _generate_daily_signal(df_feat, symbol=symbol)
