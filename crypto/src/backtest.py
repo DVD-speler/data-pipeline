@@ -58,7 +58,8 @@ def run_backtest(
     horizon              : voorspellingstijdshorizon in uur (None = config.PREDICTION_HORIZON_H)
     """
     if threshold is None:
-        threshold = load_optimal_threshold()
+        # load_optimal_threshold() geeft (long, short) terug — alleen long nodig
+        threshold, _ = load_optimal_threshold()
 
     h = horizon if horizon is not None else config.PREDICTION_HORIZON_H
 
@@ -222,8 +223,9 @@ def run_backtest(
             daily_thr = getattr(config, "DAILY_GATE_THRESHOLD", 0.45)
             daily_ok  = (daily_proba_h >= daily_thr).fillna(True)  # NaN = geen data = niet blokkeren
             results["signal_long"] = results["signal_long"] * daily_ok.astype(int)
-        except Exception:
-            pass  # daily gate niet beschikbaar → stilzwijgend overslaan
+        except Exception as e:
+            # Niet stil laten degraderen: zichtbaar maken waarom de gate uit staat
+            print(f"  Waarschuwing: daily-gate overgeslagen ({e})")
 
     # ── S11-A: Bear-regime short signaal ──────────────────────────────────────
     # Actief uitsluitend bij market_regime == -1 (ADX > 20 en -DI > +DI).

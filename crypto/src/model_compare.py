@@ -232,12 +232,6 @@ def compare_models(df: pd.DataFrame, symbol: str = config.SYMBOL) -> pd.DataFram
     ens_test_probas = sum(weights[n] * test_probas_per_model[n] for n in weights)
 
     ens_long_thr  = _optimize_threshold_from_probas(ens_val_probas, val)
-    ens_short_thr = _optimize_threshold_from_probas(
-        1 - ens_val_probas, val,    # invert: zoek drempel voor lage kansen
-        thr_min=0.50, thr_max=0.70, min_trades=5,
-    )
-    # Converteer: ens_short_thr is de ceiling op de originele schaal
-    ens_short_thr_orig = round(1 - ens_short_thr, 2)
 
     # Zoek direct met optimize_short_threshold variant via helper
     from src.model import optimize_short_threshold as _opt_short

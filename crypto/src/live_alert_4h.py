@@ -44,12 +44,21 @@ def _generate_4h_signal(df_feat: pd.DataFrame, symbol: str) -> dict:
     thr_path   = cfg.symbol_path_4h(symbol, "optimal_threshold.json")
 
     if not model_path.exists():
+        # Zelfde keys als het normale pad — consumers (print, wait-bericht,
+        # paper trading) lezen deze rechtstreeks en mogen niet KeyError'en.
         return {
-            "signaal":       "GEEN MODEL",
-            "richting":      "NEUTRAAL",
-            "kans_stijging": 0.5,
-            "prijs":         0.0,
-            "tijdstip":      "n/a",
+            "signaal":             "GEEN MODEL",
+            "richting":            "NEUTRAAL",
+            "kans_stijging":       0.5,
+            "prijs":               0.0,
+            "tijdstip":            "n/a",
+            "market_regime":       0.0,
+            "regime_label":        "onbekend",
+            "death_cross":         False,
+            "boven_ema200":        False,
+            "long_threshold":      0.65,
+            "long_threshold_base": 0.65,
+            "short_threshold":     0.0,
         }
 
     model = joblib.load(model_path)
@@ -384,7 +393,9 @@ def run_live_alert_4h(
     print(f"\n── 4h Alert ({symbol}) ──────────────────────────────────────────────────")
 
     df_ohlcv = load_ohlcv(symbol=symbol, interval="4h")
-    df_feat  = build_features_4h(df_ohlcv, symbol=symbol)
+    # keep_unlabeled=True: nieuwste candle behouden (target nog onbekend) zodat
+    # het signaal op de actuele candle wordt berekend i.p.v. een 12h-stale rij.
+    df_feat  = build_features_4h(df_ohlcv, symbol=symbol, keep_unlabeled=True)
     signaal  = _generate_4h_signal(df_feat, symbol=symbol)
 
     print(f"  Tijdstip : {signaal['tijdstip']}")

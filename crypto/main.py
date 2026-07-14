@@ -528,10 +528,6 @@ def fase_model_daily(features=None, symbol: str = None):
                 shutil.copy2(src, dst)
                 print(f"Dagmodel opgeslagen: {dst}")
     finally:
-        config.FEATURE_COLS         = orig_feature_cols
-        config.FILTER_COLS          = orig_filter_cols
-        config.TEST_SIZE_DAYS       = orig_test_days
-        config.VALIDATION_SIZE_DAYS = orig_val_days
         config.FEATURE_COLS             = orig_feature_cols
         config.FILTER_COLS              = orig_filter_cols
         config.TEST_SIZE_DAYS           = orig_test_days
