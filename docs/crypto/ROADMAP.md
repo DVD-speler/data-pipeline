@@ -49,6 +49,9 @@ Items uit oude `verbeterplan.md` die nog niet gedaan zijn:
 | **Drempeloptimalisatie per ADX-band** (S15-C, uitgesteld na S15 revert) | open | `src/backtest.py` |
 | **Per-trade circuit breaker** — vereist trade-level simulatie (huidige backtest is vectorized) | uitgesteld | `src/backtest.py` |
 | **Pyramiding / add-on logic** in sterke trends — zelfde reden, vereist trade-level sim | uitgesteld | `src/backtest.py` |
+| **Code-review M2 (+L6)**: `force=True` wist externe cache vóór download — temp-file + rename na succes | open | `src/external_data.py` |
+| **Code-review M5**: `volume_spike_30d` == `volume_ratio_30d` in dagmodel — fixen bij eerstvolgende hertraining dagmodel | open | `src/features_daily.py`, `config_daily.py` |
+| **Code-review M6/M7**: refactor lange functies + gedupliceerde exit-logica naar `shared/` — eigen PR met regressie-backtest | open | `src/backtest.py`, `src/live_alert*.py` |
 
 ## Recent afgerond (al in productie)
 
@@ -65,6 +68,7 @@ Items uit oude `verbeterplan.md` die nog niet gedaan zijn:
 | Kelly sizing (half-Kelly) | Sprint 3 | `USE_KELLY_SIZING` in config |
 | ATR-trailing stop | — | `ATR_STOP_MULTIPLIER` in config |
 | Drawdown circuit breaker | — | `MAX_DRAWDOWN_GATE` in config |
+| Code-review fixes: live-signaal op actuele candle (H1), −260 regels hot path (H2), 9 kleinere | PR #3 (jul 2026) | `docs/crypto/CODE_REVIEW_2026-07.md` |
 
 ## Experimenteel / research-only — NIET in productie
 
@@ -103,6 +107,8 @@ schema, die wél actief zijn).
   (AUC 0.53). Cleanup in Fase C van repo-opschoning (april 2026). ETH
   OHLCV blijft gedownload omdat `eth_btc_ratio` een BTC-feature is.
 - **HMM regime detection** — uitgesloten in Sprint 5, redundant met ADX.
+  Berekening zelf verwijderd uit `features.py` in PR #3 (jul 2026).
 - **BTC dominance feature** — datakwaliteit onvoldoende, 0 importance.
 - **Candlestick patterns (hammer, engulfing, gap_up)** — 0 importance op
-  24h horizon, te schaars.
+  24h horizon, te schaars. Berekening verwijderd in PR #3 (jul 2026),
+  samen met halving-cyclus, Supertrend en BTC-ETH-correlatie.

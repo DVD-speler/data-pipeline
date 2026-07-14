@@ -87,6 +87,19 @@ artifacts.** `np.arange(0.30, 0.46, 0.01)` kan 0.46 includen door
 float-arithmetic. Gebruik `np.linspace(min, max, n_steps,
 endpoint=False)` voor threshold-grids.
 
+## Live pipeline
+
+**L16: Een fix in één horizon-pad is pas af als álle paden hem hebben.**
+De 1h-pipeline kreeg `keep_unlabeled=True` zodat live inference de
+actuele candle gebruikt (target van de nieuwste rijen is per definitie
+NaN — kale `dropna()` gooit ze weg). Het 4h- en dagpad kregen die fix
+nooit: 4h-signalen waren daardoor structureel **12h oud**, dagelijkse
+signalen **1 dag** (gevonden in code-review, gefixt 2026-07-14, PR #3).
+**Regel:** bij een bugfix in een gedeeld patroon (features → dropna →
+`iloc[-1]`) alle drie de horizon-varianten checken — de code is
+gedupliceerd, dus de bug ook. Zie ook M7 (dedupliceren naar `shared/`)
+in `CODE_REVIEW_2026-07.md`.
+
 ## Mislukte experimenten (don't repeat)
 
 **Sprint 5 — HMM regime detection:** redundant met ADX market_regime,

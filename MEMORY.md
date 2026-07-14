@@ -9,13 +9,19 @@ zit in `~/.claude/projects/...`). Dit bestand is voor menselijke lezers
 Monorepo voor signaalmodellen op kansstatistische basis. Twee project-
 mappen (crypto, sports) + één shared map.
 
-## Status (2026-04-27)
+## Status (2026-07-14)
 
 - **crypto**: Sprint 19 voltooid, gem WF Sharpe BTC +5.97. Sprint 20
   (Bybit live order execution) is de volgende sprint maar nog niet
   gestart. Single-symbol (BTC) sinds april 2026 — ETH gerevert wegens
   AUC 0.53. ETH OHLCV blijft gedownload als cross-asset feature
   (`eth_btc_ratio` in BTC's feature matrix).
+- **onderhoud (jul 2026, PR #3)**: code-review met 11 fixes gemerged.
+  Belangrijkste: 4h/daily live-signaal draaide op een 12h/1d-oude
+  candle (`keep_unlabeled` nu in alle drie de horizon-paden, zie
+  LESSONS L16) + ~260 regels dode feature-berekening uit het hot path.
+  Alle drie de workflows na merge groen gevalideerd. Bevindingen +
+  open punten (M2/M5/M6/M7): `docs/crypto/CODE_REVIEW_2026-07.md`.
 - **sports**: scaffold gepland in Sprint S0 (niet gestart).
 - **shared**: drie modules actief — notifier (Discord), paper_state, kelly.
 - **monorepo migration**: M1 (april 2026) — directories opgesplitst naar
