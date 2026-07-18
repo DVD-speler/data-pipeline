@@ -1,9 +1,9 @@
 {
   "signaal": "WACHT (death cross)",
   "richting": "BULLISH",
-  "kans_stijging": 0.7178694381463251,
-  "prijs": 64011.4609375,
-  "tijdstip": "2026-07-17 20:00:00+00:00",
+  "kans_stijging": 0.797327308487926,
+  "prijs": 63914.23046875,
+  "tijdstip": "2026-07-18 00:00:00+00:00",
   "market_regime": 0.0,
   "regime_label": "ranging",
   "death_cross": true,
