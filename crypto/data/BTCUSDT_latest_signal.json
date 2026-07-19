@@ -1,5 +1,5 @@
 {
-  "tijdstip": "2026-07-19 12:00:00+00:00",
+  "tijdstip": "2026-07-19 13:00:00+00:00",
   "signaal": "LONG",
   "kans_stijging": "57.2%",
   "proba_raw": 0.572072072072072,
@@ -11,10 +11,10 @@
   "death_cross": false,
   "proba_4h": "n/a",
   "confirm_4h": true,
-  "btc_skew_25d": "+4.2%",
+  "btc_skew_25d": "+4.5%",
   "skew_blocked": false,
   "horizon": "24 uur",
-  "prijs": 64400.0,
+  "prijs": 64355.828125,
   "ranging_score": 2.0,
   "crash_mode": 0,
   "macd_size_mult": 0.0
