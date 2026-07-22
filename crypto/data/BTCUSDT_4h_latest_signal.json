@@ -1,9 +1,9 @@
 {
   "signaal": "WACHT",
   "richting": "NEUTRAAL",
-  "kans_stijging": 0.4869999635234041,
-  "prijs": 66214.9765625,
-  "tijdstip": "2026-07-22 04:00:00+00:00",
+  "kans_stijging": 0.5339240924040455,
+  "prijs": 65880.6484375,
+  "tijdstip": "2026-07-22 08:00:00+00:00",
   "market_regime": 1.0,
   "regime_label": "bull (ADX+)",
   "death_cross": false,
