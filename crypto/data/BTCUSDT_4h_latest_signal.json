@@ -1,9 +1,9 @@
 {
-  "signaal": "WACHT",
+  "signaal": "WACHT (onder EMA200)",
   "richting": "BULLISH",
-  "kans_stijging": 0.6048137485480232,
-  "prijs": 64395.4296875,
-  "tijdstip": "2026-07-29 12:00:00+00:00",
+  "kans_stijging": 0.6561580177966598,
+  "prijs": 63840.48828125,
+  "tijdstip": "2026-07-29 16:00:00+00:00",
   "market_regime": 0.0,
   "regime_label": "ranging",
   "death_cross": false,
