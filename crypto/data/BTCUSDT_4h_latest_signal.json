@@ -1,13 +1,13 @@
 {
-  "signaal": "LONG",
+  "signaal": "WACHT (onder EMA200)",
   "richting": "BULLISH",
-  "kans_stijging": 0.6503318951104244,
-  "prijs": 64377.140625,
-  "tijdstip": "2026-08-11 12:00:00+00:00",
+  "kans_stijging": 0.6859869301129293,
+  "prijs": 63546.83984375,
+  "tijdstip": "2026-08-11 16:00:00+00:00",
   "market_regime": 0.0,
   "regime_label": "ranging",
   "death_cross": false,
-  "boven_ema200": true,
+  "boven_ema200": false,
   "long_threshold": 0.65,
   "long_threshold_base": 0.65,
   "short_threshold": 0.36
