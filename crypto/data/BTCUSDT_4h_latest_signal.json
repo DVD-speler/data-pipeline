@@ -1,14 +1,14 @@
 {
   "signaal": "WACHT",
   "richting": "NEUTRAAL",
-  "kans_stijging": 0.5232526341904651,
-  "prijs": 63526.4296875,
-  "tijdstip": "2026-08-12 00:00:00+00:00",
-  "market_regime": -1.0,
-  "regime_label": "bear (ADX-)",
+  "kans_stijging": 0.46613780366349417,
+  "prijs": 63766.2109375,
+  "tijdstip": "2026-08-12 04:00:00+00:00",
+  "market_regime": 0.0,
+  "regime_label": "ranging",
   "death_cross": false,
   "boven_ema200": false,
-  "long_threshold": 0.73,
+  "long_threshold": 0.65,
   "long_threshold_base": 0.65,
   "short_threshold": 0.36
 }
