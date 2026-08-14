@@ -1,9 +1,9 @@
 {
   "signaal": "WACHT",
   "richting": "BULLISH",
-  "kans_stijging": 0.6432814563654713,
-  "prijs": 63321.5703125,
-  "tijdstip": "2026-08-13 20:00:00+00:00",
+  "kans_stijging": 0.5591569910996608,
+  "prijs": 63396.5703125,
+  "tijdstip": "2026-08-14 00:00:00+00:00",
   "market_regime": 0.0,
   "regime_label": "ranging",
   "death_cross": true,
