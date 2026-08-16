@@ -1,9 +1,9 @@
 {
   "signaal": "BULLISH",
   "richting": "BULLISH",
-  "kans_stijging": 0.6836712008381416,
-  "prijs": 63077.1796875,
-  "tijdstip": "2026-08-15 04:00:00+00:00",
+  "kans_stijging": 0.7230151950649971,
+  "prijs": 63052.5,
+  "tijdstip": "2026-08-16 04:00:00+00:00",
   "market_regime": 0.0,
   "regime_label": "ranging",
   "death_cross": true,
