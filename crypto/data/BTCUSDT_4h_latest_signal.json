@@ -1,14 +1,14 @@
 {
   "signaal": "WACHT",
-  "richting": "BULLISH",
-  "kans_stijging": 0.5607505720051215,
-  "prijs": 63412.328125,
-  "tijdstip": "2026-08-17 04:00:00+00:00",
-  "market_regime": 1.0,
-  "regime_label": "bull (ADX+)",
+  "richting": "NEUTRAAL",
+  "kans_stijging": 0.49272405612155196,
+  "prijs": 63434.30078125,
+  "tijdstip": "2026-08-17 08:00:00+00:00",
+  "market_regime": 0.0,
+  "regime_label": "ranging",
   "death_cross": true,
   "boven_ema200": false,
-  "long_threshold": 0.6,
+  "long_threshold": 0.65,
   "long_threshold_base": 0.65,
   "short_threshold": 0.36
 }
