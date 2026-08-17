@@ -1,14 +1,14 @@
 {
-  "signaal": "WACHT",
+  "signaal": "WACHT (death cross)",
   "richting": "BULLISH",
-  "kans_stijging": 0.629984755247597,
-  "prijs": 63586.41015625,
-  "tijdstip": "2026-08-17 12:00:00+00:00",
-  "market_regime": 0.0,
-  "regime_label": "ranging",
+  "kans_stijging": 0.6628662692214461,
+  "prijs": 64137.05859375,
+  "tijdstip": "2026-08-17 16:00:00+00:00",
+  "market_regime": 1.0,
+  "regime_label": "bull (ADX+)",
   "death_cross": true,
-  "boven_ema200": false,
-  "long_threshold": 0.65,
+  "boven_ema200": true,
+  "long_threshold": 0.6,
   "long_threshold_base": 0.65,
   "short_threshold": 0.36
 }
