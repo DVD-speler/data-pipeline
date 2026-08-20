@@ -1,9 +1,9 @@
 {
   "signaal": "BEARISH",
   "richting": "BEARISH",
-  "kans_stijging": 0.42787415341028573,
-  "prijs": 64318.2109375,
-  "tijdstip": "2026-08-19 04:00:00+00:00",
+  "kans_stijging": 0.28995374221569475,
+  "prijs": 69213.8125,
+  "tijdstip": "2026-08-20 04:00:00+00:00",
   "market_regime": 1.0,
   "regime_label": "bull (ADX+)",
   "death_cross": false,
