@@ -1,5 +1,5 @@
 {
-  "tijdstip": "2026-08-29 06:00:00+00:00",
+  "tijdstip": "2026-08-29 07:00:00+00:00",
   "signaal": "LONG",
   "kans_stijging": "68.8%",
   "proba_raw": 0.6875,
@@ -11,11 +11,11 @@
   "death_cross": false,
   "proba_4h": "n/a",
   "confirm_4h": true,
-  "btc_skew_25d": "+1.8%",
+  "btc_skew_25d": "+2.1%",
   "skew_blocked": false,
   "horizon": "24 uur",
-  "prijs": 77575.296875,
+  "prijs": 77506.46875,
   "ranging_score": 1.0,
   "crash_mode": 0,
-  "macd_size_mult": 0.18459900808671822
+  "macd_size_mult": 0.27159806017164245
 }
