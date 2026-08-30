@@ -1,5 +1,5 @@
 {
-  "tijdstip": "2026-08-30 09:00:00+00:00",
+  "tijdstip": "2026-08-30 10:00:00+00:00",
   "signaal": "WACHT",
   "kans_stijging": "47.4%",
   "proba_raw": 0.474025974025974,
@@ -11,11 +11,11 @@
   "death_cross": false,
   "proba_4h": "n/a",
   "confirm_4h": true,
-  "btc_skew_25d": "+1.9%",
+  "btc_skew_25d": "+1.7%",
   "skew_blocked": false,
   "horizon": "24 uur",
-  "prijs": 78083.0703125,
+  "prijs": 77983.1875,
   "ranging_score": 2.0,
-  "crash_mode": 0,
-  "macd_size_mult": 0.21938636921623267
+  "crash_mode": 1,
+  "macd_size_mult": 0.03838407524815847
 }
