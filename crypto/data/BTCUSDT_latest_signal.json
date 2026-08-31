@@ -1,8 +1,8 @@
 {
-  "tijdstip": "2026-08-31 15:00:00+00:00",
+  "tijdstip": "2026-08-31 16:00:00+00:00",
   "signaal": "WACHT",
-  "kans_stijging": "47.4%",
-  "proba_raw": 0.474025974025974,
+  "kans_stijging": "43.5%",
+  "proba_raw": 0.43478260869565216,
   "long_threshold": "0.50",
   "long_threshold_base": "0.65",
   "short_threshold": "uitgeschakeld",
@@ -14,8 +14,8 @@
   "btc_skew_25d": "+0.4%",
   "skew_blocked": false,
   "horizon": "24 uur",
-  "prijs": 78459.7265625,
+  "prijs": 78655.1015625,
   "ranging_score": 3.0,
   "crash_mode": 0,
-  "macd_size_mult": 0.3665066949079633
+  "macd_size_mult": 0.5
 }
