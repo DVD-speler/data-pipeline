@@ -1,15 +1,15 @@
 {
   "open_position": {
     "direction": "LONG",
-    "entry_price": 77896.0,
-    "sl_price": 77449.0,
-    "tp_price": 79238.0,
-    "open_time": "2026-08-31 01:00:00+00:00",
-    "horizon_end": "2026-09-07 01:00:00+00:00",
-    "position_size": 469.81,
-    "risk_euro": 9.4,
+    "entry_price": 77505.0,
+    "sl_price": 77110.0,
+    "tp_price": 78558.0,
+    "open_time": "2026-08-31 03:00:00+00:00",
+    "horizon_end": "2026-09-07 03:00:00+00:00",
+    "position_size": 623.99,
+    "risk_euro": 9.36,
     "proba": "57.2%",
-    "market_regime": "ranging"
+    "market_regime": "bear"
   },
   "closed_trades": [
     {
@@ -546,8 +546,26 @@
       "gross_return_pct": -0.63,
       "pnl_euro": -3.92,
       "capital_after": 939.62
+    },
+    {
+      "direction": "LONG",
+      "entry_price": 77896.0,
+      "sl_price": 77449.0,
+      "tp_price": 79238.0,
+      "open_time": "2026-08-31 01:00:00+00:00",
+      "horizon_end": "2026-09-07 01:00:00+00:00",
+      "position_size": 469.81,
+      "risk_euro": 9.4,
+      "proba": "57.2%",
+      "market_regime": "ranging",
+      "exit_price": 77449.0,
+      "exit_reason": "SL \u2717",
+      "exit_time": "2026-08-31 03:00:00+00:00",
+      "gross_return_pct": -0.57,
+      "pnl_euro": -3.64,
+      "capital_after": 935.98
     }
   ],
-  "capital": 939.62,
-  "last_checked": "2026-08-31 02:00:00+00:00"
+  "capital": 935.98,
+  "last_checked": "2026-08-31 03:00:00+00:00"
 }
