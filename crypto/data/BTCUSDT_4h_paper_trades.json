@@ -1,14 +1,14 @@
 {
   "open_position": {
     "direction": "LONG",
-    "entry_price": 77704.0,
-    "sl_price": 76150.0,
-    "tp_price": 82367.0,
-    "open_time": "2026-09-03 04:00:00+00:00",
-    "horizon_end": "2026-09-03 16:00:00+00:00",
-    "position_size": 472.67,
-    "risk_euro": 9.45,
-    "proba": 0.7542890682496279
+    "entry_price": 81119.0,
+    "sl_price": 79497.0,
+    "tp_price": 85987.0,
+    "open_time": "2026-09-03 16:00:00+00:00",
+    "horizon_end": "2026-09-04 04:00:00+00:00",
+    "position_size": 482.58,
+    "risk_euro": 9.65,
+    "proba": 0.6892858274996511
   },
   "closed_trades": [
     {
@@ -673,8 +673,25 @@
       "gross_return_pct": 0.79,
       "pnl_euro": 2.76,
       "capital_after": 945.33
+    },
+    {
+      "direction": "LONG",
+      "entry_price": 77704.0,
+      "sl_price": 76150.0,
+      "tp_price": 82367.0,
+      "open_time": "2026-09-03 04:00:00+00:00",
+      "horizon_end": "2026-09-03 16:00:00+00:00",
+      "position_size": 472.67,
+      "risk_euro": 9.45,
+      "proba": 0.7542890682496279,
+      "exit_price": 81119.453125,
+      "exit_reason": "12h \u23f0",
+      "exit_time": "2026-09-03 16:00:00+00:00",
+      "gross_return_pct": 4.4,
+      "pnl_euro": 19.83,
+      "capital_after": 965.16
     }
   ],
-  "capital": 945.33,
-  "last_checked": "2026-09-03 12:00:00+00:00"
+  "capital": 965.16,
+  "last_checked": "2026-09-03 16:00:00+00:00"
 }
