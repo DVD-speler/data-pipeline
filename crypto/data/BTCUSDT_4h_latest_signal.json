@@ -1,9 +1,9 @@
 {
-  "signaal": "LONG",
+  "signaal": "WACHT",
   "richting": "BULLISH",
-  "kans_stijging": 0.6892858274996511,
-  "prijs": 81119.453125,
-  "tijdstip": "2026-09-03 16:00:00+00:00",
+  "kans_stijging": 0.6092883078776982,
+  "prijs": 81486.0625,
+  "tijdstip": "2026-09-03 20:00:00+00:00",
   "market_regime": 0.0,
   "regime_label": "ranging",
   "death_cross": false,
