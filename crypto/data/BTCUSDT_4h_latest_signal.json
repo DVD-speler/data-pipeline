@@ -1,9 +1,9 @@
 {
   "signaal": "LONG",
   "richting": "BULLISH",
-  "kans_stijging": 0.811665813365376,
-  "prijs": 79434.3203125,
-  "tijdstip": "2026-09-04 16:00:00+00:00",
+  "kans_stijging": 0.7724936756426793,
+  "prijs": 79808.2421875,
+  "tijdstip": "2026-09-04 20:00:00+00:00",
   "market_regime": 1.0,
   "regime_label": "bull (ADX+)",
   "death_cross": false,
