@@ -1,8 +1,8 @@
 {
-  "tijdstip": "2026-09-05 12:00:00+00:00",
-  "signaal": "LONG",
-  "kans_stijging": "57.2%",
-  "proba_raw": 0.572072072072072,
+  "tijdstip": "2026-09-05 13:00:00+00:00",
+  "signaal": "WACHT",
+  "kans_stijging": "47.4%",
+  "proba_raw": 0.474025974025974,
   "long_threshold": "0.50",
   "long_threshold_base": "0.65",
   "short_threshold": "uitgeschakeld",
@@ -14,8 +14,8 @@
   "btc_skew_25d": "-1.9%",
   "skew_blocked": false,
   "horizon": "24 uur",
-  "prijs": 79661.7734375,
+  "prijs": 79701.09375,
   "ranging_score": 2.0,
   "crash_mode": 0,
-  "macd_size_mult": 0.17698864621560956
+  "macd_size_mult": 0.2246351580333914
 }
