@@ -1,5 +1,5 @@
 {
-  "tijdstip": "2026-09-05 22:00:00+00:00",
+  "tijdstip": "2026-09-05 23:00:00+00:00",
   "signaal": "WACHT",
   "kans_stijging": "24.7%",
   "proba_raw": 0.24725274725274726,
@@ -11,11 +11,11 @@
   "death_cross": false,
   "proba_4h": "n/a",
   "confirm_4h": true,
-  "btc_skew_25d": "-1.8%",
+  "btc_skew_25d": "-2.0%",
   "skew_blocked": false,
   "horizon": "24 uur",
-  "prijs": 79933.28125,
+  "prijs": 79761.921875,
   "ranging_score": 2.0,
-  "crash_mode": 0,
-  "macd_size_mult": 0.31002223271125107
+  "crash_mode": 1,
+  "macd_size_mult": 0.19671271895885015
 }
