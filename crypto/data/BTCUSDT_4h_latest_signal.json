@@ -1,9 +1,9 @@
 {
   "signaal": "WACHT",
   "richting": "NEUTRAAL",
-  "kans_stijging": 0.48376350085606157,
-  "prijs": 77257.90625,
-  "tijdstip": "2026-09-12 00:00:00+00:00",
+  "kans_stijging": 0.4591751971086101,
+  "prijs": 77285.84375,
+  "tijdstip": "2026-09-12 04:00:00+00:00",
   "market_regime": 0.0,
   "regime_label": "ranging",
   "death_cross": false,
